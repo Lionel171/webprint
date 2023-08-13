@@ -1,4 +1,4 @@
 {
-  "mongoURI": "mongodb://127.0.0.1:27017/myproject",
+  "mongoURI": "mongodb+srv://kingdevtalent:CHioaANzFbI9Tsrw@cluster0.cwjn3n9.mongodb.net/?retryWrites=true&w=majority/myproject",
   "secretOrKey": "theMostSecretPhraseEver123"
 }
