@@ -8,7 +8,7 @@ export default defineConfig({
   },
   define: {
     'process.env': {
-      API_URL: 'http://127.0.0.1:5000',
+      API_URL: 'http://185.148.129.206:5000',
       DEBUG: 'true'
     }
   }

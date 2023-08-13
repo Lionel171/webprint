@@ -1,7 +1,7 @@
 import Axios from "axios";
 
 const API_URL = process.env.API_URL;
-Axios.defaults.baseURL = API_URL; // 'http://127.0.0.1:3000/auth/';
+Axios.defaults.baseURL = API_URL; // 'http://185.148.129.206:5000/auth/';
 
 export class HttpService {
   _axios = Axios.create();
