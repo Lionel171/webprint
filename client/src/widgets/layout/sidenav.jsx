@@ -13,7 +13,7 @@ import {
 } from "@/context";
 import { useEffect } from "react";
 
-export function Sidenav({ brandImg, brandName, routes, onClose, isMobile }) {
+export function Sidenav({ brandImg, brandName, routes, isMobile }) {
   const [controller, dispatch] = useMaterialTailwindController();
   const { sidenavColor, sidenavType, openSidenav } = controller;
   const sidenavTypes = {
@@ -22,19 +22,6 @@ export function Sidenav({ brandImg, brandName, routes, onClose, isMobile }) {
     transparent: "bg-transparent",
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMobile && event.target.closest("aside") === null && onClose) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [isMobile, onClose]);
 
   return (
     <aside
@@ -104,9 +91,9 @@ export function Sidenav({ brandImg, brandName, routes, onClose, isMobile }) {
                       fullWidth
                       onClick={() => {
                         setOpenSidenav(dispatch, false);  // Close the sidenav
-                        if (isMobile && onClose) {
-                          onClose();  // Close the mobile window
-                        }
+                        // if (isMobile && onClose) {
+                        //   onClose();  // Close the mobile window
+                        // }
                       }}
                     >
                       {icon}

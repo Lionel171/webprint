@@ -58,6 +58,12 @@ export function UserEdit() {
     address: "",
     reseller_id: "",
   });
+  const [sendEmail, setSendEmail] = useState(false);
+
+  useEffect(() => {
+    setSendEmail(true);
+    console.log(sendEmail, "hahaha")
+  }, [user.user_status])
 
   const [errors, setErrors] = useState({
     nameError: false,
@@ -125,6 +131,7 @@ export function UserEdit() {
     const response = await UserService.updateUser(payload);
     if (response.success) {
       if (user.user_status === 'permit') {
+        navigate("/dashboard/users");
         const messageData = {
           from: 'showstopperurbanwear@gmail.com',
           to: 'showstopperurbanwear@gmail.com',
@@ -133,7 +140,7 @@ export function UserEdit() {
           text: 'You are approved!'
         };
         const email_response = await UserService.sendEmail(messageData);
-        navigate("/dashboard/users");
+      
   
       } else {
         const messageData = {

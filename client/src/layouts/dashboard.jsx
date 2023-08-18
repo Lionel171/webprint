@@ -48,7 +48,7 @@ export function Dashboard() {
         isMobile={isMobile}
         routes={sideNavRoutes}
         brandImg={sidenavType === "dark" ? "/img/logo.png" : "/img/logo.png"}
-        onClose={() => isMobile && setOpenSidenav(dispatch, false)}
+        // onClose={() => isMobile && setOpenSidenav(dispatch, false)}
       />
       <div className="p-4 xl:ml-80">
         <DashboardNavbar />
