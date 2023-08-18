@@ -17,24 +17,38 @@ export function Dashboard() {
   const { sidenavType } = controller;
   const authContext = useContext(AuthContext);
   const [sideNavRoutes, setSideNavRoutes] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSidenav, setShowSidenav] = useState(true)
 
   useEffect(() => {
     let tempRoutes = [];
- 
-    routes.map(item => {
-      if (item.role === localStorage.getItem("role"))
-        tempRoutes.push(item);
-        
-    })
+
+    routes.map((item) => {
+      if (item.role === localStorage.getItem("role")) tempRoutes.push(item);
+    });
     setSideNavRoutes(tempRoutes);
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initialize isMobile value
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-blue-gray-50/50">
       <Sidenav
+        isMobile={isMobile}
         routes={sideNavRoutes}
-        brandImg={
-          sidenavType === "dark" ? "/img/logo.png" : "/img/logo.png"
-        }
+        brandImg={sidenavType === "dark" ? "/img/logo.png" : "/img/logo.png"}
+        onClose={() => isMobile && setOpenSidenav(dispatch, false)}
       />
       <div className="p-4 xl:ml-80">
         <DashboardNavbar />

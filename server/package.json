@@ -33,6 +33,7 @@
     "nodemailer": "^6.9.3",
     "nodemon": "^2.0.19",
     "paypal-rest-sdk": "^1.8.1",
+    "stripe": "^13.0.0",
     "validator": "^10.11.0"
   },
   "devDependencies": {

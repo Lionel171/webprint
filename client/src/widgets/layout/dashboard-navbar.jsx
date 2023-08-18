@@ -28,9 +28,8 @@ import {
 } from "@/context";
 import UserService from "@/services/user-service";
 import { useEffect, useState } from "react";
-import { useNavigate, Router } from 'react-router-dom';
-
-
+import { useContext } from "react";
+import { AuthContext } from "@/context";
 
 
 export function DashboardNavbar() {
@@ -41,17 +40,22 @@ export function DashboardNavbar() {
   const [users, setUsers] = useState([]);
   const [isShowed, setIsShowed] = useState(false);
   const API_URL = process.env.API_URL;
-  console.log(API_URL, "api_url")
-
 
   useEffect(() => {
     async function fetchData() {
-      const response = await UserService.pendingUser();
-      setUsers(response.entities);
-      console.log(users, 'notification');
+      if (localStorage.getItem('role') === "admin") {
+        const response = await UserService.pendingUser();
+        setUsers(response.entities);
+      }
     }
     fetchData();
   }, []);
+
+  const authContext = useContext(AuthContext);
+
+  const handleLogout = () => {
+    authContext.logout();
+  };
 
   function getTimeDifference(createdAt) {
     const currentDate = new Date();
@@ -126,6 +130,7 @@ export function DashboardNavbar() {
               variant="text"
               color="blue-gray"
               className="hidden items-center gap-1 px-4 xl:flex"
+              onClick={handleLogout}
             >
               <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
               LOG OUT
@@ -159,36 +164,36 @@ export function DashboardNavbar() {
               </IconButton>
             </MenuHandler>
             <MenuList className="w-max border-0">
-            <Link to='/dashboard/users'>
-              {users.map((user) => (
-                <div key={user._id}>
+              <Link to='/dashboard/users'>
+                {users.map((user) => (
+                  <div key={user._id}>
 
-                  <MenuItem className="flex items-center gap-4">
-                    <Avatar
-                      src={ user.profile_image ? `http://185.148.129.206:5000/${user.profile_image}` : DefaultAvart}
-                      alt={user.contact_person}
-                      size="sm"
-                      variant="circular"
-                    />
-                    <div>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="mb-1 font-normal"
-                      >
-                        <strong>New message</strong> from {user.contact_person}
-                      </Typography>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="flex items-center gap-1 text-xs font-normal opacity-60"
-                      >
-                        <ClockIcon className="h-3.5 w-3.5" /> {getTimeDifference(user.created_at)}
-                      </Typography>
-                    </div>
-                  </MenuItem>
-                </div>
-              ))}
+                    <MenuItem className="flex items-center gap-4">
+                      <Avatar
+                        src={user.profile_image ? `http://185.148.129.206:5000/${user.profile_image}` : DefaultAvart}
+                        alt={user.contact_person}
+                        size="sm"
+                        variant="circular"
+                      />
+                      <div>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="mb-1 font-normal"
+                        >
+                          <strong>New message</strong> from {user.contact_person}
+                        </Typography>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="flex items-center gap-1 text-xs font-normal opacity-60"
+                        >
+                          <ClockIcon className="h-3.5 w-3.5" /> {getTimeDifference(user.created_at)}
+                        </Typography>
+                      </div>
+                    </MenuItem>
+                  </div>
+                ))}
               </Link>
             </MenuList>
           </Menu>

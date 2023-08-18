@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Card,
@@ -28,174 +28,316 @@ import {
   ordersOverviewData,
 } from "@/data";
 
-export function Home() {
-  return (
-    <div className="mt-12">
-      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-          <StatisticsCard
-            key={title}
-            {...rest}
-            title={title}
-            icon={React.createElement(icon, {
-              className: "w-6 h-6 text-white",
-            })}
-            footer={
-              <Typography className="font-normal text-blue-gray-600">
-                <strong className={footer.color}>{footer.value}</strong>
-                &nbsp;{footer.label}
-              </Typography>
-            }
-          />
-        ))}
-      </div>
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-        {statisticsChartsData.map((props) => (
-          <StatisticsChart
-            key={props.title}
-            {...props}
-            footer={
-              <Typography
-                variant="small"
-                className="flex items-center font-normal text-blue-gray-600"
-              >
-                <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
-                &nbsp;{props.footer}
-              </Typography>
-            }
-          />
-        ))}
-      </div>
-      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between p-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Projects
-              </Typography>
-              <Typography
-                variant="small"
-                className="flex items-center gap-1 font-normal text-blue-gray-600"
-              >
-                <CheckIcon strokeWidth={3} className="h-4 w-4 text-blue-500" />
-                <strong>30 done</strong> this month
-              </Typography>
-            </div>
-            <Menu placement="left-start">
-              <MenuHandler>
-                <IconButton size="sm" variant="text" color="blue-gray">
-                  <EllipsisVerticalIcon
-                    strokeWidth={3}
-                    fill="currenColor"
-                    className="h-6 w-6"
-                  />
-                </IconButton>
-              </MenuHandler>
-              <MenuList>
-                <MenuItem>Action</MenuItem>
-                <MenuItem>Another Action</MenuItem>
-                <MenuItem>Something else here</MenuItem>
-              </MenuList>
-            </Menu>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["companies", "members", "budget", "completion"].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {projectsTableData.map(
-                  ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
+import OrderService from '@/services/order-service';
+import UserService from '@/services/user-service';
 
-                    return (
-                      <tr key={name}>
-                        <td className={className}>
-                          <div className="flex items-center gap-4">
-                            <Avatar src={img} alt={name} size="sm" />
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold"
-                            >
-                              {name}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={className}>
-                          {members.map(({ img, name }, key) => (
-                            <Tooltip key={name} content={name}>
-                              <Avatar
-                                src={img}
-                                alt={name}
-                                size="xs"
-                                variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
-                              />
-                            </Tooltip>
-                          ))}
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                            {budget}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="w-10/12">
-                            <Typography
-                              variant="small"
-                              className="mb-1 block text-xs font-medium text-blue-gray-600"
-                            >
-                              {completion}%
-                            </Typography>
-                            <Progress
-                              value={completion}
-                              variant="gradient"
-                              color={completion === 100 ? "green" : "blue"}
-                              className="h-1"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader
+export function Home() {
+  const [todayMoney, setTodayMoney] = useState(0);
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [newCustomers, setNewCustomers] = useState(0);
+  const [completedOrders, setCompletedOrders] = useState(0);
+  const [totalMoney, setTotalMoney] = useState(0);
+  const [monthlySales, setMonthlySales] = useState([]);
+  const [monthlyCompletedOrders, setMonthlyCompletedOrders] = useState([]);
+  const [weekCustomers, setWeekCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [reviewOrdersCount, setReviewOrdersCount] = useState(0);
+  const [porcessingOrdersCount, setPorcessingOrdersCount] = useState(0);
+  const [compeltedOrdersCount, setcCompeltedOrdersCount] = useState(0);
+  const [pickupOrdersCount, setPickupOrdersCount] = useState(0);
+  const [deliveryOrdersCount, setDeliveryOrdersCount] = useState(0);
+
+  //Total Orders
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getOrders();
+      setOrders(response.orders);
+      const newOrders = response.orders.filter(order => order.status === "1");
+      setNewOrdersCount(newOrders.length);
+
+      const reviewOrders = response.orders.filter(order => order.status === "2");
+      setReviewOrdersCount(reviewOrders.length);
+
+      const porcessingOrders = response.orders.filter(order => order.status === "3");
+      setPorcessingOrdersCount(porcessingOrders.length);
+
+      const compeltedOrders = response.orders.filter(order => order.status === "4");
+      setcCompeltedOrdersCount(compeltedOrders.length);
+
+      const pickupOrders = response.orders.filter(order => order.status === "5");
+      setPickupOrdersCount(pickupOrders.length);
+
+      const deliveryOrders = response.orders.filter(order => order.status === "6");
+      setDeliveryOrdersCount(deliveryOrders.length);
+    }
+    fetchData();
+  }, []);
+
+
+
+  //Today's Order
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getTodayOrders();
+      setTodayOrders(response.orders.length);
+      const completed_orders = response.orders.filter(status => status >= "4");
+      setCompletedOrders(completed_orders.length);
+    }
+    fetchData();
+  }, [])
+
+
+  // Today's Customer
+  useEffect(() => {
+    async function fetchData() {
+      const response = await UserService.getTodayCustomers();
+      setNewCustomers(response.users.length);
+    }
+    fetchData();
+  }, []);
+
+  // Today's money
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getTodayMoney();
+      const money = response.orders.map((res) => res.total_value);
+
+      const total = money.reduce((acc, curr) => acc + curr, 0);
+      setTodayMoney(total);
+
+    }
+    fetchData();
+  }, []);
+
+  // Total Money
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getTotalMoney();
+      const money = response.orders.map((res) => res.total_value);
+
+      const total = money.reduce((acc, curr) => acc + curr, 0);
+      setTotalMoney(total);
+
+    }
+    fetchData();
+  }, []);
+  //----------Chart-------------
+  // Weekly Customers
+
+  useEffect(() => {
+    async function fetchData() {
+      const response = await UserService.getWeekCustomers();
+      if (response) {
+        const updatedWeekCustomers = [0, 0, 0, 0, 0, 0, 0];
+        response.users.forEach((user) => {
+          if (user._id.day === 1) {
+            updatedWeekCustomers[6] = user.count;
+          } else if (user._id.day === 2) {
+            updatedWeekCustomers[0] = user.count;
+          } else if (user._id.day === 3) {
+            updatedWeekCustomers[1] = user.count;
+          } else if (user._id.day === 4) {
+            updatedWeekCustomers[2] = user.count;
+          } else if (user._id.day === 5) {
+            updatedWeekCustomers[3] = user.count;
+          } else if (user._id.day === 6) {
+            updatedWeekCustomers[4] = user.count;
+          } else {
+            updatedWeekCustomers[5] = user.count;
+          }
+        });
+        setWeekCustomers(updatedWeekCustomers);
+      }
+    }
+
+    fetchData();
+  }, []);
+  //Monthly price for this year
+
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getMonthlyMoney();
+      if (response) {
+        const updatedMonthlySales = [];
+        const current_month = new Date().getMonth();
+        for (let i = 0; i <= current_month; i++) {
+          updatedMonthlySales.push(0);
+          response.orders.forEach((order) => {
+            if (order._id === i + 1) {
+              updatedMonthlySales[i] = order.totalPrice;
+            }
+          });
+        }
+        setMonthlySales(updatedMonthlySales);
+      }
+    }
+    fetchData();
+  }, []);
+
+  //Monthly Completed Orders.
+  useEffect(() => {
+    async function fetchData() {
+      const response = await OrderService.getMonthlyOrders();
+      if (response) {
+        const updatedMonthlyOrders = [];
+        const current_month = new Date().getMonth();
+        for (let i = 0; i <= current_month; i++) {
+          updatedMonthlyOrders.push(0);
+          response.count.forEach((order) => {
+            if (order._id === i + 1) {
+              updatedMonthlyOrders[i] = order.count;
+            }
+          });
+        }
+        setMonthlyCompletedOrders(updatedMonthlyOrders);
+      }
+    }
+    fetchData();
+  }, []);
+
+
+  return (
+    localStorage.getItem('role') === 'admin' && (
+      <div className="mt-12">
+        <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-5">
+          {statisticsCardsData.map(({ icon, title, footer, value, ...rest }) =>
+            title === "Today's Orders" ? (
+              <StatisticsCard
+                key={title}
+                {...rest}
+                title={title}
+                value={todayOrders}
+                icon={React.createElement(icon, {
+                  className: "w-6 h-6 text-white",
+                })}
+              />
+            ) :
+              title === "New Customers" ? (
+                <StatisticsCard
+                  key={title}
+                  {...rest}
+                  title={title}
+                  value={newCustomers}
+                  icon={React.createElement(icon, {
+                    className: "w-6 h-6 text-white",
+                  })}
+                />
+              ) :
+                title === "Today's Completed Orders" ? (
+                  <StatisticsCard
+                    key={title}
+                    {...rest}
+                    title={title}
+                    value={completedOrders}
+                    icon={React.createElement(icon, {
+                      className: "w-6 h-6 text-white",
+                    })}
+                  />
+                ) :
+                  title === "Today's Money" ? (
+                    <StatisticsCard
+                      key={title}
+                      {...rest}
+                      title={title}
+                      value={'$' + (todayMoney / 1000) + "K"}
+                      icon={React.createElement(icon, {
+                        className: "w-6 h-6 text-white",
+                      })}
+                    />
+                  ) : (
+                    <StatisticsCard
+                      key={title}
+                      {...rest}
+                      title={title}
+                      value={'$' + totalMoney / 1000 + "K"}
+                      icon={React.createElement(icon, {
+                        className: "w-6 h-6 text-white",
+                      })}
+                    />
+                  )
+          )}
+        </div>
+        <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+          {statisticsChartsData.map((props) => (
+            props.title === "Customers" ? (
+              <StatisticsChart
+                key={props.title}
+                {...props}
+                chart={{
+                  ...props.chart,
+                  series: [
+                    {
+                      ...props.chart.series[0],
+                      data: weekCustomers,
+                    },
+                  ],
+                }}
+              // footer={
+              //   <Typography
+              //     variant="small"
+              //     className="flex items-center font-normal text-blue-gray-600"
+              //   >
+              //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+              //     &nbsp;{props.footer}
+              //   </Typography>
+              // }
+              />
+            ) :
+              props.title === "Monthly Sales" ? (
+                <StatisticsChart
+                  key={props.title}
+                  {...props}
+                  chart={{
+                    ...props.chart,
+                    series: [
+                      {
+                        ...props.chart.series[0],
+                        data: monthlySales,
+                      },
+                    ],
+                  }}
+                // footer={
+                //   <Typography
+                //     variant="small"
+                //     className="flex items-center font-normal text-blue-gray-600"
+                //   >
+                //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+                //     &nbsp;{props.footer}
+                //   </Typography>
+                // }
+                />
+              ) :
+                (
+                  <StatisticsChart
+                    key={props.title}
+                    {...props}
+                    chart={{
+                      ...props.chart,
+                      series: [
+                        {
+                          ...props.chart.series[0],
+                          data: monthlyCompletedOrders,
+                        },
+                      ],
+                    }}
+                  // footer={
+                  //   <Typography
+                  //     variant="small"
+                  //     className="flex items-center font-normal text-blue-gray-600"
+                  //   >
+                  //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+                  //     &nbsp;{props.footer}
+                  //   </Typography>
+                  // }
+                  />
+                )
+
+          ))}
+        </div>
+        <div className="mb-5 pt-5 mt grid grid-cols-1 gap-6 xl:grid-cols-1 mt-3" >
+          <Card>
+            <CardHeader
             floated={false}
             shadow={false}
             color="transparent"
@@ -215,16 +357,22 @@ export function Home() {
               <strong>24%</strong> this month
             </Typography>
           </CardHeader>
-          <CardBody className="pt-0">
-            {ordersOverviewData.map(
-              ({ icon, color, title, description }, key) => (
+            {/* <CardHeader  >
+              <img
+                className="mb-4 mt-2 p"
+                src="/img/order-logo.png"
+                alt="The cover of Stubborn Attachments"
+              />
+            </CardHeader> */}
+            <CardBody className="pt-2">
+              {/* <Typography variant="h6" color="blue-gray" className="mb-2">
+                Orders Overview
+              </Typography> */}
+              {ordersOverviewData.map(({ icon, color, title, description }, key) => (
                 <div key={title} className="flex items-start gap-4 py-3">
                   <div
-                    className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                      key === ordersOverviewData.length - 1
-                        ? "after:h-0"
-                        : "after:h-4/6"
-                    }`}
+                    className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${key === ordersOverviewData.length - 1 ? "after:h-0" : "after:h-4/6"
+                      }`}
                   >
                     {React.createElement(icon, {
                       className: `!w-5 !h-5 ${color}`,
@@ -232,27 +380,39 @@ export function Home() {
                   </div>
                   <div>
                     <Typography
-                      variant="small"
+                      variant="h5"
                       color="blue-gray"
                       className="block font-medium"
                     >
-                      {title}
+                      {title}{" "}{title === "New Orders:"
+                        ? newOrdersCount
+                        : title === "Review Orders:"
+                          ? reviewOrdersCount
+                          : title === "Processing Orders:"
+                            ? porcessingOrdersCount
+                            : title === "Completed Orders:"
+                              ? compeltedOrdersCount
+                              : title === "Pick-Up Orders:"
+                                ? pickupOrdersCount
+                                : deliveryOrdersCount}{' '}{'orders'}
                     </Typography>
                     <Typography
                       as="span"
                       variant="small"
                       className="text-xs font-medium text-blue-gray-500"
                     >
-                      {description}
+                      {/* {description} */}
                     </Typography>
                   </div>
                 </div>
-              )
-            )}
-          </CardBody>
-        </Card>
+              ))}
+
+            </CardBody>
+          </Card>
+        </div>
       </div>
-    </div>
+    )
+
   );
 }
 

@@ -7,9 +7,13 @@ import {
   IconButton,
   Typography,
 } from "@material-tailwind/react";
-import { useMaterialTailwindController, setOpenSidenav } from "@/context";
+import {
+  useMaterialTailwindController,
+  setOpenSidenav,
+} from "@/context";
+import { useEffect } from "react";
 
-export function Sidenav({ brandImg, brandName, routes }) {
+export function Sidenav({ brandImg, brandName, routes, onClose, isMobile }) {
   const [controller, dispatch] = useMaterialTailwindController();
   const { sidenavColor, sidenavType, openSidenav } = controller;
   const sidenavTypes = {
@@ -18,14 +22,29 @@ export function Sidenav({ brandImg, brandName, routes }) {
     transparent: "bg-transparent",
   };
 
-  console.log(routes)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobile && event.target.closest("aside") === null && onClose) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [isMobile, onClose]);
+
   return (
     <aside
       className={`${sidenavTypes[sidenavType]} ${openSidenav ? "translate-x-0" : "-translate-x-80"
         } fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0`}
     >
       <div
-        className={`relative border-b ${sidenavType === "dark" ? "border-white/20" : "border-blue-gray-50"
+        className={`relative border-b ${sidenavType === "dark"
+          ? "border-white/20"
+          : "border-blue-gray-50"
           }`}
       >
         <Link to="/" className="flex items-center gap-4 py-6 px-8">
@@ -55,7 +74,9 @@ export function Sidenav({ brandImg, brandName, routes }) {
               <li className="mx-3.5 mt-4 mb-2">
                 <Typography
                   variant="small"
-                  color={sidenavType === "dark" ? "white" : "blue-gray"}
+                  color={
+                    sidenavType === "dark" ? "white" : "blue-gray"
+                  }
                   className="font-black uppercase opacity-75"
                 >
                   {title}
@@ -63,8 +84,12 @@ export function Sidenav({ brandImg, brandName, routes }) {
               </li>
             )}
             {pages.map(({ icon, name, path }, subIndex) => (
-              <li key={subIndex}>
-                <NavLink to={`/${layout}${path}`}>
+
+              <li key={subIndex}  >
+                <NavLink
+                  to={`/${layout}${path}`}
+                // onClick={onClose}
+                >
                   {({ isActive }) => (
                     <Button
                       variant={isActive ? "gradient" : "text"}
@@ -77,6 +102,12 @@ export function Sidenav({ brandImg, brandName, routes }) {
                       }
                       className="flex items-center gap-4 px-4 capitalize"
                       fullWidth
+                      onClick={() => {
+                        setOpenSidenav(dispatch, false);  // Close the sidenav
+                        if (isMobile && onClose) {
+                          onClose();  // Close the mobile window
+                        }
+                      }}
                     >
                       {icon}
                       <Typography
@@ -106,7 +137,8 @@ Sidenav.propTypes = {
   brandImg: PropTypes.string,
   brandName: PropTypes.string,
   routes: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
+  onClose: PropTypes.func,
+}
 
 Sidenav.displayName = "/src/widgets/layout/sidnave.jsx";
 

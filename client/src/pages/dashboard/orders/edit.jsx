@@ -23,18 +23,24 @@ const statusList = [
 ]
 const serviceTypeList = [
     { id: 0, name: "", value: "" },
-    { id: 1, name: "We Print DTF", value: "we_print_dtf" },
-    { id: 2, name: "Embroidery", value: "embroidery" },
-    { id: 3, name: "Screen Printing", value: "screen_printing" },
-    { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
-    { id: 5, name: "Signs & Banners", value: "signs_banners" },
+    { id: 1, name: "Screen Print", value: "screen_print" },
+    { id: 2, name: "We Print DTF", value: "we_print_dtf" },
+    { id: 3, name: "Gang Sheet", value: "gang_sheet" },
+    { id: 4, name: "Signs & Banners", value: "signs_banners" },
+    { id: 5, name: "Embroidery", value: "embroidery" },
+    { id: 6, name: "Vinyl Transfer", value: "vinly_transfer" },
+    { id: 7, name: "Sublimation", value: "sublimation" }
 ];
+const paymentTypeList = [
+    { id: 0, name: "", value: "" },
+    { id: 1, name: "Credit Card", value: "card"},
+    { id: 2, name: "PayPal", value: "paypal"}
+]
 
 export function OrderEdit() {
     const navigate = useNavigate();
     const location = useLocation();
     const authContext = useContext(AuthContext);
-    console.log(authContext.role);
     const isAdmin = authContext.role === Constant.Admin ? true : false;
     const order = location.state;
     const [title, setTitle] = useState('');
@@ -55,7 +61,9 @@ export function OrderEdit() {
             comment: '',
             client_art_up: null,
             service_type: 0,
+            payment_type: 0,
             serviceTypeFlag: false,
+            paymentTypeFlag: false,
             quantityFlag: false,
             idFlag: false,
             imgFlag: false,
@@ -82,11 +90,7 @@ export function OrderEdit() {
                     }
                     return obj;
                 });
-                console.log(orders, "this is on1")
-
-                console.log('1-temp', temp)
                 setOrders(temp);
-                console.log(orders, "this is on2")
             };
             reader.readAsDataURL(event.target.files[0]);
         }
@@ -110,6 +114,7 @@ export function OrderEdit() {
             }
             return obj;
         });
+        
         setOrders(temp);
     };
 
@@ -126,7 +131,7 @@ export function OrderEdit() {
         setOrders(temp);
     };
 
-    const onChangeButtonType = (item, index) => {
+    const onChangeServiceType = (item, index) => {
         const temp = orders.map((obj, subindex) => {
             if (subindex === index) {
                 return {
@@ -139,6 +144,21 @@ export function OrderEdit() {
         });
         setOrders(temp);
     };
+    
+    const onChangePaymentType = (item, index) => {
+        const temp = orders.map((obj, subindex) => {
+            if (subindex === index) {
+                return {
+                    ...obj,
+                    paymentTypeFlag: false,
+                    payment_type: item.id,
+                };
+            }
+            return obj;
+        });
+        setOrders(temp);
+    };
+    
 
     const onDeleteButton = (index) => {
         let temp = orders;
@@ -170,6 +190,13 @@ export function OrderEdit() {
                 return {
                     ...obj,
                     serviceTypeFlag: true,
+                };
+            }
+            if (obj.payment_type === 0) {
+                flag = false;
+                return {
+                    ...obj,
+                    paymentTypeFlag: true,
                 };
             }
             if (obj.quantity === 0) {
@@ -307,7 +334,7 @@ export function OrderEdit() {
                                             <SelectNoSearch
                                                 labelName={'Service Type'}
                                                 onChange={(item) =>
-                                                    onChangeButtonType(item, index)
+                                                    onChangeServiceType(item, index)
                                                 }
                                                 value={order.service_type}
                                                 items={serviceTypeList}
@@ -315,6 +342,19 @@ export function OrderEdit() {
                                                 disabled={isView}
                                             />
                                         </div>
+                                        <div className='mt-2'>
+                                            <SelectNoSearch
+                                                labelName={'Payment Tpye'}
+                                                onChange={(item) =>
+                                                    onChangePaymentType(item, index)
+                                                }
+                                                value={order.payment_type}
+                                                items={paymentTypeList}
+                                                error={order.paymentTypeFlag}
+                                                disabled={isView}
+                                            />
+                                        </div>
+                                        
                                         <div className="mt-2">
                                             <Input
                                                 type='number'

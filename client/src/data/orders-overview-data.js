@@ -1,47 +1,49 @@
 import {
-  BellIcon,
+  CheckCircleIcon,
   PlusCircleIcon,
-  ShoppingCartIcon,
+  ArrowTopRightOnSquareIcon,
   CreditCardIcon,
-  LockOpenIcon,
+  BellAlertIcon,
+
+  ShoppingCartIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/solid";
 
 export const ordersOverviewData = [
   {
-    icon: BellIcon,
+    icon: PlusCircleIcon,
     color: "text-green-500",
-    title: "$2400, Design changes",
+    title: "New Orders:",
     description: "22 DEC 7:20 PM",
   },
   {
-    icon: PlusCircleIcon,
+    icon: CheckCircleIcon,
     color: "text-red-500",
-    title: "New order #1832412",
+    title: "Review Orders:",
     description: "21 DEC 11 PM",
   },
   {
-    icon: ShoppingCartIcon,
+    icon: ArrowTopRightOnSquareIcon,
     color: "text-blue-500",
-    title: "Server payments for April",
+    title: "Processing Orders:",
     description: "21 DEC 9:34 PM",
   },
   {
-    icon: CreditCardIcon,
+    icon: BellAlertIcon,
     color: "text-orange-500",
-    title: "New card added for order #4395133",
+    title: "Completed Orders:",
     description: "20 DEC 2:20 AM",
   },
   {
-    icon: LockOpenIcon,
+    icon: ShoppingCartIcon,
     color: "text-pink-500",
-    title: "Unlock packages for development",
+    title: "Pick-Up Orders:",
     description: "18 DEC 4:54 AM",
   },
   {
-    icon: BanknotesIcon,
+    icon: CreditCardIcon,
     color: "text-blue-gray-900",
-    title: "New order #9583120",
+    title: "Deleivery Orders:",
     description: "17 DEC",
   },
 ];

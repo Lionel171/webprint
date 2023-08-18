@@ -42,7 +42,6 @@ export default function userPermitModal(props) {
         console.log(permitUser)
         try {
             const response = await UserService.permitUser(permitUser);
-            console.log(response)
             setMessageFlag(false)
             setMessage('')
         } catch (err) {

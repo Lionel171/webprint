@@ -1,4 +1,4 @@
 {
-  "mongoURI": "mongodb+srv://kingdevtalent:CHioaANzFbI9Tsrw@cluster0.cwjn3n9.mongodb.net/?retryWrites=true&w=majority/myproject",
+  "mongoURI": "mongodb+srv://kingdevtalent:CHioaANzFbI9Tsrw@cluster0.cwjn3n9.mongodb.net/test",
   "secretOrKey": "theMostSecretPhraseEver123"
 }

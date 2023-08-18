@@ -19,6 +19,9 @@ const OrderSchema = new Schema(
     service_type: {
       type: Number,
     },
+    payment_type: {
+      type: Number,
+    },
     quantity: {
       type: Number,
       default: 0,

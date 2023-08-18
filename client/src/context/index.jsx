@@ -109,6 +109,7 @@ export const AuthContextProvider = ({ children }) => {
   const login = (token, role) => {
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
+    // localStorage.setItem('user', user)
     setIsAuthenticated(true);
     setupAxiosInterceptors();
     navigate("/dashboard/home");

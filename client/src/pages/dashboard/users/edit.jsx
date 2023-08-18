@@ -126,28 +126,24 @@ export function UserEdit() {
     if (response.success) {
       if (user.user_status === 'permit') {
         const messageData = {
-          from: 'calvin168943@gmail.com',
-          to: 'calvin168943@gmail.com',
+          from: 'showstopperurbanwear@gmail.com',
+          to: 'showstopperurbanwear@gmail.com',
           // to: user.email,
           subject: 'Hello ' + user.name + '.',
           text: 'You are approved!'
         };
         const email_response = await UserService.sendEmail(messageData);
-        console.log("this is my msg.")
-        console.log(email_response, 'email response')
         navigate("/dashboard/users");
   
       } else {
         const messageData = {
-          from: 'calvin168943@gmail.com',
-          to: 'calvin168943@gmail.com',
+          from: 'showstopperurbanwear@gmail.com',
+          to: 'showstopperurbanwear@gmail.com',
           // to: user.email,
           subject: 'Hello ' + user.name + '.',
           text: 'Your are pending!'
         };
         const email_response = await UserService.sendEmail(messageData);
-        console.log("this is my msg.")
-        console.log(email_response, 'email response')
         navigate("/dashboard/users");
       }
     }

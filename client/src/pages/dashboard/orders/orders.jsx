@@ -51,7 +51,6 @@ export function Orders() {
   }
   const controlAction = async () => {
     const response = await OrderService.deleteOrder(selectedOrderId);
-    console.log(response.state, "deleted")
     if (response.state) {
       setIsDelete(true);
     }
@@ -61,20 +60,17 @@ export function Orders() {
     setCurrentPage(page);
   };
   const setSearchTxt = (value) => {
-    console.log(value, 'valude');
     setSearch(value);
     fetchData(value);
   }
   useEffect(() => {
     if (user._id !== undefined) {
-      console.log("this is fect")
       fetchData('');
     }
   }, [user._id]);
 
   useEffect(() => {
     if (user._id !== undefined) {
-      console.log("this is fect")
       fetchData('');
     }
   }, [isDelete]);
@@ -87,7 +83,6 @@ export function Orders() {
 
 
     if (user.role === "admin") {
-      console.log("this is admin")
       setLoadingData(true);
       const response = await OrderService.getOrderList(query);
       setOrders(response.docs);
@@ -98,8 +93,6 @@ export function Orders() {
 
 
     } else if (user.role === "normal") {
-      console.log("this is normal")
-
       setLoadingData(true);
       const response = await OrderService.getOrderListByUserId(query, user._id);
       setOrders(response.orders);
@@ -109,8 +102,6 @@ export function Orders() {
       setLoadingData(false);
 
     } else if (user.role === "artworker") {
-      console.log("this is artworker")
-
       setLoadingData(true);
       const response = await OrderService.getOderListByApprove(query);
       setOrders(response.docs);

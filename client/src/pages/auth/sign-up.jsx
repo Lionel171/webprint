@@ -16,6 +16,25 @@ import { AuthContext } from "@/context";
 import { useContext, useState } from "react";
 import AuthService from "@/services/auth-service";
 
+function Icon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+      />
+    </svg>
+  );
+}
+
 export function SignUp() {
   const authContext = useContext(AuthContext);
 
@@ -72,23 +91,45 @@ export function SignUp() {
     const mailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
     if (inputs.name.trim().length === 0) {
-      setErrors({ ...errors, nameError: true });
+      setErrors({ ...errors, nameError: true, errorText: " Please provide a company name."});
       return;
     }
 
     if (inputs.email.trim().length === 0 || !inputs.email.trim().match(mailFormat)) {
-      setErrors({ ...errors, emailError: true });
+      setErrors({ ...errors, emailError: true, errorText: "  Invalid email address" });
       return;
     }
 
+    if (inputs.contact_person.trim().length === 0) {
+      setErrors({ ...errors, contactPersonError: true, });
+      return;
+    }
+
+    if (inputs.phone.trim().length === 0 || !/^\d+$/.test(inputs.phone.trim())) {
+      setErrors({ ...errors, phoneError: true, errorText: "Please provide a valid phone number." });
+      return;
+    }
+
+
+    if (inputs.address.trim().length === 0) {
+      setErrors({ ...errors, addressError: true, errorText: "Please provide a address."});
+      return;
+    }
+
+    if (inputs.reseller_id.trim().length === 0) {
+      setErrors({ ...errors, resellerIdError: true, errorText: "Please provide a reseller ID" });
+      return;
+    }
+
+
     if (inputs.password.trim().length < 8) {
-      setErrors({ ...errors, passwordError: true });
+      setErrors({ ...errors, passwordError: true, errorText: " Password must be at least 8 characters long" });
       return;
     }
 
 
     if (inputs.agree === false) {
-      setErrors({ ...errors, agreeError: true });
+      setErrors({ ...errors, agreeError: true, errorText: "You must agree to the terms and conditions" });
       return;
     }
 
@@ -121,7 +162,9 @@ export function SignUp() {
       },
     };
     try {
+      console.log("response")
       const response = await AuthService.register(myData);
+
 
       // authContext.login(response.access_token, response.user.role);
       setIsMessage(true);
@@ -150,8 +193,7 @@ export function SignUp() {
         errorText: "",
       });
     } catch (err) {
-      setErrors({ ...errors, error: true, errorText: err.message });
-      console.error(err);
+      setErrors({ ...errors, error: true, errorText: err.data['email'] });
     }
   };
 
@@ -163,17 +205,7 @@ export function SignUp() {
         className="absolute inset-0 z-0 h-full w-full object-cover"
       />
       {isMessage ? (
-        <Alert
-          open={isMessage}
-          variant="ghost"
-          onClose={() => setIsMessage(false)}
-          animate={{
-            mount: { y: 0 },
-            unmount: { y: 100 },
-          }}
-        >
-          User registration request is pending. Please wait for approval.
-        </Alert>
+        <Alert color="amber" icon={<Icon />}>User registration request is pending.   Please wait for approval.</Alert>
       ) : null}
       <div className="absolute inset-0 z-0 h-full w-full bg-black/50" />
 
@@ -242,6 +274,10 @@ export function SignUp() {
               <Checkbox label="I agree the Terms and Conditions"
                 name="agree" id="agree" onChange={changeHandler} />
             </div>
+            {/* errror alert */}
+            {errors.errorText && (
+              <p className="text-red-600/100 warning">*{errors.errorText} !</p>
+            )}
           </CardBody>
           <CardFooter className="pt-0">
             <Button variant="gradient" fullWidth onClick={submitHandler}>

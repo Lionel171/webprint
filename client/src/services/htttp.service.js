@@ -7,7 +7,6 @@ export class HttpService {
   _axios = Axios.create();
 
   addRequestInterceptor = (onFulfilled, onRejected) => {
-    console.log("request intercepter===");
     this._axios.interceptors.request.use(onFulfilled, onRejected);
   };
 

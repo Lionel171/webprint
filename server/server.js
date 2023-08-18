@@ -46,6 +46,10 @@ app.use("/api/orders", auth, require("./routes/api/orders"));
 app.use("/api/order-details", require("./routes/api/orderDetails"));
 app.use("/api/customers", require("./routes/api/customers"));
 
+//stripe for credit card
+app.use("/api/stripe-route", require("./routes/api/stripe-route"));
+
+
 app.use(express.static("resources/assets"));
 // Serve static assets in production
 if (process.env.NODE_ENV === "production") {

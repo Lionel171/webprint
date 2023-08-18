@@ -342,17 +342,85 @@ router.get("/customerList", auth, async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+//----Home
+//Today's customers
+router.get("/today", async (req, res) => {
+  try {
+    const today = new Date(); // Get today's date
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Get the start of the day
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Get the end of the day
+    const users = await User.find({
+      created_at: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      },
+      role: 'normal'
+    });
+    
+    res.json({
+      users: users,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//Week's customers
+router.get("/last-week", async (req, res) => {
+  try {
+    const today = new Date(); // Get today's date
+    const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7); // Get the date a week ago
+    const users = await User.aggregate([
+      {
+        $match: {
+          created_at: {
+            $gte: weekAgo,
+            $lt: today
+          },
+          role: 'normal'
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$created_at" },
+            month: { $month: "$created_at" },
+            date: { $dayOfMonth: "$created_at" },
+            day: { $dayOfWeek: "$created_at" },
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.day": 1 }
+      }
+    ]);
+    
+    res.json({
+      users: users,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+
+
 //send email
 router.post("/sendEmail", auth, async (req, res) => {
-  const client = mailgun.client({ username: "api", key: 'e9b6048b2297fb019b2f6c4d492aff36-28e9457d-ee1210e1' });
+  const client = mailgun.client({ username: "api", key: 'fe60c869863bad18f2b35332b101f08a-c30053db-91dce0e4' });
   const messageData = {
     from: req.body.from,
     to: req.body.to,
+    // from: 'showstopperurbanwear@gmail.com',
+    // to: 'showstopperurbanwear@gmail.com',
     subject: req.body.subject,
     text: req.body.text
   };
   client.messages
-    .create('sandboxa212c18a6f5b45ad96fb1d9819faccdc.mailgun.org', messageData)
+    .create('sandboxbabb1dd9978a40eba89c92c1c9e53c63.mailgun.org', messageData)
     .then((res) => {
       console.log(res);
     })

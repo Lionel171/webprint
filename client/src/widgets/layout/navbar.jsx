@@ -18,7 +18,27 @@ export function Navbar({ brandName, routes, action }) {
       "resize",
       () => window.innerWidth >= 960 && setOpenNav(false)
     );
+
+    window.addEventListener("click", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
   }, []);
+
+  const handleClickOutside = (event) => {
+    // Close the side nav if it is open and the click is outside the nav area or inside the mobile navigation area
+    console.log("aaaaaaaaaaaaa")
+    if (
+      openNav &&
+      !event.target.closest(".navbar-container") &&
+      !event.target.closest(".MobileNav") &&
+      event.target !== window
+    ) {
+      setOpenNav(false);
+    }
+  };
+  
 
   const navList = (
     <ul className="mb-4 mt-2 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
@@ -44,7 +64,7 @@ export function Navbar({ brandName, routes, action }) {
 
   return (
     <MTNavbar className="p-3">
-      <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
+       <div className="navbar-container mx-auto flex items-center justify-between text-blue-gray-900">
         <Link to="/">
           <Typography
             variant="small"

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon, PencilSquareIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import ReactTimeAgo from 'react-time-ago';
-import DropDown from '@/components/dashboard/users/Dropdown';
+import DropDown from './Dropdown';
 import { SelectMenu, SelectNoSearch } from '@/components/common/Select';
 
 import { useMaterialTailwindController, setOpenSidenav } from "@/context";
@@ -35,7 +35,6 @@ export default function Content({
   };
 
   const deleteComfirm = (order) => {
-    console.log(order.id);
     deleteFunction(order);
   };
 
@@ -249,9 +248,11 @@ export default function Content({
                           })
                         }
 
-                        onEdit={() => {
-                          navigate("/dashboard/orders/edit");
-                        }}
+                        // onEdit={() => {
+                        //   navigate(`/dashboard/order/edit/${order._id}`);
+                        //   // navigate("/dashboard/orders/edit");
+
+                        // }}
                       />
                       <NavLink to={"/dashboard/orders/view"} state={order}>
                         <EyeIcon

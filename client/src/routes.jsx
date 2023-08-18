@@ -57,12 +57,12 @@ export const routes = [
         path: "/payments",
         element: <Payments />,
       },
-      {
-        icon: <TableCellsIcon {...icon} />,
-        name: "productions",
-        path: "/productions",
-        element: <Productions />,
-      },
+      // {
+      //   icon: <TableCellsIcon {...icon} />,
+      //   name: "productions",
+      //   path: "/productions",
+      //   element: <Productions />,
+      // },
       {
         icon: <TableCellsIcon {...icon} />,
         name: "users",

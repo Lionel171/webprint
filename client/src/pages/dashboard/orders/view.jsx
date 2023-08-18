@@ -11,21 +11,6 @@ import OrderStep from './components/orderStep';
 import DefaultImage from '../../../../public/img/default.png';
 
 
-
-const userTypeList = [
-  { id: 0, name: "normal" },
-  { id: 1, name: "admin" },
-  { id: 2, name: "artworker" },
-  { id: 3, name: "projectstuff" },
-];
-const statusList = [
-  { id: 1, name: "request" },
-  { id: 2, name: "accepted" },
-  { id: 3, name: "processing" },
-  { id: 4, name: "complete" },
-  { id: 5, name: "pick-up" },
-  { id: 6, name: "delivered" }
-]
 const serviceTypeList = [
   { id: 0, name: "", value: "" },
   { id: 1, name: "We Print DTF", value: "we_print_dtf" },
@@ -33,6 +18,11 @@ const serviceTypeList = [
   { id: 3, name: "Screen Printing", value: "screen_printing" },
   { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
   { id: 5, name: "Signs & Banners", value: "signs_banners" },
+];
+const paymentTypeList = [
+  { id: 0, name: "", value: "" },
+  { id: 1, name: "Credit Card", value: "credit_card" },
+  { id: 2, name: "Paypal", value: "paypal" },
 ];
 const controlList = [
   { id: 0, name: "Send Invoice Email", role: "admin" },
@@ -57,12 +47,9 @@ export function OrderEdit() {
 
   const getUserbyOder = async () => {
     const response = await userService.getUserById(order.user_id);
-
-    // if(response.success) {
+    if(response.success) {
     setUser(response);
-    console.log(user, "user on view")
-    // }
-
+    }
   }
 
   const onChangeImagePhoto = (event, index) => {
@@ -101,6 +88,7 @@ export function OrderEdit() {
   const onChangePrice = (value, index) => {
     const temp = orders.map((obj, subindex) => {
       if (subindex === index) {
+        setTotalPrice(value);
         return {
           ...obj,
           price: value,
@@ -127,7 +115,6 @@ export function OrderEdit() {
 
   const downloadHandle = (imageUrl) => {
     let url = imageUrl;
-    console.log(url, "this is image url")
     saveAs(url, "work_image");
   };
 
@@ -165,7 +152,6 @@ export function OrderEdit() {
         orders: orders,
       };
       const response = await OrderService.saveOrder(newOrder);
-      console.log(response, "tello")
       if (response.success) {
         await changeStaus(parseInt(order.status) + 1);
         // const payload ={
@@ -216,14 +202,14 @@ export function OrderEdit() {
 
   const controlHandle = async (id) => {
     if (id === 0) {
-      if (totalPrice === 0) {
+      if (totalPrice == 0) {
         alert("Please set price!");
         return
       } else {
         const messageData = {
-          from: 'calvin168943@gmail.com',
+          from: 'showstopperurbanwear@gmail.com',
           // to: user.user.email,
-          to: 'calvin168943@gmail.com',
+          to: 'showstopperurbanwear@gmail.com',
           subject: 'Hello ' + user.user.name + '.',
           text: 'You received invoice emai: https://invoicehome.com/'
         };
@@ -253,24 +239,24 @@ export function OrderEdit() {
       fetchCustomerList();
   }, [])
 
-  // useEffect(() => {
-  //   getUserbyOder();
-  //   async function fetchData() {
-  //     const orderResponse = await OrderService.getOrderById(order._id);
-  //     setOrder(orderResponse.order);
-  //     const response = await OrderService.getOrderDetailList(order._id);
-  //     setOrders(response.entities);
-  //     let tempTotal = 0
-  //     response.entities.map(item => {
-  //       tempTotal = tempTotal + item.price;
-  //     })
-  //     setTotalPrice(tempTotal);
-  //   }
-  //   // if (order && order._id) {
-  //     fetchData();
-  //     setIsView(true)
-  // // }
-  // }, [])
+  useEffect(() => {
+    getUserbyOder();
+    async function fetchData() {
+      const orderResponse = await OrderService.getOrderById(order._id);
+      setOrder(orderResponse.order);
+      const response = await OrderService.getOrderDetailList(order._id);
+      setOrders(response.entities);
+      let tempTotal = 0
+      response.entities.map(item => {
+        tempTotal = tempTotal + item.price;
+      })
+      setTotalPrice(tempTotal);
+    }
+    // if (order && order._id) {
+      fetchData();
+      setIsView(true)
+  // }
+  }, [])
 
   return (
     <div>
@@ -388,6 +374,9 @@ export function OrderEdit() {
                 <th scope="col" className="px-0 py-3 font-semibold">
                   Service Type
                 </th>
+                <th scope="col" className="pl-10 px-0 py-3 font-semibold">
+                  Payment Type
+                </th>
                 <th
                   scope="col"
                   className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
@@ -417,7 +406,11 @@ export function OrderEdit() {
                     </div>
                     <div className="truncate text-gray-500">
                       {item.comment}
-                      
+                    </div>
+                  </td>
+                  <td className="ml-5 max-w-0 px-0 py-5 align-top">
+                    <div className="pl-10 truncate font-medium text-gray-900">
+                      {paymentTypeList[item.payment_type].name}
                     </div>
                   </td>
                   <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
@@ -462,7 +455,7 @@ export function OrderEdit() {
                       </button>
                     ) : null}
                   </td>
-                  {localStorage.getItem('role') === 'admin' ? (
+                  {(localStorage.getItem('role') === 'admin' && order.status === "1")  ? (
                     <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                       <Input
                         type="number"
@@ -506,7 +499,7 @@ export function OrderEdit() {
 
       {localStorage.getItem("role") === 'artworker' && (
         <div className="mt-6 flex items-center justify-end gap-x-6">
-          {order.status === '2' || order.status === '3' ? (
+          {/* {order.status === '2' || order.status === '3' ? (
             <div className="mt-4 " style={{ width: "60%" }}>
               {orders.map((item, index) => (
                 <>
@@ -527,10 +520,10 @@ export function OrderEdit() {
                     />
                   </div>
                 </>
-              ))}
-
+              ))} */}
+{/* 
             </div>
-          ) : null}
+          ) : null} */}
 
           {order.status === '2' && (
             <>

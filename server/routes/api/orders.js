@@ -3,6 +3,7 @@ const router = express.Router();
 const uploadFile = require("../../middleware/upload");
 const auth = require("../../middleware/auth");
 // Load User model
+const User  = require("../../models/User");
 const Order = require("../../models/Order");
 const OrderDetail = require("../../models/OrderDetail");
 const OrderHistory = require("../../models/OrderHistory");
@@ -33,15 +34,18 @@ router.post("/save-order", auth, async (req, res) => {
     });
 
     await order.save();
-    
+    console.log(orders,"ddddd>?>>>>")
+
 
     order = await Order.findOne({ _id: order._id }).populate("Users");
     orders.map(async (item, index) => {
       let orderDetail = new OrderDetail({
         order_id: order._id,
+        status: item.status,
         title: title,
         user_id: _id,
         service_type: item.service_type,
+        payment_type: item.payment_type,
         comment: item.comment,
         quantity: item.quantity,
         client_art_up: req.files[index] ? req.files[index].filename : null,
@@ -61,7 +65,7 @@ router.post("/save-order", auth, async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server error");
+    res.status(500).send("Server error!!!");
   }
 });
 
@@ -93,6 +97,19 @@ router.post("/save-order-price", auth, async (req, res) => {
   }
 });
 
+//get total orders
+
+router.get("/total", async (req, res) => {
+  try {
+    const response = await Order.find();
+    res.json({
+      orders: response,
+    })
+
+  } catch (err) {
+    res.status(500).send("Server error")
+  }
+})
 
 router.get("/", async (req, res) => {
   try {
@@ -114,11 +131,11 @@ router.get("/list", async (req, res) => {
     const { page, perPage, search } = req.query;
     var condition = search
       ? {
-          $or: [
-            { title: { $regex: new RegExp(search), $options: "i" } },
-            { status: { $regex: new RegExp(search), $options: "i" } },
-          ],
-        }
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
       : {};
     const { limit, offset } = getPagination(page, perPage);
     const orders = await Order.paginate(condition, {
@@ -137,12 +154,12 @@ router.get("/approve", async (req, res) => {
     const { page, perPage, search } = req.query;
     var condition = search
       ? {
-          $or: [
-            { title: { $regex: new RegExp(search), $options: "i" } },
-            { status: { $regex: new RegExp(search), $options: "i" } },
-          ],
-        }
-      : {status: {$ne: 1}};
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $ne: 1 } };
     const { limit, offset } = getPagination(page, perPage);
     const orders = await Order.paginate(condition, {
       offset,
@@ -160,16 +177,16 @@ router.get("/approve", async (req, res) => {
 
 router.get("/complete", async (req, res) => {
   try {
-    
+
     const { page, perPage, search } = req.query;
     var condition = search
       ? {
-          $or: [
-            { title: { $regex: new RegExp(search), $options: "i" } },
-            { status: { $regex: new RegExp(search), $options: "i" } },
-          ],
-        }
-      : {status: {$in: [4, 5, 6]}};
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $in: [4, 5, 6] } };
     const { limit, offset } = getPagination(page, perPage);
     const orders = await Order.paginate(condition, {
       offset,
@@ -215,11 +232,11 @@ router.get("/complete", async (req, res) => {
 router.get("/current/:id", async (req, res) => {
   try {
     const { page = 1, perPage = 10, search = "" } = req.query;
-    
+
     const limit = parseInt(perPage);
     const skip = (page - 1) * limit;
     const condition = search
-    ? {
+      ? {
         $and: [
           { user_id: req.params.id },
           {
@@ -230,8 +247,8 @@ router.get("/current/:id", async (req, res) => {
           },
         ],
       }
-    : { user_id: req.params.id };
-  
+      : { user_id: req.params.id };
+
     const orders = await Order.find(condition)
       .skip(skip)
       .limit(limit);
@@ -280,6 +297,150 @@ router.put("/update-status", auth, async (req, res) => {
 
     res.json({
       state: true,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+//Home-----Get today's Orders number
+router.get("/today", async (req, res) => {
+  try {
+    const today = new Date(); // Get today's date
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Get the start of the day
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Get the end of the day
+
+    const orders = await Order.find({
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      }
+    }).populate("user_id");;
+    
+    res.json({
+      orders: orders,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//----------Get monthly completed orders for this year.
+router.get("/monthly", async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+
+    const startOfYear = new Date(currentYear, 0, 1); // Get the start of the year
+    const endOfYear = new Date(currentYear + 1, 0, 1); // Get the start of next year
+
+    const pipeline = [
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfYear,
+            $lt: endOfYear
+          },
+          status: "6" 
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: {
+          _id: 1 // Sort by month in ascending order
+        }
+      }
+    ];
+
+    const count = await Order.aggregate(pipeline);
+
+    res.json({
+      count: count
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// ---------Get today's total price.
+router.get("/today/price", async (req, res) => {
+  try {
+    const today = new Date(); // Get today's date
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Get the start of the day
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Get the end of the day
+
+    const orders = await Order.find({
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      },
+      status: '6' 
+    });
+
+    res.json({
+      orders: orders,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+// --------- Get monthly price for a year
+router.get("/monthly/price", async (req, res) => {
+  try {
+    const today = new Date(); // Get today's date
+    const startOfYear = new Date(today.getFullYear(), 0, 1); // Get the start of the year
+    const endOfYear = new Date(today.getFullYear(), 11, 31); // Get the end of the year
+
+    const orders = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfYear,
+            $lte: endOfYear
+          },
+          status: '6'
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalPrice: { $sum: "$total_value" }
+        }
+      },
+      {
+        $sort: {
+          "_id": 1
+        }
+      }
+    ]);
+
+    res.json({
+      orders: orders,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+//---------Get total price
+router.get("/totalprice", async (req, res) => {
+  try {
+  
+    const orders = await Order.find({
+      status: '6' 
+    });
+
+    res.json({
+      orders: orders,
     });
   } catch (err) {
     console.error(err.message);

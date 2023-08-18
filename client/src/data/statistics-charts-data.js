@@ -1,11 +1,11 @@
 import { chartsConfig } from "@/configs";
 
-const websiteViewsChart = {
+const CustomersView = {
   type: "bar",
   height: 220,
   series: [
     {
-      name: "Views",
+      name: "Customers",
       data: [50, 20, 10, 22, 50, 10, 40],
     },
   ],
@@ -25,7 +25,7 @@ const websiteViewsChart = {
   },
 };
 
-const dailySalesChart = {
+const MonthlySalesChart = {
   type: "line",
   height: 220,
   series: [
@@ -46,6 +46,9 @@ const dailySalesChart = {
     xaxis: {
       ...chartsConfig.xaxis,
       categories: [
+        "Jan",
+        "Feb",
+        "March",
         "Apr",
         "May",
         "Jun",
@@ -61,10 +64,10 @@ const dailySalesChart = {
 };
 
 const completedTasksChart = {
-  ...dailySalesChart,
+  ...MonthlySalesChart,
   series: [
     {
-      name: "Tasks",
+      name: "Orders",
       data: [50, 40, 300, 220, 500, 250, 400, 230, 500],
     },
   ],
@@ -73,23 +76,23 @@ const completedTasksChart = {
 export const statisticsChartsData = [
   {
     color: "blue",
-    title: "Website View",
-    description: "Last Campaign Performance",
-    footer: "campaign sent 2 days ago",
-    chart: websiteViewsChart,
+    title: "Customers",
+    footer: "",
+    description: "",
+    chart: CustomersView,
   },
   {
     color: "pink",
-    title: "Daily Sales",
-    description: "15% increase in today sales",
-    footer: "updated 4 min ago",
-    chart: dailySalesChart,
+    title: "Monthly Sales",
+    description: "",
+    footer: "",
+    chart: MonthlySalesChart,
   },
   {
     color: "green",
-    title: "Completed Tasks",
-    description: "Last Campaign Performance",
-    footer: "just updated",
+    title: "Completed Orders", 
+    description: "",
+    footer: "",
     chart: completedTasksChart,
   },
 ];

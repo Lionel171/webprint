@@ -38,6 +38,18 @@ class UserService {
         const getCustomerListEndpoint = `api/users`;
         return await HttpService.put(getCustomerListEndpoint, payload);
     }
+    //Home
+    //Today's Customers
+    getTodayCustomers = async () => {
+        const getTodayCustomersEndpoint = 'api/users/today';
+        return await HttpService.get(getTodayCustomersEndpoint);
+    }
+    //Week Customers
+    getWeekCustomers = async () => {
+        const getWeekCustomersEndpoint = 'api/users/last-week';
+        return await HttpService.get(getWeekCustomersEndpoint);
+    }
+    //Email
     sendEmail = async (payload) => {
         const sendEmailToClients = `api/users/sendEmail`;
         return await HttpService.post(sendEmailToClients, payload);
