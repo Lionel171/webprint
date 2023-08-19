@@ -3,6 +3,7 @@ import { useNavigate, Router } from 'react-router-dom';
 import { Dialog, Listbox, Menu, Transition } from '@headlessui/react'
 import {
   Bars3Icon,
+  HomeModernIcon,
   CalendarDaysIcon,
   CreditCardIcon,
   EllipsisVerticalIcon,
@@ -13,13 +14,15 @@ import {
   HeartIcon,
   PaperClipIcon,
   UserCircleIcon,
+  HomeIcon,
   XMarkIcon as XMarkIconMini,
 } from '@heroicons/react/20/solid'
 import { BellIcon, XMarkIcon as XMarkIconOutline } from '@heroicons/react/24/outline'
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import DefaultImage from '../../../public/img/default.png';
 import Input from '@/components/common/Input';
-import UserService from "@/services/user-service"
+import UserService from "@/services/user-service";
+import OrderService from "@/services/order-service";
 
 const navigation = [
   { name: 'Home', href: '#' },
@@ -97,10 +100,11 @@ export function Profile() {
   // const [pwdAllow, setPwdAllow] = useState(false);
   const [avatarPhotoFlag, setAvatarPhotoFlag] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
- 
+
   const [avatarFile, setAvatarFile] = useState();
   const avatarFileRef = useRef();
   const [user, setUser] = useState({});
+  const [paid, setPaid] = useState(0);
   // const [password, setPassword] = useState('');
   // const [confirmPwd, setConfirmpwd] = useState('');
   // const [passwordFlag, setPasswordFlag] = useState(false);
@@ -118,6 +122,7 @@ export function Profile() {
     }
   };
   const [isMatch, setMatch] = useState(true);
+
   const avatarImageClick = () => {
     avatarFileRef.current.click();
   };
@@ -186,9 +191,19 @@ export function Profile() {
     async function fetchData() {
       const response = await UserService.getUser();
       setUser(response.user);
+      if(response.user) {
+        const price = await OrderService.getPaidByUser(response.user._id);
+        setPaid(price.totalPrice);
+        // console.log(response.user._id, "userererere")
+      }
+
     }
     fetchData();
   }, [])
+
+
+
+
 
 
   return (
@@ -223,7 +238,8 @@ export function Profile() {
               <h1>
                 <div className="mt-1 text-base font-semibold leading-6 text-gray-900">{user.contact_person}</div>
                 <div className="text-sm leading-6 text-gray-500">
-                {user.email}
+                  {user.email}
+
                 </div>
                 <div className="text-sm leading-6 text-gray-500">
                   +{user.phone}
@@ -231,7 +247,7 @@ export function Profile() {
               </h1>
             </div>
 
-            
+
           </div>
         </div>
       </header>
@@ -350,7 +366,7 @@ export function Profile() {
             <dl className="flex flex-wrap">
               <div className="flex-auto pl-6 pt-6">
                 <dt className="text-sm font-semibold leading-6 text-gray-900">Amount</dt>
-                <dd className="mt-1 text-base font-semibold leading-6 text-gray-900">$10,560.00</dd>
+                <dd className="mt-1 text-base font-semibold leading-6 text-gray-900">${paid / 1000} K</dd>
               </div>
               <div className="flex-none self-end px-6 pt-4">
                 <dt className="sr-only">Status</dt>
@@ -363,28 +379,28 @@ export function Profile() {
                   <span className="sr-only">Client</span>
                   <UserCircleIcon className="h-6 w-5 text-gray-400" aria-hidden="true" />
                 </dt>
-                <dd className="text-sm font-medium leading-6 text-gray-900">Alex Curren</dd>
+                <dd className="text-sm font-medium leading-6 text-gray-900">{user.contact_person}</dd>
               </div>
               <div className="mt-4 flex w-full flex-none gap-x-4 px-6">
                 <dt className="flex-none">
                   <span className="sr-only">Due date</span>
-                  <CalendarDaysIcon className="h-6 w-5 text-gray-400" aria-hidden="true" />
-                </dt>
+                  <HomeModernIcon className="h-6 w-5 text-gray-400" aria-hidden="true" />
+                </dt> 
                 <dd className="text-sm leading-6 text-gray-500">
-                  <time dateTime="2023-01-31">January 31, 2023</time>
+                  <time dateTime="2023-01-31">{user.address}</time>
                 </dd>
               </div>
               <div className="mt-4 flex w-full flex-none gap-x-4 px-6">
                 <dt className="flex-none">
                   <span className="sr-only">Status</span>
-                  <CreditCardIcon className="h-6 w-5 text-gray-400" aria-hidden="true" />
+                  <HomeIcon className="h-6 w-5 text-gray-400" aria-hidden="true" />
                 </dt>
-                <dd className="text-sm leading-6 text-gray-500">Paid with MasterCard</dd>
+                <dd className="text-sm leading-6 text-gray-500">{user.name}</dd>
               </div>
             </dl>
             <div className="mt-6 border-t border-gray-900/5 px-6 py-6">
               <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
-                Download receipt <span aria-hidden="true">&rarr;</span>
+                {/* Download receipt <span aria-hidden="true">&rarr;</span> */}
               </a>
             </div>
           </div>

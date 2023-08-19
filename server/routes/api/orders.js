@@ -34,8 +34,6 @@ router.post("/save-order", auth, async (req, res) => {
     });
 
     await order.save();
-    console.log(orders,"ddddd>?>>>>")
-
 
     order = await Order.findOne({ _id: order._id }).populate("Users");
     orders.map(async (item, index) => {
@@ -48,6 +46,7 @@ router.post("/save-order", auth, async (req, res) => {
         payment_type: item.payment_type,
         comment: item.comment,
         quantity: item.quantity,
+        size: item.size,
         client_art_up: req.files[index] ? req.files[index].filename : null,
       });
       await orderDetail.save();
@@ -148,6 +147,7 @@ router.get("/list", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
 //approve order
 router.get("/approve", async (req, res) => {
   try {
@@ -392,6 +392,7 @@ router.get("/today/price", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
 // --------- Get monthly price for a year
 router.get("/monthly/price", async (req, res) => {
   try {
@@ -441,6 +442,80 @@ router.get("/totalprice", async (req, res) => {
 
     res.json({
       orders: orders,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//---------Get total user's paid
+router.get("/paid/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const orders = await Order.find({
+      user_id: id,
+      status: '6' 
+    });
+
+    let totalPrice = 0;
+    orders.forEach(order => {
+      totalPrice += order.total_value;
+    });
+
+    res.json({
+      totalPrice: totalPrice,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//---------Get weekly user's paid
+router.get("weekly/paid/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get today's date
+    const currentDate = new Date();
+
+    // Calculate the start and end dates of the current week
+    const startOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay());
+    const endOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay() + 6);
+
+    // Find orders within the current week for the given user
+    const orders = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfWeek,
+            $lte: endOfWeek
+          },
+          status: '6'
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+        }
+      },
+      {
+        count: { $sum: 1 }
+      },
+      {
+        $sort: {
+          "_id": 1
+        }
+      }
+    ]);
+
+    res.json({
+      orders: orders,
+    });
+
+
+    res.json({
+      totalPrice: totalPrice,
     });
   } catch (err) {
     console.error(err.message);

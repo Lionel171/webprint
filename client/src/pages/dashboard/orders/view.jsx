@@ -387,6 +387,12 @@ export function OrderEdit() {
                   scope="col"
                   className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
                 >
+                  Size
+                </th>
+                <th
+                  scope="col"
+                  className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
+                >
                   Image
                 </th>
                 <th
@@ -415,6 +421,9 @@ export function OrderEdit() {
                   </td>
                   <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
                     {item.quantity}
+                  </td>
+                  <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
+                    {item.size}
                   </td>
                   <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
                     <div className="flex justify-end">

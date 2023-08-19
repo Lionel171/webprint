@@ -58,6 +58,7 @@ export function OrderEdit() {
     const addOrder = (title, id) => {
         let order = {
             quantity: 0,
+            size: '',
             comment: '',
             client_art_up: null,
             service_type: 0,
@@ -65,6 +66,7 @@ export function OrderEdit() {
             serviceTypeFlag: false,
             paymentTypeFlag: false,
             quantityFlag: false,
+            sizeFlag: false,
             idFlag: false,
             imgFlag: false,
         };
@@ -110,6 +112,21 @@ export function OrderEdit() {
                     ...obj,
                     quantity: value,
                     quantityFlag: false,
+                };
+            }
+            return obj;
+        });
+        
+        setOrders(temp);
+    };
+
+    const onChangeSize = (value, index) => {
+        const temp = orders.map((obj, subindex) => {
+            if (subindex === index) {
+                return {
+                    ...obj,
+                    size: value,
+                    sizeFlag: false,
                 };
             }
             return obj;
@@ -204,6 +221,13 @@ export function OrderEdit() {
                 return {
                     ...obj,
                     quantityFlag: true,
+                };
+            }
+            if (obj.size === '') {
+                flag = false;
+                return {
+                    ...obj,
+                    sizeFlag: true,
                 };
             }
             if (obj.client_art_up === "") {
@@ -365,9 +389,25 @@ export function OrderEdit() {
                                                 value={order.quantity}
                                                 error={order.quantityFlag}
                                                 maxLength={50}
+                                                minLength={1}
                                                 disabled={isView}
                                             />
                                         </div>
+
+                                        <div className="mt-2">
+                                            <Input
+                                                type='text'
+                                                labelName={'Size'}
+                                                onChange={(e) =>
+                                                    onChangeSize(e.target.value, index)
+                                                }
+                                                value={order.size}
+                                                error={order.sizeFlag}
+                                                placeholder={"100*100"}
+                                                disabled={isView}
+                                            />
+                                        </div>
+                                        
                                         <div className="mt-2">
                                             <label className='block text-sm font-medium text-gray-700'>
                                                 Comment

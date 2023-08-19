@@ -47,6 +47,7 @@ export function Home() {
   const [compeltedOrdersCount, setcCompeltedOrdersCount] = useState(0);
   const [pickupOrdersCount, setPickupOrdersCount] = useState(0);
   const [deliveryOrdersCount, setDeliveryOrdersCount] = useState(0);
+  const [myorders, setMyorders] = useState([]);
 
   //Total Orders
   useEffect(() => {
@@ -198,7 +199,7 @@ export function Home() {
 
 
   return (
-    localStorage.getItem('role') === 'admin' && (
+    localStorage.getItem('role') === 'admin' ? (
       <div className="mt-12">
         <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-5">
           {statisticsCardsData.map(({ icon, title, footer, value, ...rest }) =>
@@ -338,25 +339,25 @@ export function Home() {
         <div className="mb-5 pt-5 mt grid grid-cols-1 gap-6 xl:grid-cols-1 mt-3" >
           <Card>
             <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 p-6"
-          >
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Orders Overview
-            </Typography>
-            <Typography
-              variant="small"
-              className="flex items-center gap-1 font-normal text-blue-gray-600"
+              floated={false}
+              shadow={false}
+              color="transparent"
+              className="m-0 p-6"
             >
-              <ArrowUpIcon
-                strokeWidth={3}
-                className="h-3.5 w-3.5 text-green-500"
-              />
-              <strong>24%</strong> this month
-            </Typography>
-          </CardHeader>
+              <Typography variant="h6" color="blue-gray" className="mb-2">
+                Orders Overview
+              </Typography>
+              <Typography
+                variant="small"
+                className="flex items-center gap-1 font-normal text-blue-gray-600"
+              >
+                <ArrowUpIcon
+                  strokeWidth={3}
+                  className="h-3.5 w-3.5 text-green-500"
+                />
+                <strong>24%</strong> this month
+              </Typography>
+            </CardHeader>
             {/* <CardHeader  >
               <img
                 className="mb-4 mt-2 p"
@@ -411,6 +412,68 @@ export function Home() {
           </Card>
         </div>
       </div>
+    ) : (
+      <div className="mt-12">
+        <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-1">
+          {statisticsChartsData.map((props) => (
+            props.title === "Customers" ? (
+              <StatisticsChart
+                key={props.title}
+                {...props}
+                title="Weekly Payment"
+                chart={{
+                  ...props.chart,
+                  series: [
+                    {
+                      ...props.chart.series[0],
+                      data: weekCustomers,
+                    },
+                  ],
+                }}
+              // footer={
+              //   <Typography
+              //     variant="small"
+              //     className="flex items-center font-normal text-blue-gray-600"
+              //   >
+              //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+              //     &nbsp;{props.footer}
+              //   </Typography>
+              // }
+              />
+            ) :
+              props.title === "Monthly Sales" ? (
+                <></>
+              ) :
+                (
+                  <StatisticsChart
+                    key={props.title}
+                    {...props}
+                    title="Monthly Payment"
+                    chart={{
+                      ...props.chart,
+                      series: [
+                        {
+                          ...props.chart.series[0],
+                          data: monthlyCompletedOrders,
+                        },
+                      ],
+                    }}
+                  // footer={
+                  //   <Typography
+                  //     variant="small"
+                  //     className="flex items-center font-normal text-blue-gray-600"
+                  //   >
+                  //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+                  //     &nbsp;{props.footer}
+                  //   </Typography>
+                  // }
+                  />
+                )
+
+          ))}
+        </div>
+      </div>
+
     )
 
   );

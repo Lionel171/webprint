@@ -30,7 +30,8 @@ const userTypeList = [
 ];
 const statusList = [
   { id: 0, name: "request" },
-  { id: 1, name: "permit" }
+  { id: 1, name: "permit" },
+  { id: 2, name: "cancel" }
 ]
 const userRoleList = [
   { id: 0, name: "Admin" },
@@ -58,12 +59,9 @@ export function UserEdit() {
     address: "",
     reseller_id: "",
   });
-  const [sendEmail, setSendEmail] = useState(false);
 
-  useEffect(() => {
-    setSendEmail(true);
-    console.log(sendEmail, "hahaha")
-  }, [user.user_status])
+  const [isChangedStatus, setIsChangedStatus] = useState(false)
+
 
   const [errors, setErrors] = useState({
     nameError: false,
@@ -121,37 +119,37 @@ export function UserEdit() {
     if (!flag) {
       return;
     }
-  
+
     let payload = {
       user: user,
     };
-  
+
     if (avatarFile)
       payload.file = avatarFile
     const response = await UserService.updateUser(payload);
-    if (response.success) {
-      if (user.user_status === 'permit') {
-        navigate("/dashboard/users");
-        const messageData = {
-          from: 'showstopperurbanwear@gmail.com',
-          to: 'showstopperurbanwear@gmail.com',
-          // to: user.email,
-          subject: 'Hello ' + user.name + '.',
-          text: 'You are approved!'
-        };
-        const email_response = await UserService.sendEmail(messageData);
-      
-  
-      } else {
-        const messageData = {
-          from: 'showstopperurbanwear@gmail.com',
-          to: 'showstopperurbanwear@gmail.com',
-          // to: user.email,
-          subject: 'Hello ' + user.name + '.',
-          text: 'Your are pending!'
-        };
-        const email_response = await UserService.sendEmail(messageData);
-        navigate("/dashboard/users");
+    if (response) {
+      if (isChangedStatus === true) {
+        if (user.user_status === 'permit') {
+          navigate("/dashboard/users");
+          const messageData = {
+            from: 'showstopperurbanwear@gmail.com',
+            to: 'showstopperurbanwear@gmail.com',
+            // to: user.email,
+            subject: 'Hello ' + user.name + '.',
+            text: 'Welcome! Your account are approved!'
+          };
+          const email_response = await UserService.sendEmail(messageData);
+        } else if (user.user_status === "cancel") {
+          const messageData = {
+            from: 'showstopperurbanwear@gmail.com',
+            to: 'showstopperurbanwear@gmail.com',
+            // to: user.email,
+            subject: 'Hello ' + user.name + '.',
+            text: 'Sorry! Your account are not approved.!'
+          };
+          const email_response = await UserService.sendEmail(messageData);
+          // navigate("/dashboard/users");
+        }
       }
     }
     navigate("/dashboard/users");
@@ -246,12 +244,12 @@ export function UserEdit() {
             <div className="sm:col-span-3">
               <Input
                 labelName={"Name"}
-                onChange={(e) =>
+                onChange={(e) => {
                   setUser({
                     ...user,
                     name: e.target.value,
                   })
-                }
+                }}
                 value={user.name}
                 error={errors.name}
                 maxLength={50}
@@ -341,6 +339,7 @@ export function UserEdit() {
                     ...user,
                     user_status: item.name,
                   });
+                  setIsChangedStatus(true)
                 }}
                 value={user.user_status}
                 items={statusList}

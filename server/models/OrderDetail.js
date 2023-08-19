@@ -22,6 +22,9 @@ const OrderSchema = new Schema(
     payment_type: {
       type: Number,
     },
+    size: {
+      type: String,
+    },
     quantity: {
       type: Number,
       default: 0,

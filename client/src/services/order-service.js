@@ -21,13 +21,16 @@ class OrderService {
 
   getOderListByApprove = async (payload) => {
     const getUserListEndpoint = 'api/orders/approve';
-    return await HttpService.getWithParams(getUserListEndpoint, payload)
+    return await HttpService.getWithParams(getUserListEndpoint, payload);
   }
   getOderListByComplete = async (payload) => {
     const getUserListEndpoint = 'api/orders/complete';
-    return await HttpService.getWithParams(getUserListEndpoint, payload)
+    return await HttpService.getWithParams(getUserListEndpoint, payload);
   }
-
+  getPaidByUser = async (user_id) => {
+    const getPaidByUserEndpoint = `api/orders/paid/${user_id}`;
+    return await HttpService.get(getPaidByUserEndpoint);
+  }
   saveOrder = async (payload) => {
     const getCurrentUserEndpoint = "api/orders/save-order";
     return await HttpService.post(getCurrentUserEndpoint, payload);
