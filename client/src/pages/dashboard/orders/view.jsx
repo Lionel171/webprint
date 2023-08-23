@@ -145,7 +145,7 @@ export function OrderEdit() {
     if (!flag) {
       return;
     }
-    if (localStorage.getItem('role') === "artworker" && order.status === "3") {
+    if (localStorage.getItem('role') === "Artwork Manager" && order.status === "3") {
       let newOrder = {
         title: order.title,
         files: imageFiles,
@@ -428,7 +428,7 @@ export function OrderEdit() {
                   <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
                     <div className="flex justify-end">
                       <div className="flex items-center mr-3">
-                        {(localStorage.getItem('role') === 'artworker' && order.status !== "3") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "normal" || (localStorage.getItem('role') === "projectstuff" && order.status === "4")) ? (
+                        {(localStorage.getItem('role') === 'Artwork Manager' && order.status !== "3") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "normal" || (localStorage.getItem('role') === "Project Manager" && order.status === "4")) ? (
                           <img
                             src={item.client_art_up ? API_URL + "/" + item.client_art_up : DefaultImage}
                             alt="Image"
@@ -438,7 +438,7 @@ export function OrderEdit() {
                             style={{ objectFit: "contain" }}
                           />
                         ) : null}
-                        {(localStorage.getItem('role') === 'artworker' && order.status === "3") ? (
+                        {(localStorage.getItem('role') === 'Artwork Manager' && order.status === "3") ? (
                           <>
                             <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
                             <img
@@ -454,7 +454,7 @@ export function OrderEdit() {
                         ) : null}
                       </div>
                     </div>
-                    {(localStorage.getItem('role') === 'artworker' && order.status === "2") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "projectstuff" && order.status === "4") ? (
+                    {(localStorage.getItem('role') === 'Artwork Manager' && order.status === "2") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "Project Manager" && order.status === "4") ? (
                       <button
                         type="submit"
                         onClick={() => downloadHandle(API_URL + "/" + item.client_art_up)}
@@ -506,7 +506,7 @@ export function OrderEdit() {
       ) : null}
 
 
-      {localStorage.getItem("role") === 'artworker' && (
+      {localStorage.getItem("role") === 'Artwork Manager' && (
         <div className="mt-6 flex items-center justify-end gap-x-6">
           {/* {order.status === '2' || order.status === '3' ? (
             <div className="mt-4 " style={{ width: "60%" }}>
@@ -573,7 +573,7 @@ export function OrderEdit() {
         </div>
       )
       }
-      {localStorage.getItem("role") === "projectstuff" && (
+      {localStorage.getItem("role") === "Project Manager" && (
         <div className="mt-6 flex items-center justify-end gap-x-6">
 
           {order.status === "4" && (

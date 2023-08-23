@@ -116,6 +116,106 @@ router.post("/register", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+//staff register
+
+router.post("/staff/register", async (req, res) => {
+  //const { name, email, password } = req.body;
+
+  const {
+    name,
+    email,
+    password,
+    company_name,
+    contact_person,
+    phone,
+    address,
+    role,
+    department,
+    reseller_id,
+  } = req.body;
+  const user_status = "permit";
+
+  console.log(contact_person, email, password);
+  try {
+    let user = await User.findOne({ email });
+
+    if (user) {
+      return res.status(400).json({ email: "User already exists" });
+    }
+    let state = "In-Active";
+    user = new User({
+      name,
+      email,
+      password,
+      company_name,
+      contact_person,
+      phone,
+      address,
+      role,
+      department,
+      user_status,
+      reseller_id,
+    });
+    
+    //if (email === 'superadmin@playestates.com') user.user_status = 'Active';
+
+    const salt = await bcrypt.genSalt(10);
+
+    user.password = await bcrypt.hash(password, salt);
+
+    await user.save();
+    const payload = {
+      user: {
+        _id: user._id,
+        name: user.name,
+        state: user.state,
+        email: user.email,
+        password: user.password,
+        company_name: user.company_name,
+        contact_person: user.contact_person,
+        phone: user.phone,
+        address: user.address,
+        reseller_id: user.reseller_id,
+        user_status: user.user_status,
+        user_type: user.user_type,
+        role: user.role,
+        
+      },
+    };
+    console.log(config.get("secretOrKey"));
+    jwt.sign(
+      payload,
+      config.get("secretOrKey"),
+      { expiresIn: 360000 },
+      (err, token) => {
+        if (err) throw err;
+        return res.json({
+          success: true,
+          access_token: "Bearer " + token,
+          refresh_token: "Bearer " + token,
+          user: {
+            _id: user._id,
+            name: user.name,
+            state: user.state,
+            email: user.email,
+            password: user.password,
+            company_name: user.company_name,
+            contact_person: user.contact_person,
+            phone: user.phone,
+            address: user.address,
+            reseller_id: user.reseller_id,
+            user_status: user.user_status,
+            user_type: user.user_type,
+            role: user.role,
+          },
+        });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
 
 // @route POST api/users/login
 // @desc Login user and return JWT token
@@ -186,8 +286,7 @@ router.post("/login", validateLoginInput(), async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server error");
   }
-});
-
+}); 
 // @route    GET api/users/current
 // @desc     Get user by token
 // @access   Private
@@ -209,13 +308,13 @@ router.get("/current", auth, async (req, res) => {
 // @access   Public
 router.get('/pending', auth, async (req, res) => {
   try {
-    const newUsers = await User.find({user_status: "request"});
-    
+    const newUsers = await User.find({ user_status: "request" });
+
     res.json({
       totalCount: newUsers.length,
       entities: newUsers,
     });
-    
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -274,7 +373,9 @@ router.put("/", async (req, res) => {
     phone,
     address,
     reseller_id,
+    department,
   } = req.body.user;
+  console.log(req.body.user)
   try {
     let user = await User.findById(_id);
     if (user) {
@@ -288,6 +389,7 @@ router.put("/", async (req, res) => {
       user.reseller_id = reseller_id;
       user.user_type = user_type;
       user.user_status = user_status;
+      user.department = department;
       if (req.files[0]) user.profile_image = req.files[0].filename;
       await user.save();
     }
@@ -356,7 +458,7 @@ router.get("/today", async (req, res) => {
       },
       role: 'normal'
     });
-    
+
     res.json({
       users: users,
     });
@@ -395,7 +497,7 @@ router.get("/last-week", async (req, res) => {
         $sort: { "_id.day": 1 }
       }
     ]);
-    
+
     res.json({
       users: users,
     });
@@ -405,11 +507,22 @@ router.get("/last-week", async (req, res) => {
   }
 });
 
+//delete user
 
-
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    await User.findOneAndDelete({ _id: req.params.id });
+    res.json({
+      state: true,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 //send email
-router.post("/sendEmail", auth, async (req, res) => {
+router.post("/sendEmail", async (req, res) => {
   const client = mailgun.client({ username: "api", key: 'fe60c869863bad18f2b35332b101f08a-c30053db-91dce0e4' });
   const messageData = {
     from: req.body.from,

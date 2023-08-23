@@ -45,6 +45,7 @@ app.use("/api/users", require("./routes/api/users"));
 app.use("/api/orders", auth, require("./routes/api/orders"));
 app.use("/api/order-details", require("./routes/api/orderDetails"));
 app.use("/api/customers", require("./routes/api/customers"));
+app.use("/api/department", require("./routes/api/department"));
 
 //stripe for credit card
 app.use("/api/stripe-route", require("./routes/api/stripe-route"));

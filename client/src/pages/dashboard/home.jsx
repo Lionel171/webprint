@@ -98,7 +98,7 @@ export function Home() {
     fetchData();
   }, []);
 
-  // Today's money
+  // Today's sales
   useEffect(() => {
     async function fetchData() {
       const response = await OrderService.getTodayMoney();
@@ -236,7 +236,7 @@ export function Home() {
                     })}
                   />
                 ) :
-                  title === "Today's Money" ? (
+                  title === "Today's Sales" ? (
                     <StatisticsCard
                       key={title}
                       {...rest}
@@ -351,11 +351,11 @@ export function Home() {
                 variant="small"
                 className="flex items-center gap-1 font-normal text-blue-gray-600"
               >
-                <ArrowUpIcon
+                {/* <ArrowUpIcon
                   strokeWidth={3}
                   className="h-3.5 w-3.5 text-green-500"
                 />
-                <strong>24%</strong> this month
+                <strong>24%</strong> this month */}
               </Typography>
             </CardHeader>
             {/* <CardHeader  >

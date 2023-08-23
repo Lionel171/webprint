@@ -15,6 +15,7 @@ import {
 import { AuthContext } from "@/context";
 import { useContext, useState } from "react";
 import AuthService from "@/services/auth-service";
+import UserService from "@/services/user-service";
 
 function Icon() {
   return (
@@ -91,7 +92,7 @@ export function SignUp() {
     const mailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
     if (inputs.name.trim().length === 0) {
-      setErrors({ ...errors, nameError: true, errorText: " Please provide a company name."});
+      setErrors({ ...errors, nameError: true, errorText: " Please provide a company name." });
       return;
     }
 
@@ -112,7 +113,7 @@ export function SignUp() {
 
 
     if (inputs.address.trim().length === 0) {
-      setErrors({ ...errors, addressError: true, errorText: "Please provide a address."});
+      setErrors({ ...errors, addressError: true, errorText: "Please provide a address." });
       return;
     }
 
@@ -162,12 +163,21 @@ export function SignUp() {
       },
     };
     try {
-      console.log("response")
       const response = await AuthService.register(myData);
-
-
+      console.log("response", response)
       // authContext.login(response.access_token, response.user.role);
-      setIsMessage(true);
+      // if (response.success) {
+        setIsMessage(true);
+        const messageData = {
+          from: 'showstopperurbanwear@gmail.com',
+          to: 'showstopperurbanwear@gmail.com',
+          // to: user.email,
+          subject: 'Hello.',
+          text: `${response.user.contact_person} requested new account.`
+        };
+        const email_response = await UserService.sendEmail(messageData);
+        console.log(email_response, "email_Res")
+      // }
 
       setInputs({
         name: "",

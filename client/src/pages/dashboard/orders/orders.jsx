@@ -82,7 +82,7 @@ export function Orders() {
     };
 
 
-    if (user.role === "admin") {
+    if (user.role.includes("admin")) {
       setLoadingData(true);
       const response = await OrderService.getOrderList(query);
       setOrders(response.docs);
@@ -92,7 +92,7 @@ export function Orders() {
       setLoadingData(false);
 
 
-    } else if (user.role === "normal") {
+    } else if (user.role.includes("normal")) {
       setLoadingData(true);
       const response = await OrderService.getOrderListByUserId(query, user._id);
       setOrders(response.orders);
@@ -101,7 +101,7 @@ export function Orders() {
       setCurrentPage(response.currentPage);
       setLoadingData(false);
 
-    } else if (user.role === "artworker") {
+    } else if (user.role.includes("Artwork Manager")) {
       setLoadingData(true);
       const response = await OrderService.getOderListByApprove(query);
       setOrders(response.docs);
@@ -110,7 +110,7 @@ export function Orders() {
       setCurrentPage(response.page);
       setLoadingData(false);
 
-    } else if (user.role === "projectstuff") {
+    } else if (user.role.includes("Project Manager")) {
 
       setLoadingData(true);
       const response = await OrderService.getOderListByComplete(query);

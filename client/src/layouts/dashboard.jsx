@@ -9,7 +9,7 @@ import {
 } from "@/widgets/layout";
 import routes from "@/routes";
 import { useMaterialTailwindController, setOpenConfigurator } from "@/context";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "@/context";
 
 export function Dashboard() {
@@ -20,8 +20,21 @@ export function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [showSidenav, setShowSidenav] = useState(true)
 
+  const boxRef = useRef()
+
+  // useEffect(() => {
+  //   window.onclick = (event) => {
+  //     if (event.target.contains(boxRef.current)
+  //       && event.target !== boxRef.current) {
+  //       setShowSidenav(false);
+  //       console.log(`You clicked Outside the box at ${new Date().toLocaleString()}`);
+  //     }
+  //   }
+  // }, []);
+
   useEffect(() => {
     let tempRoutes = [];
+
 
     routes.map((item) => {
       if (item.role === localStorage.getItem("role")) tempRoutes.push(item);
@@ -44,12 +57,18 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-blue-gray-50/50">
-      <Sidenav
-        isMobile={isMobile}
-        routes={sideNavRoutes}
-        brandImg={sidenavType === "dark" ? "/img/logo.png" : "/img/logo.png"}
-        // onClose={() => isMobile && setOpenSidenav(dispatch, false)}
-      />
+      {/* {showSidenav && ( */}
+        <div ref={boxRef}>
+          <Sidenav
+            isMobile={isMobile}
+            routes={sideNavRoutes}
+            brandImg={sidenavType === "dark" ? "/img/logo.png" : "/img/logo.png"}
+          // onClose={() => isMobile && setOpenSidenav(dispatch, false)}
+          />
+        </div>
+      {/* )} */}
+
+
       <div className="p-4 xl:ml-80">
         <DashboardNavbar />
         <Configurator />

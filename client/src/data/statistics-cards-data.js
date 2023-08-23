@@ -11,13 +11,13 @@ export const statisticsCardsData = [
   {
     color: "blue",
     icon: BanknotesIcon,
-    title: "Today's Money",
+    title: "Today's Sales",
     value: "$53k",
   },
   {
     color: "yellow",
     icon: CurrencyDollarIcon,
-    title: "Total Money",
+    title: "Total Sales",
     value: "$53k",
   },
   {

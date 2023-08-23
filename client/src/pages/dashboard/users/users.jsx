@@ -1,6 +1,7 @@
 
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
+import ConfirmModal from "@/components/common/comfirmModal";
 import Content from './components/content';
 import { useEffect, useState } from "react";
 import UserService from "@/services/user-service"
@@ -9,14 +10,35 @@ export function Users() {
   const [filterValue, setFilterValue] = useState('');
   const [filterItem, setFilterItem] = useState([]);
   const [users, setUsers] = useState([]);
-  const [isDelete, setIsDelete] = useState(false)
+  const [isDelete, setIsDelete] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [isConfirm, setIsConfirm] = useState(false);
+
+
+
   const editItem = id => {
   };
 
   const deleteComfirm = props => {
+    setSelectedUserId(props.id);
+    setConfirmMessage("Are you going to precess this action");
+    setIsConfirm(true);
   };
+
   const setFilter = value => {
   };
+  const controlAction = async () => {
+    const response = await UserService.deleteUser(selectedUserId);
+    console.log(response.state, "deleted")
+    if (response.state) {
+      setIsDelete(true);
+    }
+    setIsConfirm(false);
+  }
+  const handleClose = () => {
+    setIsConfirm(false);
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -24,7 +46,7 @@ export function Users() {
       setUsers(response.entities);
     }
     fetchData();
-  }, [])
+  }, [isDelete])
 
   return (
     <div className=" flex flex-col gap-5">
@@ -47,6 +69,12 @@ export function Users() {
           />
         </div>
       </div>
+      <ConfirmModal
+        open={isConfirm}
+        deleteItem={controlAction}
+        handleClose={handleClose}
+        message={confirmMessage}
+      />
     </div>
   );
 }

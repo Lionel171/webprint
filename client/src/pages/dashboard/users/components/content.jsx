@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { MagnifyingGlassIcon, PencilSquareIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PencilSquareIcon, ChevronLeftIcon, ChevronRightIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import ReactTimeAgo from 'react-time-ago';
 import DropDown from '@/components/dashboard/users/Dropdown';
 import { SelectMenu, SelectNoSearch } from '@/components/common/Select';
 
 import { useMaterialTailwindController, setOpenSidenav } from "@/context";
-import { useNavigate, Router } from 'react-router-dom';
+import { useNavigate, Router, Link, NavLink } from 'react-router-dom';
 import UserPermitModal from './userPermitModal';
 const statusList = [
   { id: 0, name: "request" },
@@ -116,17 +116,18 @@ export default function Content({
               </div>
             </div>
           </div>
-          {isAdmin ? (
-            <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-              <button
-                type="button"
-                className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                onClick={() => editItem("")}
-              >
-                {"Add"}
-              </button>
-            </div>
-          ) : null}
+          {/* {isAdmin ? ( */}
+          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+            <NavLink
+              className="block flex items-center rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              to={"/dashboard/users/edit/new"}
+              state={null}
+            >
+              <PlusCircleIcon width={20} className="mr-1 text-white" />
+              {"New Staff"}
+            </NavLink>
+          </div>
+          {/* ) : null} */}
         </div>
         <div className="mt-4  rounded-md sm:-mx-0">
           <table className="min-w-full divide-y divide-gray-300 rounded-md border-t  sm:border">
@@ -136,8 +137,15 @@ export default function Content({
                   scope="col"
                   className="py-3.5 pl-4 text-left text-sm font-semibold  sm:pl-4"
                 >
+                  Company Name
+                </th>
+                <th
+                  scope="col"
+                  className="py-3.5 pl-4 text-left text-sm font-semibold  sm:pl-4"
+                >
                   Name
                 </th>
+
                 <th
                   scope="col"
                   className="px-2 py-3.5 text-left text-sm font-semibold "
@@ -146,15 +154,21 @@ export default function Content({
                 </th>
                 <th
                   scope="col"
+                  className="py-3.5 pl-4 text-left text-sm font-semibold  sm:pl-4"
+                >
+                  Role
+                </th>
+                {/* <th
+                  scope="col"
                   className="px-2 py-3.5 text-left text-sm font-semibold "
                 >
                   Status
-                </th>
+                </th> */}
                 <th
                   scope="col"
                   className="hidden px-2 py-3.5 text-left text-sm  font-semibold sm:block"
                 >
-                  Last Login
+                  Created Date
                 </th>
                 <th
                   scope="col"
@@ -163,20 +177,28 @@ export default function Content({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
-              {uusers.map((user, index) => (
+              {uusers.filter(user => (user.role[0] !== 'admin' && user.role[0] !== "normal")).map((user, index) => (
                 <tr key={index}>
-                  <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
-                    <dl className="font-medium">
-                      <dt className="sr-only">Name</dt>
-                      <dd className="mt-1 truncate text-[15px] text-gray-700">
-                        {user.name}
-                      </dd>
-                    </dl>
+                  <Link to={`/dashboard/users/edit/${user._id}`}>
+                    <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
+                      <dl className="font-medium">
+                        <dt className="sr-only">Name</dt>
+                        <dd className="mt-1 truncate text-[15px] text-gray-700">
+                          {user.name}
+                        </dd>
+                      </dl>
+                    </td>
+                  </Link>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    {user.contact_person}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.email}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    {user.role.join(', ')}
+                  </td>
+                  {/* <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.user_status === "permit" ? (
                       <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                         {user.user_status}
@@ -188,21 +210,21 @@ export default function Content({
                     )}
 
                     {/* <SelectNoSearch
-              labelName={''}
-              onChange={(item) => {
-                openPermitModal(user, item);
-              }
-              }
-              value={user.user_status}
-              // defaultValue={priority}
-              items={statusList}
-              isStatus={true}
-            /> */}
-                  </td>
+                      labelName={''}
+                      onChange={(item) => {
+                        openPermitModal(user, item);
+                      }
+                      }
+                      value={user.user_status}
+                      // defaultValue={priority}
+                      items={statusList}
+                      isStatus={true}
+                    /> */}
+                  {/* </td> */}
                   <td className="hidden whitespace-nowrap py-4 px-3 text-sm font-medium sm:block">
-                    {user.last_login && (
+                    {user.created_at && (
                       <ReactTimeAgo
-                        date={Date.parse(user.last_login)}
+                        date={Date.parse(user.created_at)}
                         locale="en-US"
                         className="mr-2 font-bold"
                       />

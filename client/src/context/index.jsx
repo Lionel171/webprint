@@ -106,10 +106,11 @@ export const AuthContextProvider = ({ children }) => {
   const location = useLocation();
   const token = localStorage.getItem("token");
 
-  const login = (token, role) => {
+  const login = (token, role, username, email) => {
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
-    // localStorage.setItem('user', user)
+    localStorage.setItem('username', username);
+    localStorage.setItem('email', email);
     setIsAuthenticated(true);
     setupAxiosInterceptors();
     navigate("/dashboard/home");
@@ -144,7 +145,7 @@ export const AuthContextProvider = ({ children }) => {
     setRole(localStorage.getItem("role"))
     setIsAuthenticated(isAuthenticated);
     if (location.pathname === "/auth/sign-in" || location.pathname === "/auth/sign-up") {
-      navigate("/dashboard");
+      navigate("/dashboard/home");
     } else {
       navigate(location.pathname);
     }

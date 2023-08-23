@@ -22,7 +22,6 @@ export function Sidenav({ brandImg, brandName, routes, isMobile }) {
     transparent: "bg-transparent",
   };
 
-
   return (
     <aside
       className={`${sidenavTypes[sidenavType]} ${openSidenav ? "translate-x-0" : "-translate-x-80"

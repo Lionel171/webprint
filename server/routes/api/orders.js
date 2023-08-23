@@ -507,6 +507,7 @@ router.get("weekly/paid/:id", async (req, res) => {
           "_id": 1
         }
       }
+      
     ]);
 
     res.json({

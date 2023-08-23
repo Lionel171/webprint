@@ -14,6 +14,12 @@ class AuthService {
     return await HttpService.post(registerEndpoint, credentials);
   };
 
+  registerStaff = async (credentials) => {
+    const registerStaffEndpoint = 'api/users/staff/register';
+
+    return await HttpService.post(registerStaffEndpoint, credentials);
+  };
+
   logout = async () => {
     const logoutEndpoint = 'logout';
     return await HttpService.post(logoutEndpoint);

@@ -33,8 +33,8 @@ const serviceTypeList = [
 ];
 const paymentTypeList = [
     { id: 0, name: "", value: "" },
-    { id: 1, name: "Credit Card", value: "card"},
-    { id: 2, name: "PayPal", value: "paypal"}
+    { id: 1, name: "Credit Card", value: "card" },
+    { id: 2, name: "PayPal", value: "paypal" }
 ]
 
 export function OrderEdit() {
@@ -55,6 +55,8 @@ export function OrderEdit() {
     const [customerList, setCustomerList] = useState([]);
     const [customerFlag, setCustomerFlag] = useState(false);
     const [isView, setIsView] = useState(false);
+    const [user, setUser] = useState([]);
+
     const addOrder = (title, id) => {
         let order = {
             quantity: 0,
@@ -116,7 +118,7 @@ export function OrderEdit() {
             }
             return obj;
         });
-        
+
         setOrders(temp);
     };
 
@@ -131,7 +133,7 @@ export function OrderEdit() {
             }
             return obj;
         });
-        
+
         setOrders(temp);
     };
 
@@ -161,7 +163,7 @@ export function OrderEdit() {
         });
         setOrders(temp);
     };
-    
+
     const onChangePaymentType = (item, index) => {
         const temp = orders.map((obj, subindex) => {
             if (subindex === index) {
@@ -175,7 +177,7 @@ export function OrderEdit() {
         });
         setOrders(temp);
     };
-    
+
 
     const onDeleteButton = (index) => {
         let temp = orders;
@@ -258,6 +260,15 @@ export function OrderEdit() {
         const response = await OrderService.saveOrder(newOrder);
         if (response.success) {
             navigate("/dashboard/orders");
+            const messageData = {
+                from: 'showstopperurbanwear@gmail.com',
+                // from: localStorage.getItem('email'),
+                to: 'showstopperurbanwear@gmail.com',
+                subject: 'Hello.',
+                text: `${localStorage.getItem("username")} requested new order.`
+            };
+            const email_response = await userService.sendEmail(messageData);
+            console.log(email_response, "email_Res")
         }
     }
 
@@ -268,17 +279,20 @@ export function OrderEdit() {
         async function fetchData() {
             const response = await OrderService.getOrderDetailList(order._id);
             setOrders(response.entities);
+            console.log(orders)
         }
+
         async function fetchCustomerList() {
             const response = await userService.getCustomerList();
             setCustomerList(response.entities);
         }
         if (order && order._id) {
             fetchData();
-            setIsView(true)
+            setIsView(true);
         }
         if (authContext.role === Constant.Admin)
             fetchCustomerList();
+
     }, [])
 
     return (
@@ -378,7 +392,23 @@ export function OrderEdit() {
                                                 disabled={isView}
                                             />
                                         </div>
-                                        
+
+
+
+                                        <div className="mt-2">
+                                            <Input
+                                                type='text'
+                                                labelName={'Size'}
+                                                onChange={(e) =>
+                                                    onChangeSize(e.target.value, index)
+                                                }
+                                                value={order.size}
+                                                error={order.sizeFlag}
+                                                placeholder={"100*100"}
+                                                disabled={isView}
+                                            />
+                                        </div>
+
                                         <div className="mt-2">
                                             <Input
                                                 type='number'
@@ -394,20 +424,6 @@ export function OrderEdit() {
                                             />
                                         </div>
 
-                                        <div className="mt-2">
-                                            <Input
-                                                type='text'
-                                                labelName={'Size'}
-                                                onChange={(e) =>
-                                                    onChangeSize(e.target.value, index)
-                                                }
-                                                value={order.size}
-                                                error={order.sizeFlag}
-                                                placeholder={"100*100"}
-                                                disabled={isView}
-                                            />
-                                        </div>
-                                        
                                         <div className="mt-2">
                                             <label className='block text-sm font-medium text-gray-700'>
                                                 Comment

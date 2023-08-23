@@ -142,14 +142,16 @@ export default function Content({
             {orders &&
               orders.map((order, index) => (
                 <tr key={index}>
-                  <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
-                    <dl className="font-medium">
-                      <dt className="sr-only">Order</dt>
-                      <dd className="mt-1 truncate text-[15px] text-gray-700">
-                        {order.title}
-                      </dd>
-                    </dl>
-                  </td>
+                  <NavLink to={"/dashboard/orders/view"} state={order}>
+                    <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
+                      <dl className="font-medium">
+                        <dt className="sr-only">Order</dt>
+                        <dd className="mt-1 truncate text-[15px] text-gray-700">
+                          {order.title}
+                        </dd>
+                      </dl>
+                    </td>
+                  </NavLink>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {parseInt(order.status) === 1 ? (
                       <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
@@ -248,11 +250,11 @@ export default function Content({
                           })
                         }
 
-                        // onEdit={() => {
-                        //   navigate(`/dashboard/order/edit/${order._id}`);
-                        //   // navigate("/dashboard/orders/edit");
+                      // onEdit={() => {
+                      //   navigate(`/dashboard/order/edit/${order._id}`);
+                      //   // navigate("/dashboard/orders/edit");
 
-                        // }}
+                      // }}
                       />
                       <NavLink to={"/dashboard/orders/view"} state={order}>
                         <EyeIcon

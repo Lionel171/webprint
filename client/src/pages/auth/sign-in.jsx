@@ -98,7 +98,7 @@ export function SignIn() {
     try {
       const response = await AuthService.login(newUser);
       if (response.user.user_status === "permit") {
-        authContext.login(response.accessToken, response.user.role);
+        authContext.login(response.accessToken, response.user.role, response.user.contact_person, response.user.email);
       } else {
         setIsMessage(true);
       }

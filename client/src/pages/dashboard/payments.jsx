@@ -16,19 +16,19 @@ const ProductDisplay = () => (
         <div className="flex flex-col items-center">
 
           <Typography color="blueGray" size="2xl" >
-            <stron>$1500.00</stron>
+            <strong>$1500.00</strong>
           </Typography>
         </div>
       </CardBody>
       <div className="flex justify-center">
         <Button className="mb-3"
           color="lightBlue"
-          buttonType="filled"
+          // buttonType="filled"
           size="lg"
-          rounded={false}
-          block={false}
-          iconOnly={false}
-          ripple="light"
+          // rounded={false}
+          // block={false}
+          // icononly={false}
+          // ripple="light"
           onClick={handleCheckout}
         >
           Checkout

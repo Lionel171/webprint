@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   name: {
     type: String,
-    required: true
+    
   },
   company_name: {
     type: String,
@@ -30,6 +30,10 @@ const UserSchema = new Schema({
   address: {
     type: String,
   },
+  department: {
+    type: String,
+    default:""
+  },
   shipping_address: {
     type: String,
   },
@@ -48,10 +52,11 @@ const UserSchema = new Schema({
     type: String,
     default: 'normal'
   },
-  role: {
-    type: String,
-    default: 'normal'
-  },
+  role:  { type : Array , "default" : ["normal"] },
+  //   role: {
+  //   type: String,
+  //   default: 'normal'
+  // },
   last_login: {
     type: Date,
   },

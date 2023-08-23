@@ -164,9 +164,11 @@ export function DashboardNavbar() {
               </IconButton>
             </MenuHandler>
             <MenuList className="w-max border-0">
-              <Link to='/dashboard/users'>
+              log out
+              
                 {users.map((user) => (
                   <div key={user._id}>
+                    <Link to={`/dashboard/customers/edit/${user._id}`}>
 
                     <MenuItem className="flex items-center gap-4">
                       <Avatar
@@ -192,9 +194,10 @@ export function DashboardNavbar() {
                         </Typography>
                       </div>
                     </MenuItem>
+                    </Link>
                   </div>
                 ))}
-              </Link>
+            
             </MenuList>
           </Menu>
         </div>

@@ -5,6 +5,8 @@ import {
   BellIcon,
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
+  UserGroupIcon,
+  HomeModernIcon
 } from "@heroicons/react/24/solid";
 import {
   Home,
@@ -13,13 +15,16 @@ import {
   Orders,
   Customers,
   Users,
-  Settings,
+  Department,
   Payments,
   Notifications
 } from "@/pages/dashboard";
 import {
   UserEdit
 } from "@/pages/dashboard/users/edit";
+import {
+  CustomerEdit
+} from "@/pages/dashboard/customers/edit";
 import { SignIn, SignUp } from "@/pages/auth";
 import OrderEdit from "./pages/dashboard/orders/edit";
 import OrderView from "./pages/dashboard/orders/view";
@@ -51,12 +56,12 @@ export const routes = [
         path: "/orders",
         element: <Orders />,
       },
-      {
-        icon: <TableCellsIcon {...icon} />,
-        name: "payments",
-        path: "/payments",
-        element: <Payments />,
-      },
+      // {
+      //   icon: <TableCellsIcon {...icon} />,
+      //   name: "payments",
+      //   path: "/payments",
+      //   element: <Payments />,
+      // },
       // {
       //   icon: <TableCellsIcon {...icon} />,
       //   name: "productions",
@@ -64,23 +69,23 @@ export const routes = [
       //   element: <Productions />,
       // },
       {
-        icon: <TableCellsIcon {...icon} />,
-        name: "users",
+        icon: <HomeModernIcon {...icon} />,
+        name: "staff",
         path: "/users",
         element: <Users />,
       },
-      // {
-      //   icon: <TableCellsIcon {...icon} />,
-      //   name: "customers",
-      //   path: "/customers",
-      //   element: <Customers />,
-      // },
-      // {
-      //   icon: <TableCellsIcon {...icon} />,
-      //   name: "settings",
-      //   path: "/settings",
-      //   element: <Settings />,
-      // },
+      {
+        icon: <UserGroupIcon {...icon} />,
+        name: "customers",
+        path: "/customers",
+        element: <Customers />,
+      },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "Department",
+        path: "/department",
+        element: <Department />,
+      },
       // {
       //   icon: <BellIcon {...icon} />,
       //   name: "notifactions",
@@ -90,7 +95,7 @@ export const routes = [
     ],
   },
   {
-    title: "other pages",
+    title: "",
     layout: "other",
     role: "admin",
     pages: [
@@ -98,6 +103,11 @@ export const routes = [
         // name: "user edit",
         path: "/users/edit/:id",
         element: <UserEdit />,
+      },
+      {
+        // name: "user edit",
+        path: "/customers/edit/:id",
+        element: <CustomerEdit />,
       },
       {
         // name: "sign up",
@@ -137,14 +147,14 @@ export const routes = [
         icon: <TableCellsIcon {...icon} />,
         name: "payments",
         path: "/payments",
-        element: <Customers />,
+        element: <Payments />,
       },
     ],
   },
   {
     title: "Artworker pages",
     layout: "dashboard",
-    role: "artworker",
+    role: "Artwork Manager",
     pages: [
       {
         icon: <UserCircleIcon {...icon} />,
@@ -169,7 +179,7 @@ export const routes = [
   {
     title: "Project Stuff pages",
     layout: "dashboard",
-    role: "projectstuff",
+    role: "Project Manager",
     pages: [
       {
         icon: <UserCircleIcon {...icon} />,

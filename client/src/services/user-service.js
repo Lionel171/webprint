@@ -38,6 +38,10 @@ class UserService {
         const getCustomerListEndpoint = `api/users`;
         return await HttpService.put(getCustomerListEndpoint, payload);
     }
+    deleteUser = async (user_id) => {
+        const deleteUserEndpoint = `api/users/${user_id}`;
+        return await HttpService.delete(deleteUserEndpoint);
+    }
     //Home
     //Today's Customers
     getTodayCustomers = async () => {

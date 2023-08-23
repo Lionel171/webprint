@@ -13,21 +13,37 @@
   ```
 */
 import Input from '@/components/common/Input';
-import { PhotoIcon, UserCircleIcon } from '@heroicons/react/24/solid'
+import { MinusCircleIcon, PhotoIcon, UserCircleIcon } from '@heroicons/react/24/solid'
 import { useEffect, useState, useRef } from 'react';
 import DefaultImage from '../../../../public/img/default.png';
 import UserService from "@/services/user-service"
 import { SelectNoSearch } from '@/components/common/Select';
 import { useParams } from 'react-router-dom';
 import { useNavigate, Router } from 'react-router-dom';
+import authService from '@/services/auth-service';
+import { PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import DepartmentService from "@/services/department-service";
+
+
 const userTypeList = [
-  { id: 0, name: "normal" },
-  { id: 1, name: "admin" },
-  { id: 2, name: "artworker" },
-  { id: 3, name: "projectstuff" },
-
-
+  { id: 0, name: "" },
+  { id: 1, name: "Sales Manager" },
+  { id: 2, name: "Artwork Manager" },
+  { id: 3, name: "Artwork Staff" },
+  { id: 4, name: "Production Manager" },
+  { id: 5, name: "Production Staff" },
+  { id: 6, name: "Customer Relation" },
 ];
+// const departmentTypeList = [
+//   { id: 0, name: "", value: "" },
+//   { id: 1, name: "Screen Print", value: "screen_print" },
+//   { id: 2, name: "We Print DTF", value: "we_print_dtf" },
+//   { id: 3, name: "Gang Sheet", value: "gang_sheet" },
+//   { id: 4, name: "Signs & Banners", value: "signs_banners" },
+//   { id: 5, name: "Embroidery", value: "embroidery" },
+//   { id: 6, name: "Vinyl Transfer", value: "vinly_transfer" },
+//   { id: 7, name: "Sublimation", value: "sublimation" }
+// ];
 const statusList = [
   { id: 0, name: "request" },
   { id: 1, name: "permit" },
@@ -48,17 +64,19 @@ export function UserEdit() {
   const [avatarPhoto, setAvatarPhoto] = useState('');
   const API_URL = process.env.API_URL;
   const [user, setUser] = useState({
-    name: "",
     email: "",
     profile_image: "",
     contact_person: "",
     company_name: "",
-    role: "",
+    role: [""],
     user_status: "",
     phone: "",
     address: "",
     reseller_id: "",
+    name: ""
   });
+  const [departmentTypeList, setDepartmentTypeList] = useState([]);
+
 
   const [isChangedStatus, setIsChangedStatus] = useState(false)
 
@@ -72,8 +90,27 @@ export function UserEdit() {
     resellerIdError: false,
     agreeError: false,
     error: false,
+    passwordError: false,
   });
 
+  useEffect(() => {
+    async function fetchData() {
+      const response = await DepartmentService.getDepartments();
+      setDepartmentTypeList(response.department);
+      console.log(departmentTypeList)
+      
+    }
+    fetchData();
+  }, [])
+  const addRole = () => {
+    setUser(prevUser => ({ ...prevUser, role: [...prevUser.role, ""] }));
+  }
+  const onDeleteButton = (index) => {
+    setUser(prevUser => {
+      const temp = prevUser.role.filter((button, subIndex) => index !== subIndex);
+      return { ...prevUser, role: temp };
+    });
+  };
   const onChangeAvatarPhoto = event => {
     if (event.target.files && event.target.files[0]) {
       setAvatarFile(event.target.files[0]);
@@ -109,6 +146,13 @@ export function UserEdit() {
         emailError: true
       })
     }
+    if (user.password === '') {
+      flag = false;
+      setErrors({
+        ...errors,
+        passwordError: true
+      })
+    }
     if (user.phone === "") {
       flag = false;
       setErrors({
@@ -126,29 +170,36 @@ export function UserEdit() {
 
     if (avatarFile)
       payload.file = avatarFile
-    const response = await UserService.updateUser(payload);
-    if (response) {
-      if (isChangedStatus === true) {
-        if (user.user_status === 'permit') {
-          navigate("/dashboard/users");
-          const messageData = {
-            from: 'showstopperurbanwear@gmail.com',
-            to: 'showstopperurbanwear@gmail.com',
-            // to: user.email,
-            subject: 'Hello ' + user.name + '.',
-            text: 'Welcome! Your account are approved!'
-          };
-          const email_response = await UserService.sendEmail(messageData);
-        } else if (user.user_status === "cancel") {
-          const messageData = {
-            from: 'showstopperurbanwear@gmail.com',
-            to: 'showstopperurbanwear@gmail.com',
-            // to: user.email,
-            subject: 'Hello ' + user.name + '.',
-            text: 'Sorry! Your account are not approved.!'
-          };
-          const email_response = await UserService.sendEmail(messageData);
-          // navigate("/dashboard/users");
+    if (id !== "new") {
+      const response = await UserService.updateUser(payload);
+      
+    } else if (id === "new") {
+      // const data = payload
+      const response = await authService.registerStaff(payload.user);
+      if (response) {
+        if (isChangedStatus === true) {
+          if (user.user_status === 'permit') {
+            navigate("/dashboard/users");
+            const messageData = {
+              from: 'showstopperurbanwear@gmail.com',
+              to: 'showstopperurbanwear@gmail.com',
+              // to: user.email,
+              subject: 'Hello ' + user.name + '.',
+              text: 'Welcome! Your account are approved!'
+            };
+            const email_response = await UserService.sendEmail(messageData);
+          } else if (user.user_status === "cancel") {
+            navigate("/dashboard/users");
+            const messageData = {
+              from: 'showstopperurbanwear@gmail.com',
+              to: 'showstopperurbanwear@gmail.com',
+              // to: user.email,
+              subject: 'Hello ' + user.name + '.',
+              text: 'Sorry! Your account are not approved.!'
+            };
+            const email_response = await UserService.sendEmail(messageData);
+            // navigate("/dashboard/users");
+          }
         }
       }
     }
@@ -162,7 +213,9 @@ export function UserEdit() {
       //if (response.user.profile_image)
       //setAvatarPhoto(response.user.profile_image)
     }
-    if (id)
+
+
+    if (id && id !== "new")
       fetchData();
   }, [])
 
@@ -194,41 +247,45 @@ export function UserEdit() {
               </div>
               <p className="mt-3 text-sm leading-6 text-gray-600">Write a few sentences about yourself.</p>
             </div> */}
+            {id !== "new" && (
+              <div className="col-span-full">
+                <div className="flex items-center gap-x-6">
 
-            <div className="col-span-full">
-              <div className="flex items-center gap-x-6">
-                <input
-                  type="file"
-                  onChange={onChangeAvatarPhoto}
-                  hidden
-                  ref={avatarFileRef}
-                />
-                <img
-                  src={
-                    avatarPhoto
-                      ? avatarPhoto
-                      : user.profile_image
-                        ? API_URL + "/" + user.profile_image
-                        : DefaultImage
-                  }
-                  alt="avatarImage"
-                  onClick={avatarImageClick}
-                  width={150}
-                  height={150}
-                  className="rounded-full"
-                  style={{ objectFit: "contain" }}
-                />
+                  <input
+                    type="file"
+                    onChange={onChangeAvatarPhoto}
+                    hidden
+                    ref={avatarFileRef}
+                  />
+                  <img
+                    src={
+                      avatarPhoto
+                        ? avatarPhoto
+                        : user.profile_image
+                          ? API_URL + "/" + user.profile_image
+                          : DefaultImage
+                    }
+                    alt="avatarImage"
+                    onClick={avatarImageClick}
+                    width={150}
+                    height={150}
+                    className="rounded-full"
+                    style={{ objectFit: "contain" }}
+                  />
 
-                <h1>
-                  <div className="mt-1 text-base font-semibold leading-6 text-gray-900">
-                    {user.contact_person}
-                  </div>
-                  <div className="text-sm leading-6 text-gray-500">
-                    {user.email}<span className="text-gray-700"></span>
-                  </div>
-                </h1>
+                  <h1>
+                    <div className="mt-1 text-base font-semibold leading-6 text-gray-900">
+                      {user.contact_person}
+                    </div>
+                    <div className="text-sm leading-6 text-gray-500">
+                      {user.email}<span className="text-gray-700"></span>
+                    </div>
+                  </h1>
+                </div>
               </div>
-            </div>
+            )}
+
+
           </div>
         </div>
 
@@ -247,11 +304,11 @@ export function UserEdit() {
                 onChange={(e) => {
                   setUser({
                     ...user,
-                    name: e.target.value,
+                    contact_person: e.target.value,
                   })
                 }}
-                value={user.name}
-                error={errors.name}
+                value={user.contact_person}
+                error={errors.contact_person}
                 maxLength={50}
               />
             </div>
@@ -262,11 +319,11 @@ export function UserEdit() {
                 onChange={(e) =>
                   setUser({
                     ...user,
-                    company_name: e.target.value,
+                    name: e.target.value,
                   })
                 }
-                value={user.company_name}
-                error={errors.company_name}
+                value={user.name}
+                error={errors.name}
                 maxLength={50}
               />
             </div>
@@ -301,7 +358,7 @@ export function UserEdit() {
               />
             </div>
 
-            <div className="col-span-full">
+            <div className="sm:col-span-3">
               <Input
                 labelName={"Street address"}
                 onChange={(e) =>
@@ -315,23 +372,83 @@ export function UserEdit() {
                 maxLength={50}
               />
             </div>
-
             <div className="sm:col-span-3">
               <SelectNoSearch
-                labelName={"User Type"}
+                labelName={"Department"}
                 onChange={(item) => {
                   setUser({
                     ...user,
-                    role: item.name,
+                    department: item.name,
                   });
                 }}
-                value={user.role}
-                items={userTypeList}
+                value={user.department}
+                items={departmentTypeList}
                 isStatus={true}
               />
             </div>
+            {user.role.map((role, index) => {
+              return (
+                <>
+                  <div key={index} className="sm:col-span-3">
+                    <SelectNoSearch
+                      labelName={`Role ${index + 1}`}
+                      onChange={(item) => {
+                        const updatedRoles = [...user.role];
+                        updatedRoles[index] = item.name;
+                        setUser({ ...user, role: updatedRoles });
+                      }}
+                      value={user.role[index]}
+                      items={userTypeList}
+                      isStatus={true}
+                    />
+                  </div>
+                  {index > 0 ? (
+                    <div className="items-end h-full w-[50px] mt-2 pt-4">
+                      <MinusCircleIcon
+                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                        onClick={() => onDeleteButton(index)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="items-end h-full w-[50px] mt-2 pt-4">
+                      <PlusCircleIcon
+                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                        onClick={addRole}
+                      />
+                    </div>
+                  )}
+                  <br />
 
-            <div className="sm:col-span-3">
+                </>
+              )
+            })}
+
+            {id === "new" && (
+              <>
+
+                <div className="sm:col-span-3">
+                  <Input
+                    labelName={"Password"}
+                    type="password"
+                    onChange={(e) =>
+                      setUser({
+                        ...user,
+                        password: e.target.value,
+                      })
+                    }
+                    value={user.password}
+                    error={errors.password}
+                    maxLength={50}
+                  />
+                </div>
+              </>
+
+            )}
+
+
+
+
+            {/* <div className="sm:col-span-3">
               <SelectNoSearch
                 labelName={"User Status"}
                 onChange={(item) => {
@@ -345,7 +462,7 @@ export function UserEdit() {
                 items={statusList}
                 isStatus={true}
               />
-            </div>
+            </div> */}
 
             {/* <div className="sm:col-span-3">
               <SelectNoSearch
@@ -362,7 +479,7 @@ export function UserEdit() {
               />
             </div> */}
 
-            <div className="sm:col-span-3 sm:col-start-1">
+            {/* <div className="sm:col-span-3 sm:col-start-1">
               <legend className="text-sm font-semibold leading-6 text-gray-900">
                 Is Tax Exempt
               </legend>
@@ -410,7 +527,7 @@ export function UserEdit() {
                   </label>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
