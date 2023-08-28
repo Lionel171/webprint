@@ -37,7 +37,7 @@ export function Dashboard() {
 
 
     routes.map((item) => {
-      if (item.role === localStorage.getItem("role")) tempRoutes.push(item);
+      if (localStorage.getItem("role").includes(item.role)) tempRoutes.push(item);
     });
     setSideNavRoutes(tempRoutes);
   }, []);

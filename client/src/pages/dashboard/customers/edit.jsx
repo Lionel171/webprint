@@ -18,7 +18,7 @@ import { useEffect, useState, useRef } from 'react';
 import DefaultImage from '../../../../public/img/default.png';
 import UserService from "@/services/user-service"
 import { SelectNoSearch } from '@/components/common/Select';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useNavigate, Router } from 'react-router-dom';
 import authService from '@/services/auth-service';
 import { PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -335,8 +335,8 @@ export function CustomerEdit() {
                 maxLength={50}
               />
             </div>
-            <div className="sm:col-span-3">
-              <Input
+            {/* <div className="sm:col-span-3"> */}
+            {/* <Input
                 labelName={"Reseller ID"}
                 onChange={(e) =>
                   setUser({
@@ -347,8 +347,8 @@ export function CustomerEdit() {
                 value={user.reseller_id}
                 error={errors.reseller_id}
                 maxLength={50}
-              />
-            </div>
+              /> */}
+            {/* </div> */}
 
 
             {id === "new" && (
@@ -504,12 +504,12 @@ export function CustomerEdit() {
       </div>
 
       <div className="mt-6 flex items-center justify-end gap-x-6">
-        <button
-          type="button"
+        <Link
+          to={`/dashboard/customers`}
           className="text-sm font-semibold leading-6 text-gray-900"
         >
           Cancel
-        </button>
+        </Link>
         <button
           type="button"
           onClick={updateUser}

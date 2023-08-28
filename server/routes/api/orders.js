@@ -3,7 +3,7 @@ const router = express.Router();
 const uploadFile = require("../../middleware/upload");
 const auth = require("../../middleware/auth");
 // Load User model
-const User  = require("../../models/User");
+const User = require("../../models/User");
 const Order = require("../../models/Order");
 const OrderDetail = require("../../models/OrderDetail");
 const OrderHistory = require("../../models/OrderHistory");
@@ -12,20 +12,18 @@ const { getPagination } = require("../../config/utils");
 const paypal = require("paypal-rest-sdk");
 const nodemailer = require("nodemailer");
 
+
 paypal.configure({
   mode: "sandbox", // or 'live' for production
   client_id: "YOUR_CLIENT_ID",
   client_secret: "YOUR_CLIENT_SECRET",
 });
 
-// @route POST api/users/register
-// @desc Register user
-// @access Public
+
 router.post("/save-order", auth, async (req, res) => {
   let _id = req.user._id;
   const { customerId, title, orders } = req.body;
   if (customerId) _id = customerId;
-
   try {
     let order = new Order({
       title: title,
@@ -82,10 +80,13 @@ router.post("/save-order-price", auth, async (req, res) => {
     orders.map(async (item) => {
       let orderDetail = await OrderDetail.findById(item._id);
       orderDetail.price = item.price;
+      orderDetail.payment_type = item.payment_type;
       await orderDetail.save();
     });
     let order = await Order.findById(orders[0].order_id);
     order.total_value = totalPrice;
+    order.payment_type = orders[0].payment_type
+
     await order.save();
 
     return res.json({
@@ -96,6 +97,50 @@ router.post("/save-order-price", auth, async (req, res) => {
   }
 });
 
+//update order
+
+router.post("/img-update", auth, async (req, res) => {
+  const { orders } = req.body;
+
+  try {
+    if (orders.length <= 0) {
+      res.status(500).send("Server error");
+    }
+    orders.map(async (item, index) => {
+      let orderDetail = await OrderDetail.findById(item._id);
+      orderDetail.client_art_up = req.files[index] ? req.files[index].filename : null;
+      await orderDetail.save();
+    });
+
+    return res.json({
+      success: true,
+    });
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+});
+
+router.post("/assign-staff", auth, async (req, res) => {
+  const { orders } = req.body;
+
+  try {
+    if (orders.length <= 0) {
+      res.status(500).send("Server error");
+    }
+
+    orders.map(async (item, index) => {
+      let orderDetail = await OrderDetail.findById(item._id);
+      orderDetail.staff_id = item.staff_id;
+      await orderDetail.save();
+    });
+    return res.json({
+      success: true,
+    })
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error")
+  }
+})
 //get total orders
 
 router.get("/total", async (req, res) => {
@@ -159,7 +204,31 @@ router.get("/approve", async (req, res) => {
           { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : { status: { $ne: 1 } };
+      : { status: { $in: 2 } };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await Order.paginate(condition, {
+      offset,
+      limit,
+    });
+    res.json(orders);
+    console.log(orders)
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//pending orders
+router.get("/pending", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $in: 1 } };
     const { limit, offset } = getPagination(page, perPage);
     const orders = await Order.paginate(condition, {
       offset,
@@ -173,9 +242,9 @@ router.get("/approve", async (req, res) => {
   }
 });
 
-//complete order
+//in prodcution order
 
-router.get("/complete", async (req, res) => {
+router.get("/inproduction", async (req, res) => {
   try {
 
     const { page, perPage, search } = req.query;
@@ -186,7 +255,7 @@ router.get("/complete", async (req, res) => {
           { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : { status: { $in: [4, 5, 6] } };
+      : { status: { $in: [4, 5, 6, 7] } };
     const { limit, offset } = getPagination(page, perPage);
     const orders = await Order.paginate(condition, {
       offset,
@@ -199,6 +268,42 @@ router.get("/complete", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+// // in production
+// router.get("/in-production/:id", async (req, res) => {
+//   try {
+//     const { page = 1, perPage = 10, search = "" } = req.query;
+
+//     const limit = parseInt(perPage);
+//     const skip = (page - 1) * limit;
+//     const condition = search
+//       ? {
+//         $and: [
+//           { staff_id: req.params.id },
+//           {
+//             $or: [
+//               { title: { $regex: new RegExp(search), $options: "i" } },
+//               { status: { $regex: new RegExp(search), $options: "i" } },
+//             ],
+//           },
+//         ],
+//       }
+//       : { user_id: req.params.id };
+
+//     const orders = await Order.find(condition)
+//       .skip(skip)
+//       .limit(limit);
+//     const count = await Order.countDocuments(condition);
+//     res.json({
+//       orders,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: parseInt(page),
+//     });
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send("Server Error");
+//   }
+// });
 
 // router.get("/current", async (req, res) => {
 //   try {
@@ -317,7 +422,7 @@ router.get("/today", async (req, res) => {
         $lt: endOfDay
       }
     }).populate("user_id");;
-    
+
     res.json({
       orders: orders,
     });
@@ -342,7 +447,7 @@ router.get("/monthly", async (req, res) => {
             $gte: startOfYear,
             $lt: endOfYear
           },
-          status: "6" 
+          status: "6"
         }
       },
       {
@@ -381,7 +486,7 @@ router.get("/today/price", async (req, res) => {
         $gte: startOfDay,
         $lt: endOfDay
       },
-      status: '6' 
+      status: '6'
     });
 
     res.json({
@@ -435,9 +540,9 @@ router.get("/monthly/price", async (req, res) => {
 //---------Get total price
 router.get("/totalprice", async (req, res) => {
   try {
-  
+
     const orders = await Order.find({
-      status: '6' 
+      status: '6'
     });
 
     res.json({
@@ -455,7 +560,7 @@ router.get("/paid/:id", async (req, res) => {
 
     const orders = await Order.find({
       user_id: id,
-      status: '6' 
+      status: '6'
     });
 
     let totalPrice = 0;
@@ -507,7 +612,7 @@ router.get("weekly/paid/:id", async (req, res) => {
           "_id": 1
         }
       }
-      
+
     ]);
 
     res.json({

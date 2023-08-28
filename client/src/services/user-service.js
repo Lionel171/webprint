@@ -53,6 +53,12 @@ class UserService {
         const getWeekCustomersEndpoint = 'api/users/last-week';
         return await HttpService.get(getWeekCustomersEndpoint);
     }
+
+    // get staffs by service.
+    getStaffByService = async (payload) => {
+        const getStaffByServiceEndpoint = 'api/users/staff-service';
+        return await HttpService.getWithParams(getStaffByServiceEndpoint, payload);
+    }
     //Email
     sendEmail = async (payload) => {
         const sendEmailToClients = `api/users/sendEmail`;

@@ -3,10 +3,18 @@ import { MagnifyingGlassIcon, PencilSquareIcon, ChevronLeftIcon, ChevronRightIco
 import ReactTimeAgo from 'react-time-ago';
 import DropDown from '@/components/dashboard/users/Dropdown';
 import { SelectMenu, SelectNoSearch } from '@/components/common/Select';
-
 import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useNavigate, Router, Link, NavLink } from 'react-router-dom';
 import UserPermitModal from './userPermitModal';
+import DefaultImage from '../../../../../public/img/default_avatar.png';
+import {
+  Typography,
+  Avatar,
+} from "@material-tailwind/react";
+
+
+const API_URL = process.env.API_URL;
+
 const statusList = [
   { id: 0, name: "request" },
   { id: 1, name: "permit" },
@@ -117,9 +125,9 @@ export default function Content({
             </div>
           </div>
           {/* {isAdmin ? ( */}
-          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+          <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none mb-2">
             <NavLink
-              className="block flex items-center rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="block flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               to={"/dashboard/users/edit/new"}
               state={null}
             >
@@ -127,15 +135,16 @@ export default function Content({
               {"New Staff"}
             </NavLink>
           </div>
+
           {/* ) : null} */}
         </div>
-        <div className="mt-4  rounded-md sm:-mx-0">
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300 rounded-md border-t  sm:border">
             <thead className={`bg-blue-400 text-white`}>
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pl-4 text-left text-sm font-semibold  sm:pl-4"
+                  className="truncate py-3.5 pl-4 text-left text-sm font-semibold  sm:pl-4"
                 >
                   Company Name
                 </th>
@@ -148,7 +157,7 @@ export default function Content({
 
                 <th
                   scope="col"
-                  className="px-2 py-3.5 text-left text-sm font-semibold "
+                  className="px-2 py-3.5 text-left text-sm font-semibold sm:pl-4"
                 >
                   Email
                 </th>
@@ -166,7 +175,8 @@ export default function Content({
                 </th> */}
                 <th
                   scope="col"
-                  className="hidden px-2 py-3.5 text-left text-sm  font-semibold sm:block"
+                  className="truncate px-2 py-3.5 text-left text-sm  font-semibold "
+                  style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                 >
                   Created Date
                 </th>
@@ -179,19 +189,23 @@ export default function Content({
             <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
               {uusers.filter(user => (user.role[0] !== 'admin' && user.role[0] !== "normal")).map((user, index) => (
                 <tr key={index}>
-                  <Link to={`/dashboard/users/edit/${user._id}`}>
-                    <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
-                      <dl className="font-medium">
-                        <dt className="sr-only">Name</dt>
-                        <dd className="mt-1 truncate text-[15px] text-gray-700">
-                          {user.name}
-                        </dd>
-                      </dl>
-                    </td>
-                  </Link>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                    {user.contact_person}
+                  <Link to={`/dashboard/users/edit/${user._id}`}>
+                    {user.name}
+                  </Link>
                   </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    <div className="flex flex-col items-center justify-left gap-4 h-full">
+                      <Avatar src={user.profile_image ? API_URL + '/' + user.profile_image : DefaultImage} alt={user.contact_person} size="sm" />
+                      <div>
+                        <Typography variant="small" color="blue-gray" className="font-semibold">
+                          {user.contact_person}
+                        </Typography>
+                      </div>
+                    </div>
+                  </td>
+
+
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.email}
                   </td>
@@ -221,7 +235,7 @@ export default function Content({
                       isStatus={true}
                     /> */}
                   {/* </td> */}
-                  <td className="hidden whitespace-nowrap py-4 px-3 text-sm font-medium sm:block">
+                  <td className=" whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.created_at && (
                       <ReactTimeAgo
                         date={Date.parse(user.created_at)}
@@ -303,6 +317,7 @@ export default function Content({
         />
       </div>
     )
+
 
   );
 }

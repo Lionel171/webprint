@@ -32,7 +32,11 @@ export function Users() {
     const response = await UserService.deleteUser(selectedUserId);
     console.log(response.state, "deleted")
     if (response.state) {
-      setIsDelete(true);
+      if (isDelete) {
+        setIsDelete(false);
+      } else {
+        setIsDelete(true);
+      }
     }
     setIsConfirm(false);
   }

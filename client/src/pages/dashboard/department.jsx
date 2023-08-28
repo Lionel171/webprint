@@ -17,9 +17,9 @@ import { PencilSquareIcon, PlusCircleIcon, TrashIcon } from "@heroicons/react/24
 import { authorsTableData, projectsTableData } from "@/data";
 import UserService from "@/services/user-service";
 import DepartmentService from "@/services/department-service";
-import DefaultImage from '../../../public/img/default_avatar.png';
 import ConfirmModal from "@/components/common/comfirmModal";
 import EditModal from "@/components/common/EditModal";
+import DefaultImage from '../../../public/img/default_avatar.png';
 
 
 const API_URL = process.env.API_URL;
@@ -113,43 +113,47 @@ export function Department() {
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
-        <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            Add Department
-          </Typography>
-        </CardHeader>
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <div className="ml-10 pi-10 mt-5 flex justify-center items-center grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-3 mb-10" >
-              <Input
-                onChange={(e) => {
-                  setDepartmentList({ name: e.target.value });
-                }}
-                value={departmentList.name}
-                maxLength={50}
-              />
-            </div>
-            <button
-              type="button"
-              className="text-sm font-semibold leading-6 text-gray-900 mb-10"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              onClick={saveDepartment}
-              className="mb-10 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-            >
-              Save
-            </button>
-          </div>
-        </CardBody>
+  <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
+    <Typography variant="h6" color="white">
+      Add Department
+    </Typography>
+  </CardHeader>
+  <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+    <div className="mx-4 mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+      <div className="sm:col-span-3 mb-10 sm:text-center">
+        <Input
+          onChange={(e) => {
+            setDepartmentList({ name: e.target.value });
+          }}
+          value={departmentList.name}
+          maxLength={50}
+        />
+      </div>
+      <div className="flex flex-wrap justify-between items-center sm:col-span-3">
+        <button
+          onClick={() => setDepartmentList({ name: "" })}
+          type="button"
+          className="text-sm font-semibold leading-6 text-gray-900 mb-4 sm:mb-0"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          onClick={saveDepartment}
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </CardBody>
+</Card>
 
-      </Card>
+
       <Card>
         <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
           <Typography variant="h6" color="white">
-            Manegers Table
+            Managers Table
           </Typography>
         </CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
@@ -172,7 +176,7 @@ export function Department() {
               </tr>
             </thead>
             <tbody>
-              {users.filter(user => (user.role.includes("Sales Manager") || user.role.includes("Artwork Manager") || user.role.includes("Project Manager"))).map(
+              {users.filter(user => (user.role.includes("Sales Manager") || user.role.includes("Artwork Manager") || user.role.includes("Production Manager"))).map(
                 (user, key) => {
                   const className = `py-3 px-5 ${key === users.length - 1
                     ? ""

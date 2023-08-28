@@ -199,7 +199,7 @@ export function Home() {
 
 
   return (
-    localStorage.getItem('role') === 'admin' ? (
+    localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager') ? (
       <div className="mt-12">
         <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-5">
           {statisticsCardsData.map(({ icon, title, footer, value, ...rest }) =>
@@ -414,7 +414,7 @@ export function Home() {
       </div>
     ) : (
       <div className="mt-12">
-        <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-1">
+        <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-2">
           {statisticsChartsData.map((props) => (
             props.title === "Customers" ? (
               <StatisticsChart

@@ -12,6 +12,10 @@ const OrderSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
     },
+    staff_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Users",
+    },
     title: {
       type: String,
       default: "pending payment",
@@ -21,14 +25,12 @@ const OrderSchema = new Schema(
     },
     payment_type: {
       type: Number,
+      default:0,
     },
-    size: {
-      type: String,
-    },
-    quantity: {
-      type: Number,
-      default: 0,
-    },
+    size:  { type : Array , "default" : [""] },
+
+    quantity: { type : Array, "default" : [""]},
+    
     price: {
       type: Number,
       default: 0,

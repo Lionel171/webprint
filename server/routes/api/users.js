@@ -156,7 +156,7 @@ router.post("/staff/register", async (req, res) => {
       user_status,
       reseller_id,
     });
-    
+
     //if (email === 'superadmin@playestates.com') user.user_status = 'Active';
 
     const salt = await bcrypt.genSalt(10);
@@ -179,7 +179,7 @@ router.post("/staff/register", async (req, res) => {
         user_status: user.user_status,
         user_type: user.user_type,
         role: user.role,
-        
+
       },
     };
     console.log(config.get("secretOrKey"));
@@ -286,7 +286,7 @@ router.post("/login", validateLoginInput(), async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server error");
   }
-}); 
+});
 // @route    GET api/users/current
 // @desc     Get user by token
 // @access   Private
@@ -303,6 +303,46 @@ router.get("/current", auth, async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+router.get('/valid', auth, async (req, res) => {
+  try {
+    console.log(req.user._id, ">>>>>")
+    const validuser = await User
+      .findOne({ _id: req.user._id })
+      .select('-password');
+    if (!validuser) res.json({ message: 'user is not valid' });
+    res.status(201).json({
+      user: validuser,
+      token: req.token,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error });
+    console.log(error);
+  }
+});
+router.get('/?', auth, async (req, res) => {
+  // const { search } = req.query;
+  const search = req.query.search
+    ? {
+      $or: [
+        { name: { $regex: req.query.search, $options: 'i' } },
+        { email: { $regex: req.query.search, $options: 'i' } },
+      ],
+    }
+    : {};
+
+  const users = await User.find(search).find({ _id: { $ne: req.rootUserId } });
+  res.status(200).send(users);
+});
+
+router.patch('/update/:id', auth, async (req, res) => {
+  const { id } = req.params;
+  const { bio, contact_person } = req.body;
+  const updatedUser = await User.findByIdAndUpdate(id, { contact_person, bio });
+  return updatedUser;
+});
+
+
+
 // @route    GET api/users/pending
 // @desc     Get user by request
 // @access   Public
@@ -520,6 +560,46 @@ router.delete('/:id', auth, async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+//fetch users
+
+router.get('/fetchUsers', auth, async (req, res) => {
+  const keyword = req.query.search
+    ? {
+      $or: [
+        { contact_person: { $regex: req.query.search, $options: "i" } },
+        { email: { $regex: req.query.search, $options: "i" } },
+      ],
+    }
+    : {};
+
+  const users = await User.find(keyword).find({
+    _id: { $ne: req.user._id },
+  });
+  res.send(users);
+})
+
+// get staff by service
+
+router.get('/staff-service', async (req, res) => {
+  try {
+    const { department } = req.query;
+    const staff = await User.find({
+      department: { $in: department }
+    })
+    const staffTypeList = staff.map((st, index) => ({
+      name: st.contact_person,
+      id: st._id,
+      department: st.department
+    }));   
+    res.json({
+      staff: staffTypeList
+    })
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error")
+  }
+
+})
 
 //send email
 router.post("/sendEmail", async (req, res) => {

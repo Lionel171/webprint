@@ -20,26 +20,42 @@ class OrderService {
   };
 
   getOderListByApprove = async (payload) => {
-    const getUserListEndpoint = 'api/orders/approve';
-    return await HttpService.getWithParams(getUserListEndpoint, payload);
+    const getOderListByApproveEndpoint = 'api/orders/approve';
+    return await HttpService.getWithParams(getOderListByApproveEndpoint, payload);
   }
-  getOderListByComplete = async (payload) => {
-    const getUserListEndpoint = 'api/orders/complete';
-    return await HttpService.getWithParams(getUserListEndpoint, payload);
+  getOderListByPending = async (payload) => {
+    const getOderListByPendingEndpoint = 'api/orders/pending';
+    return await HttpService.getWithParams(getOderListByPendingEndpoint, payload);
   }
+  getOderListByInProduction = async (payload) => {
+    const getOderListByCompleteEndpoint = 'api/orders/inproduction';
+    return await HttpService.getWithParams(getOderListByCompleteEndpoint, payload);
+  }
+  
   getPaidByUser = async (user_id) => {
     const getPaidByUserEndpoint = `api/orders/paid/${user_id}`;
     return await HttpService.get(getPaidByUserEndpoint);
   }
   saveOrder = async (payload) => {
-    const getCurrentUserEndpoint = "api/orders/save-order";
-    return await HttpService.post(getCurrentUserEndpoint, payload);
+    const saveOrderrEndpoint = "api/orders/save-order";
+    return await HttpService.post(saveOrderrEndpoint, payload);
+  };
+
+  updateImage = async (payload) => {
+    const updateImageEndpoint = "api/orders/img-update";
+    return await HttpService.post(updateImageEndpoint, payload);
+  };
+
+  assignStaff = async (payload) => {
+    const assignStaffEndpoint = "api/orders/assign-staff";
+    return await HttpService.post(assignStaffEndpoint, payload);
   };
 
   saveOrderPrice = async (payload) => {
-    const getCurrentUserEndpoint = "api/orders/save-order-price";
-    return await HttpService.post(getCurrentUserEndpoint, payload);
+    const saveOrderPriceEndpoint = "api/orders/save-order-price";
+    return await HttpService.post(saveOrderPriceEndpoint, payload);
   };
+  
 
   getOrderDetailList = async (order_id) => {
     const getOrderDetailListEndpoint = `api/order-details/list?order_id=${order_id}`;

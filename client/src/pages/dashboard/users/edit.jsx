@@ -18,7 +18,7 @@ import { useEffect, useState, useRef } from 'react';
 import DefaultImage from '../../../../public/img/default.png';
 import UserService from "@/services/user-service"
 import { SelectNoSearch } from '@/components/common/Select';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useNavigate, Router } from 'react-router-dom';
 import authService from '@/services/auth-service';
 import { PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -28,11 +28,12 @@ import DepartmentService from "@/services/department-service";
 const userTypeList = [
   { id: 0, name: "" },
   { id: 1, name: "Sales Manager" },
-  { id: 2, name: "Artwork Manager" },
-  { id: 3, name: "Artwork Staff" },
-  { id: 4, name: "Production Manager" },
-  { id: 5, name: "Production Staff" },
-  { id: 6, name: "Customer Relation" },
+  { id: 2, name: "Sales Team Member" },
+  { id: 3, name: "Artwork Manager" },
+  { id: 4, name: "Artwork Staff" },
+  { id: 5, name: "Production Manager" },
+  { id: 6, name: "Production Staff" },
+  // { id: 7, name: "Customer Relation" },
 ];
 // const departmentTypeList = [
 //   { id: 0, name: "", value: "" },
@@ -97,8 +98,6 @@ export function UserEdit() {
     async function fetchData() {
       const response = await DepartmentService.getDepartments();
       setDepartmentTypeList(response.department);
-      console.log(departmentTypeList)
-      
     }
     fetchData();
   }, [])
@@ -172,7 +171,7 @@ export function UserEdit() {
       payload.file = avatarFile
     if (id !== "new") {
       const response = await UserService.updateUser(payload);
-      
+
     } else if (id === "new") {
       // const data = payload
       const response = await authService.registerStaff(payload.user);
@@ -273,7 +272,7 @@ export function UserEdit() {
                     style={{ objectFit: "contain" }}
                   />
 
-                  <h1>
+                  <h1 style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     <div className="mt-1 text-base font-semibold leading-6 text-gray-900">
                       {user.contact_person}
                     </div>
@@ -574,12 +573,12 @@ export function UserEdit() {
       </div>
 
       <div className="mt-6 flex items-center justify-end gap-x-6">
-        <button
-          type="button"
+        <Link
+          to={`/dashboard/users`}
           className="text-sm font-semibold leading-6 text-gray-900"
         >
           Cancel
-        </button>
+        </Link>
         <button
           type="button"
           onClick={updateUser}

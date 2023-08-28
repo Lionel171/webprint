@@ -12,6 +12,8 @@ import { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
+import DepartmentService from "@/services/department-service";
+
 
 const userTypeList = [
     { id: 0, name: "normal" },
@@ -21,16 +23,7 @@ const statusList = [
     { id: 0, name: "request" },
     { id: 0, name: "permit" }
 ]
-const serviceTypeList = [
-    { id: 0, name: "", value: "" },
-    { id: 1, name: "Screen Print", value: "screen_print" },
-    { id: 2, name: "We Print DTF", value: "we_print_dtf" },
-    { id: 3, name: "Gang Sheet", value: "gang_sheet" },
-    { id: 4, name: "Signs & Banners", value: "signs_banners" },
-    { id: 5, name: "Embroidery", value: "embroidery" },
-    { id: 6, name: "Vinyl Transfer", value: "vinly_transfer" },
-    { id: 7, name: "Sublimation", value: "sublimation" }
-];
+
 const paymentTypeList = [
     { id: 0, name: "", value: "" },
     { id: 1, name: "Credit Card", value: "card" },
@@ -49,22 +42,32 @@ export function OrderEdit() {
     const avatarFileRef = useRef([]);
     const [avatarPhoto, setAvatarPhoto] = useState('');
     const [avatarPhotoFlag, setAvatarPhotoFlag] = useState(false);
-    const [orders, setOrders] = useState([]);
     const API_URL = process.env.API_URL;
     const [customer, setCustomer] = useState({});
     const [customerList, setCustomerList] = useState([]);
     const [customerFlag, setCustomerFlag] = useState(false);
     const [isView, setIsView] = useState(false);
     const [user, setUser] = useState([]);
+    const [orders, setOrders] = useState([]);
+    // const [paymentType, setPaymentType] = useState("");
+    
+    const serviceTypeList = [
+        { id: 0, name: "", value: "" },
+        { id: 1, name: "We Print DTF", value: "we_print_dtf" },
+        { id: 2, name: "Embroidery", value: "embroidery" },
+        { id: 3, name: "Screen Printing", value: "screen_printing" },
+        { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
+        { id: 5, name: "Signs & Banners", value: "signs_banners" },
+      ];
 
     const addOrder = (title, id) => {
         let order = {
-            quantity: 0,
-            size: '',
+            quantity: [""],
+            size: [""],
             comment: '',
+            payment_type: '',
             client_art_up: null,
             service_type: 0,
-            payment_type: 0,
             serviceTypeFlag: false,
             paymentTypeFlag: false,
             quantityFlag: false,
@@ -73,9 +76,22 @@ export function OrderEdit() {
             imgFlag: false,
         };
         let temp = [...orders, order];
+        // const payment_type = paymentType;
+        // payment_type.push("");
+        // setPaymentType(payment_type);
 
         setOrders(temp);
+        console.log(temp)
     };
+
+    const addSize = (index) => {
+        let tempOrders = [...orders];
+        tempOrders[index].size.push("");
+        tempOrders[index].quantity.push("");
+        setOrders(tempOrders);
+        console.log(orders);
+    };
+
 
     const onChangeImagePhoto = (event, index) => {
         if (event.target.files && event.target.files[0]) {
@@ -107,13 +123,22 @@ export function OrderEdit() {
         avatarFileRef.current[index].click();
     };
 
-    const onChangeQuantity = (value, index) => {
+    const onChangeQuantity = (value, index, i) => {
         const temp = orders.map((obj, subindex) => {
             if (subindex === index) {
+                const updatedQuantity = obj.quantity.map((quantity, sub_subindex) => {
+                    if (sub_subindex === i) {
+                        return value;
+                    }
+                    return quantity;
+                });
+
+                const flag = updatedQuantity.some((quantity) => quantity === '');
+
                 return {
                     ...obj,
-                    quantity: value,
-                    quantityFlag: false,
+                    quantity: updatedQuantity,
+                    quantityFlag: flag,
                 };
             }
             return obj;
@@ -122,13 +147,22 @@ export function OrderEdit() {
         setOrders(temp);
     };
 
-    const onChangeSize = (value, index) => {
+    const onChangeSize = (value, index, i) => {
         const temp = orders.map((obj, subindex) => {
             if (subindex === index) {
+                const updatedSize = obj.size.map((size, sub_subindex) => {
+                    if (sub_subindex === i) {
+                        return value;
+                    }
+                    return size;
+                });
+
+                const flag = updatedSize.some((size) => size === '');
+
                 return {
                     ...obj,
-                    size: value,
-                    sizeFlag: false,
+                    size: updatedSize,
+                    sizeFlag: flag,
                 };
             }
             return obj;
@@ -136,6 +170,7 @@ export function OrderEdit() {
 
         setOrders(temp);
     };
+
 
     const onChangeAbout = (value, index) => {
         const temp = orders.map((obj, subindex) => {
@@ -164,19 +199,19 @@ export function OrderEdit() {
         setOrders(temp);
     };
 
-    const onChangePaymentType = (item, index) => {
-        const temp = orders.map((obj, subindex) => {
-            if (subindex === index) {
-                return {
-                    ...obj,
-                    paymentTypeFlag: false,
-                    payment_type: item.id,
-                };
-            }
-            return obj;
-        });
-        setOrders(temp);
-    };
+    // const onChangePaymentType = (item, index) => {
+    //     const temp = orders.map((obj, subindex) => {
+    //         if (subindex === index) {
+    //             return {
+    //                 ...obj,
+    //                 paymentTypeFlag: false,
+    //                 payment_type: item.id,
+    //             };
+    //         }
+    //         return obj;
+    //     });
+    //     setOrders(temp);
+    // };
 
 
     const onDeleteButton = (index) => {
@@ -193,6 +228,7 @@ export function OrderEdit() {
     };
 
     const saveOrder = async () => {
+        console.log(orders, "adadd>>>>>")
         let flag = true;
 
         if (title === "") {
@@ -211,27 +247,28 @@ export function OrderEdit() {
                     serviceTypeFlag: true,
                 };
             }
-            if (obj.payment_type === 0) {
-                flag = false;
-                return {
-                    ...obj,
-                    paymentTypeFlag: true,
-                };
-            }
-            if (obj.quantity === 0) {
+            // if (obj.payment_type === 0) {
+            //     flag = false;
+            //     return {
+            //         ...obj,
+            //         paymentTypeFlag: true,
+            //     };
+            // }
+            if (obj.quantity === 0 || obj.quantity.length === 0) {
                 flag = false;
                 return {
                     ...obj,
                     quantityFlag: true,
                 };
             }
-            if (obj.size === '') {
+            if (obj.size === '' || obj.size.length === 0) {
                 flag = false;
                 return {
                     ...obj,
                     sizeFlag: true,
                 };
             }
+
             if (obj.client_art_up === "") {
                 flag = false;
                 return {
@@ -257,6 +294,7 @@ export function OrderEdit() {
         if (isAdmin) {
             newOrder['customerId'] = customer.id
         }
+
         const response = await OrderService.saveOrder(newOrder);
         if (response.success) {
             navigate("/dashboard/orders");
@@ -380,7 +418,7 @@ export function OrderEdit() {
                                                 disabled={isView}
                                             />
                                         </div>
-                                        <div className='mt-2'>
+                                        {/* <div className='mt-2'>
                                             <SelectNoSearch
                                                 labelName={'Payment Tpye'}
                                                 onChange={(item) =>
@@ -391,38 +429,51 @@ export function OrderEdit() {
                                                 error={order.paymentTypeFlag}
                                                 disabled={isView}
                                             />
-                                        </div>
+                                        </div> */}
+                                        {order.size.map((size, i) => {
+                                            return (
+                                                <>
+                                                    <div className="mt-3 col-3">
+                                                        <Input
+                                                            type='text'
+                                                            labelName={`Size ${i + 1}`}
+                                                            onChange={(e) =>
+                                                                onChangeSize(e.target.value, index, i)
+                                                            }
+                                                            value={size}
+                                                            error={order.sizeFlag}
+                                                            placeholder={"100*100"}
+                                                            disabled={isView}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2">
+                                                        <Input
+                                                            type='number'
+                                                            labelName={`Quantity ${i + 1}`}
+                                                            onChange={(e) =>
+                                                                onChangeQuantity(e.target.value, index, i)
+                                                            }
+                                                            value={order.quantity}
+                                                            error={order.quantityFlag}
+                                                            maxLength={50}
+                                                            minLength={1}
+                                                            disabled={isView}
+                                                        />
+                                                    </div>
 
+                                                </>
+                                            )
+                                        })}
 
-
-                                        <div className="mt-2">
-                                            <Input
-                                                type='text'
-                                                labelName={'Size'}
-                                                onChange={(e) =>
-                                                    onChangeSize(e.target.value, index)
-                                                }
-                                                value={order.size}
-                                                error={order.sizeFlag}
-                                                placeholder={"100*100"}
-                                                disabled={isView}
+                                        <div className="items-end h-full w-[50px] mt-2 pt-4">
+                                            <PlusCircleIcon
+                                                className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                onClick={() => addSize(index)}
                                             />
                                         </div>
 
-                                        <div className="mt-2">
-                                            <Input
-                                                type='number'
-                                                labelName={'Quantity'}
-                                                onChange={(e) =>
-                                                    onChangeQuantity(e.target.value, index)
-                                                }
-                                                value={order.quantity}
-                                                error={order.quantityFlag}
-                                                maxLength={50}
-                                                minLength={1}
-                                                disabled={isView}
-                                            />
-                                        </div>
+
+
 
                                         <div className="mt-2">
                                             <label className='block text-sm font-medium text-gray-700'>

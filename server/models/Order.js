@@ -9,6 +9,7 @@ const OrderSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
     },
+
     title: {
       type: String,
     },
@@ -23,6 +24,11 @@ const OrderSchema = new Schema(
     payment_req: {
       type: Number,
       default: 0,
+    },
+
+    payment_type: {
+      type: String,
+      default: ""
     },
     comment: {
       type: String,

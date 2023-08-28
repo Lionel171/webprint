@@ -5,7 +5,6 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   name: {
     type: String,
-    
   },
   company_name: {
     type: String,
@@ -20,6 +19,12 @@ const UserSchema = new Schema({
   },
   profile_image: {
     type: String,
+    // default:
+    //   'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg',
+  },
+  bio: {
+    type: String,
+    default: 'Available',
   },
   phone: {
     type: String
@@ -32,7 +37,7 @@ const UserSchema = new Schema({
   },
   department: {
     type: String,
-    default:""
+    default: ""
   },
   shipping_address: {
     type: String,
@@ -52,7 +57,7 @@ const UserSchema = new Schema({
     type: String,
     default: 'normal'
   },
-  role:  { type : Array , "default" : ["normal"] },
+  role: { type: Array, "default": ["normal"] },
   //   role: {
   //   type: String,
   //   default: 'normal'
@@ -71,7 +76,16 @@ const UserSchema = new Schema({
   is_deleted: {
     type: Boolean,
     default: false
-  }
-});
+  },
+  contacts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Users',
+    },
+  ],
+},
+  {
+    timestamps: true,
+  });
 
 module.exports = User = mongoose.model("Users", UserSchema);

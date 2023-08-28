@@ -2,13 +2,18 @@ import { saveAs } from "file-saver";
 import Input from '@/components/common/Input';
 import { useEffect, useState, useRef } from 'react';
 import OrderService from "@/services/order-service"
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import DepartmentService from "@/services/department-service"
+import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
+import { FaDownload, FaUpload } from 'react-icons/fa';
 import userService from '@/services/user-service';
 import OrderStep from './components/orderStep';
 import DefaultImage from '../../../../public/img/default.png';
+import { SelectNoSearch } from '@/components/common/Select';
+import { position } from "@chakra-ui/react";
+
 
 
 const serviceTypeList = [
@@ -19,17 +24,23 @@ const serviceTypeList = [
   { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
   { id: 5, name: "Signs & Banners", value: "signs_banners" },
 ];
+
 const paymentTypeList = [
   { id: 0, name: "", value: "" },
   { id: 1, name: "Credit Card", value: "credit_card" },
   { id: 2, name: "Paypal", value: "paypal" },
+  { id: 3, name: "Offline", value: "offline" },
+  { id: 4, name: "Imported Payment", value: "imported_payment" },
+  { id: 5, name: "Free", value: "free" },
 ];
+
 const controlList = [
-  { id: 0, name: "Send Invoice Email", role: "admin" },
+  { id: 0, name: "Invoice Email", role: "admin" },
   // { id: 1, name: "Order cancel", role: "admin" },
   // { id: 2, name: "", role: "" },
   // { id: 3, name: "", role: "" },
 ];
+
 export function OrderEdit() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,12 +54,42 @@ export function OrderEdit() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [isView, setIsView] = useState(false);
   const [user, setUser] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [service, setService] = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [userId, setUserId] = useState('')
+
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log(orders, ">>>>>>>>>>>>>>order")
+      let department = service;
+      orders.map((order, index) => {
+        department.push(serviceTypeList[order.service_type].name);
+      })
+      setService(department);
+      const query = {
+        department: service
+      }
+      const response = await userService.getStaffByService(query);
+      setStaffList(response.staff)
+
+      // response.staff.map((st, index) => {
+      //   setStaffTypeList(prevState => [...prevState, { id: index, name: st.contact_person }]);
+      // })
+
+
+      console.log(response.staff, "staff");
+    }
+
+    fetchData();
+  }, [order]);
+
 
 
   const getUserbyOder = async () => {
     const response = await userService.getUserById(order.user_id);
-    if(response.success) {
-    setUser(response);
+    if (response.success) {
+      setUser(response);
     }
   }
 
@@ -84,6 +125,37 @@ export function OrderEdit() {
   const avatarImageClick = (index) => {
     avatarFileRef.current[index].click();
   };
+
+  const onChangePaymentType = (item, index) => {
+    const temp = orders.map((obj, subindex) => {
+      if (subindex === index) {
+        return {
+          ...obj,
+          paymentTypeFlag: false,
+          payment_type: item.id,
+        };
+      }
+      return obj;
+    });
+    setOrders(temp);
+
+  };
+
+  const onChangeStaff = (item, index) => {
+    const temp = orders.map((obj, subindex) => {
+      if (subindex === index) {
+        return {
+          ...obj,
+          staffFlag: false,
+          staff_id: item.id,
+        };
+      }
+      return obj;
+    });
+    setOrders(temp);
+    console.log(temp, "temppppp")
+    console.log(orders, "orders")
+  }
 
   const onChangePrice = (value, index) => {
     const temp = orders.map((obj, subindex) => {
@@ -128,6 +200,13 @@ export function OrderEdit() {
           priceFlag: true,
         };
       }
+      if (obj.payment_type === 0) {
+        flag = false;
+        return {
+          ...obj,
+          paymentTypeFlag: true,
+        };
+      }
       if (obj.client_art_up === "") {
         flag = false;
         return {
@@ -145,41 +224,65 @@ export function OrderEdit() {
     if (!flag) {
       return;
     }
-    if (localStorage.getItem('role') === "Artwork Manager" && order.status === "3") {
-      let newOrder = {
-        title: order.title,
-        files: imageFiles,
-        orders: orders,
-      };
-      const response = await OrderService.saveOrder(newOrder);
-      if (response.success) {
-        await changeStaus(parseInt(order.status) + 1);
-        // const payload ={
-        //   order_id: order._id,
-        //   comment: 
-        // }
-        navigate("/dashboard/orders");
-      }
-    } else {
+
+    if (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) {
+
       const response = await OrderService.saveOrderPrice({ orders: orders });
       if (response.success) {
         await changeStaus(parseInt(order.status) + 1);
-        // const payload ={
-        //   order_id: order._id,
-        //   comment: 
-        // }
+        navigate("/dashboard/orders");
+      }
+
+    }
+    if (localStorage.getItem('role').includes("Artwork Manager") && order.status === "2") {
+      let newOrder = {
+        files: imageFiles,
+        orders: orders,
+      };
+      const response = await OrderService.updateImage(newOrder);
+      if (response.success) {
+        await changeStaus(parseInt(order.status) + 1);
         navigate("/dashboard/orders");
       }
     }
-    // const response = await OrderService.saveOrderPrice({ orders: orders });
-    // if (response.success) {
-    //   await changeStaus(parseInt(order.status) + 1);
-    //   // const payload ={
-    //   //   order_id: order._id,
-    //   //   comment: 
+    if (localStorage.getItem("role").includes('Production Manager')) {
+      const response = await OrderService.assignStaff({ orders: orders });
+      if (response.success) {
+        await changeStaus(parseInt(order.status) + 1);
+        navigate("/dashboard/orders");
+      }
+    }
+    if (localStorage.getItem("role").includes("Production Staff")) {
+      await changeStaus(parseInt(order.status) + 1);
+      navigate("/dashboard/orders");
+
+    }
+    //  else {
+    //     const response = await OrderService.saveOrderPrice({ orders: orders });
+    //     let newOrder = {
+    //       title: order.title,
+    //       files: imageFiles,
+    //       orders: orders,
+    //     };
+    //     const res = await OrderService.saveOrder(newOrder);
+    //     if (response.success) {
+    //       await changeStaus(parseInt(order.status) + 1);
+    //       // const payload ={
+    //       //   order_id: order._id,
+    //       //   comment: 
+    //       // }
+    //       navigate("/dashboard/orders");
+    //     }
+    //   }
+    //   // const response = await OrderService.saveOrderPrice({ orders: orders });
+    //   // if (response.success) {
+    //   //   await changeStaus(parseInt(order.status) + 1);
+    //   //   // const payload ={
+    //   //   //   order_id: order._id,
+    //   //   //   comment: 
+    //   //   // }
+    //   //   navigate("/dashboard/orders");
     //   // }
-    //   navigate("/dashboard/orders");
-    // }
 
 
   }
@@ -225,6 +328,7 @@ export function OrderEdit() {
       const response = await OrderService.getOrderDetailList(order._id);
       setOrders(response.entities);
       getUserbyOder();
+      console.log(orders)
 
     }
     async function fetchCustomerList() {
@@ -253,9 +357,9 @@ export function OrderEdit() {
       setTotalPrice(tempTotal);
     }
     // if (order && order._id) {
-      fetchData();
-      setIsView(true)
-  // }
+    fetchData();
+    setIsView(true)
+    // }
   }, [])
 
   return (
@@ -270,13 +374,13 @@ export function OrderEdit() {
           </p>
         </div>
         <div className="border-b border-gray-900/10 pb-2 mb-4">
-          {order.status === "5" && (
+          {order.status === "6" && (
             <h1 className="text-base font-semibold leading-7 text-gray-900">
-              Order was shipped successfully!
+              Order was shipped Inspected!
             </h1>
           )}
 
-          {order.status === "6" && (
+          {order.status === "7" && (
             <h1 className="text-base font-semibold leading-7 text-gray-900">
               Order was delivered successfully!
             </h1>
@@ -304,6 +408,7 @@ export function OrderEdit() {
                     onClick={() => controlHandle(item.id)}
                     className=" mt-2 flex  h-[40px] w-[130px] items-center justify-center  gap-x-4 rounded bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   >
+
                     {item.name}
                   </button>
                 )
@@ -361,8 +466,8 @@ export function OrderEdit() {
       </div>
       <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
         {/* Order list */}
-        <div className="-mx-4 px-4 py-2 shadow-sm ring-1 ring-gray-900/5 sm:mx-0 sm:rounded-lg sm:px-4 sm:pb-10  xl:px-8 xl:pb-2 xl:pt-2">
-          <table className=" w-full whitespace-nowrap text-left text-sm leading-6">
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg ">
+          <table className=" w-full whitespace-nowrap text-left text-sm leading-6 ml-2 mr-2">
             <colgroup>
               <col className="" />
               <col />
@@ -374,98 +479,131 @@ export function OrderEdit() {
                 <th scope="col" className="px-0 py-3 font-semibold">
                   Service Type
                 </th>
-                <th scope="col" className="pl-10 px-0 py-3 font-semibold">
+
+                <th scope="col" className="pl-10 px-0 py-3 font-semibold ">
                   Payment Type
                 </th>
+
                 <th
                   scope="col"
-                  className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
+                  className=" py-3 pl-10 pr-0 text-center font-semibold "
                 >
-                  Quantity
+                  Size : Quantity
                 </th>
                 <th
                   scope="col"
-                  className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
-                >
-                  Size
-                </th>
-                <th
-                  scope="col"
-                  className="hidden py-3 pl-10 pr-0 text-right font-semibold sm:table-cell"
+                  className="py-3 pl-10 pr-0 text-center font-semibold"
                 >
                   Image
                 </th>
                 <th
                   scope="col"
-                  className="py-3 pl-10 pr-0 text-right font-semibold"
+                  className="py-3 pl-10 pr-0 text-center font-semibold"
                 >
                   Price
                 </th>
+                {((localStorage.getItem('role').includes("Production Manager") || localStorage.getItem('role').includes("admin")) && order.status === "3") && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Assign Staff
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
               {orders.map((item, index) => (
                 <tr key={index} className="border-b border-gray-100">
-                  <td className="max-w-0 px-0 py-5 align-top">
-                    <div className="truncate font-medium text-gray-900">
+                  <td className="max-w-0 px-0 py-5 align-top ">
+                    <div className="truncate font-medium text-gray-900 text-left">
                       {serviceTypeList[item.service_type].name}
                     </div>
-                    <div className="truncate text-gray-500">
+                    <div className="truncate text-gray-500 text-left" style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.comment}
                     </div>
+
                   </td>
-                  <td className="ml-5 max-w-0 px-0 py-5 align-top">
-                    <div className="pl-10 truncate font-medium text-gray-900">
-                      {paymentTypeList[item.payment_type].name}
+                  <td className="ml-5 max-w-0 px-0 py-5 align-top text-center">
+                    {/* <div className="pl-10 truncate font-medium text-gray-900"> */}
+                    {/* {paymentTypeList[item.payment_type].name} */}
+                    {/* <div className='mt-2'> */}
+                    {((localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes("Sales Manager")) && order.status === "1") ? (
+                      <SelectNoSearch
+                        onChange={(selectedOption) => onChangePaymentType(selectedOption, index)}
+                        value={paymentTypeList.find((option) => option.id === item.payment_type)}
+                        items={paymentTypeList}
+                        error={item.paymentTypeFlag}
+                      // disabled={isView}
+                      />
+                    ) : (
+                      <div className="truncate text-gray-500 text-center " style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {paymentTypeList[item.service_type].name}
+                      </div>
+                    )}
+
+
+                    {/* </div> */}
+                    {/* </div> */}
+                  </td>
+                  <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
+                    <div className="ttruncate text-gray-500 text-center">
+                      {item.quantity.map((quantity, index) => {
+                        return (
+                          item.size[index] + ': ' + quantity
+                        )
+                      }).join(', ')}
                     </div>
                   </td>
-                  <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
-                    {item.quantity}
-                  </td>
-                  <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
-                    {item.size}
-                  </td>
-                  <td className="hidden py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 sm:table-cell">
+                  <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                     <div className="flex justify-end">
                       <div className="flex items-center mr-3">
-                        {(localStorage.getItem('role') === 'Artwork Manager' && order.status !== "3") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "normal" || (localStorage.getItem('role') === "Project Manager" && order.status === "4")) ? (
-                          <img
-                            src={item.client_art_up ? API_URL + "/" + item.client_art_up : DefaultImage}
-                            alt="Image"
-                            width={100}
-                            height={100}
-                            className=" "
-                            style={{ objectFit: "contain" }}
-                          />
-                        ) : null}
-                        {(localStorage.getItem('role') === 'Artwork Manager' && order.status === "3") ? (
+                        {/* {(localStorage.getItem('role').includes.('Artwork Manager') && order.status !== "2") || (localStorage.getItem('role').includes('admin') && order.status !== "2") || (localStorage.getItem('role') "normal" || (localStorage.getItem('role') "Production Manager" && order.status === "")) ? ( */}
+
+
+                        {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && order.status === "2") ? (
                           <>
                             <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
-                            <img
-                              src={item.client_art_up ? isView ? API_URL + '/' + item.client_art_up : item.client_art_up : DefaultImage}
-                              alt='Image'
-                              onClick={() => avatarImageClick(index)}
-                              width={250}
-                              height={250}
-                              className=''
-                              style={{ objectFit: 'contain' }}
-                            />
+                            <div className="text-center" style={{ position: 'relative' }}>
+                              <img
+                                src={item.client_art_up ? (isView ? API_URL + '/' + item.client_art_up : item.client_art_up) : DefaultImage}
+                                alt='Image'
+                                onClick={() => avatarImageClick(index)}
+                                width={250}
+                                height={250}
+                                style={{ objectFit: 'contain' }}
+                              />
+                              {/* <FaUpload style={{ fontSize: '50px', position: 'absolute', top: "30px", right: "100px" }} /> */}
+                            </div>
                           </>
-                        ) : null}
+                        ) : (
+                          <div className="text-center" style={{ position: 'relative' }}>
+                            <img
+                              src={item.client_art_up ? API_URL + "/" + item.client_art_up : DefaultImage}
+                              alt="Image"
+                              width={100}
+                              height={100}
+                              className=" "
+                              style={{ objectFit: "contain" }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
-                    {(localStorage.getItem('role') === 'Artwork Manager' && order.status === "2") || (localStorage.getItem('role') === 'admin') || (localStorage.getItem('role') === "Project Manager" && order.status === "4") ? (
-                      <button
-                        type="submit"
-                        onClick={() => downloadHandle(API_URL + "/" + item.client_art_up)}
-                        className="mt-4 mr-5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                      >
-                        Download
-                      </button>
+                    {(((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && order.status === "2")) ? (
+                      <div className="text-center" >
+                        <button
+                          type="submit"
+                          onClick={() => downloadHandle(API_URL + "/" + item.client_art_up)}
+                          className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        >
+                          <FaDownload />
+                        </button>
+                      </div>
                     ) : null}
                   </td>
-                  {(localStorage.getItem('role') === 'admin' && order.status === "1")  ? (
-                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                  {(localStorage.getItem('role') === 'admin' && order.status === "1") ? (
+                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 text-left">
                       <Input
                         type="number"
                         onChange={(e) => onChangePrice(e.target.value, index)}
@@ -476,10 +614,32 @@ export function OrderEdit() {
                       />
                     </td>
                   ) : (
-                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
-                      {item.price}
+                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
+                      <div className="ttruncate text-gray-700 text-center mt-3">
+                        ${item.price}
+                      </div>
                     </td>
                   )}
+
+                  <td className="ml-5 max-w-0 px-0 py-5 align-top text-center">
+                    {/* <div className="pl-10 truncate font-medium text-gray-900"> */}
+                    {/* {paymentTypeList[item.payment_type].name} */}
+                    {/* <div className='mt-2'> */}
+                    {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && order.status === "3") && (
+                      <SelectNoSearch
+                        onChange={(selectedOption) => onChangeStaff(selectedOption, index)}
+                        // value={staffList.find((option) => option.name === item.department)}
+                        items={staffList.filter(st => st.department === serviceTypeList[item.service_type].name)}
+                      // error={item.paymentTypeFlag}
+                      // disabled={isView}
+                      />
+                    )}
+
+
+                    {/* </div> */}
+                    {/* </div> */}
+                  </td>
+
 
                 </tr>
               ))}
@@ -487,14 +647,14 @@ export function OrderEdit() {
           </table>
         </div>
       </div>
-      {(localStorage.getItem("role") === "admin" && order.status === '1') ? (
+      {((localStorage.getItem("role").includes('admin') || localStorage.getItem('role').includes('Sales Manager')) && order.status === '1') ? (
         <div className="mt-6 flex items-center justify-end gap-x-6">
-          <button
-            type="button"
+          <Link
+            to={`/dashboard/orders`}
             className="text-sm font-semibold leading-6 text-gray-900"
           >
             Cancel
-          </button>
+          </Link>
           <button
             type="submit"
             onClick={saveOrder}
@@ -506,60 +666,65 @@ export function OrderEdit() {
       ) : null}
 
 
-      {localStorage.getItem("role") === 'Artwork Manager' && (
+      {localStorage.getItem("role").includes('Artwork Manager') && (
         <div className="mt-6 flex items-center justify-end gap-x-6">
-          {/* {order.status === '2' || order.status === '3' ? (
-            <div className="mt-4 " style={{ width: "60%" }}>
-              {orders.map((item, index) => (
-                <>
-                  <label className='block text-sm font-medium text-gray-700'>
-                    Comment {index+1}
-                  </label>
-                  <div className="mt-1">
-                    <textarea
-                      id="comment"
-                      name="comment"
-                      onChange={(e) =>
-                        onChangeAbout(e.target.value, index)
-                      }
-                      // disabled={isView}
-                      value={item.comment}
-                      rows={3}
-                      className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                    />
-                  </div>
-                </>
-              ))} */}
-{/* 
-            </div>
-          ) : null} */}
 
           {order.status === '2' && (
             <>
-              <button
-                type="button"
+              <Link
+                to={`/dashboard/orders`}
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Cancel
-              </button>
+              </Link>
               <button
                 type="submit"
                 onClick={saveOrder}
                 className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               >
-
                 Start Work
               </button>
             </>
           )}
+        </div>
+      )
+      }
+      {localStorage.getItem("role").includes("Production Manager") && (
+        <div className="mt-6 flex items-center justify-end gap-x-6">
+
           {order.status === "3" && (
             <>
-              <button
-                type="button"
+              <Link
+                to={`/dashboard/orders`}
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Cancel
+              </Link>
+              <button
+                type="submit"
+                onClick={saveOrder}
+                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Assign Task
               </button>
+
+            </>
+
+          )}
+
+        </div>
+      )}
+      {localStorage.getItem("role").includes("Production Staff") && (
+        <div className="mt-6 flex items-center justify-end gap-x-6">
+
+          {order.status === "4" ? (
+            <>
+              <Link
+                to={`/dashboard/orders`}
+                className="text-sm font-semibold leading-6 text-gray-900"
+              >
+                Cancel
+              </Link>
               <button
                 type="submit"
                 onClick={saveOrder}
@@ -567,53 +732,51 @@ export function OrderEdit() {
               >
                 Complete
               </button>
+
             </>
-          )}
 
-        </div>
-      )
-      }
-      {localStorage.getItem("role") === "Project Manager" && (
-        <div className="mt-6 flex items-center justify-end gap-x-6">
-
-          {order.status === "4" && (
+          ) : 
+          order.status === "5" ? (
             <>
+              <Link
+                to={`/dashboard/orders`}
+                className="text-sm font-semibold leading-6 text-gray-900"
+              >
+                Cancel
+              </Link>
               <button
                 type="submit"
                 onClick={saveOrder}
                 className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               >
-                Pick-Up
+                Inspect
               </button>
-              <button
-                type="button"
+
+            </>
+          ) : 
+          order.status === "6" ? (
+            <>
+              <Link
+                to={`/dashboard/orders`}
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Cancel
-              </button>
-            </>
-
-          )}
-          {order.status === "5" && (
-            <>
+              </Link>
               <button
                 type="submit"
                 onClick={saveOrder}
                 className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               >
-                Delvered
+                Pick-up
               </button>
-              <button
-                type="button"
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Cancel
-              </button>
-            </>
 
-          )}
+            </>
+          ) : (null)}
+
         </div>
       )}
+
+
 
 
     </div >

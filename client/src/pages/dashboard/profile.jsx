@@ -237,7 +237,7 @@ export function Profile() {
               />
               <h1>
                 <div className="mt-1 text-base font-semibold leading-6 text-gray-900">{user.contact_person}</div>
-                <div className="text-sm leading-6 text-gray-500">
+                <div className="text-sm leading-6 text-gray-500" style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {user.email}
 
                 </div>
