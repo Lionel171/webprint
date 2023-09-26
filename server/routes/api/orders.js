@@ -9,15 +9,15 @@ const OrderDetail = require("../../models/OrderDetail");
 const OrderHistory = require("../../models/OrderHistory");
 const { getPagination } = require("../../config/utils");
 
-const paypal = require("paypal-rest-sdk");
+// const paypal = require("paypal-rest-sdk");
 const nodemailer = require("nodemailer");
 
 
-paypal.configure({
-  mode: "sandbox", // or 'live' for production
-  client_id: "YOUR_CLIENT_ID",
-  client_secret: "YOUR_CLIENT_SECRET",
-});
+// paypal.configure({
+//   mode: "sandbox", // or 'live' for production
+//   client_id: "YOUR_CLIENT_ID",
+//   client_secret: "YOUR_CLIENT_SECRET",
+// });
 
 
 router.post("/save-order", auth, async (req, res) => {
@@ -35,6 +35,15 @@ router.post("/save-order", auth, async (req, res) => {
 
     order = await Order.findOne({ _id: order._id }).populate("Users");
     orders.map(async (item, index) => {
+      const client_art_up = [];
+      if(req.files) {
+        const order_file = req.files.filter((file, i) => file.fieldname.startsWith(`files[${index}]`));
+        order_file.map((obj, sub_i) => {
+          client_art_up.push(obj.filename)
+        })
+      } else {
+        client_art_up.push(null);
+      }
       let orderDetail = new OrderDetail({
         order_id: order._id,
         status: item.status,
@@ -45,7 +54,8 @@ router.post("/save-order", auth, async (req, res) => {
         comment: item.comment,
         quantity: item.quantity,
         size: item.size,
-        client_art_up: req.files[index] ? req.files[index].filename : null,
+        client_art_up: client_art_up,
+        original_art_up: client_art_up,
       });
       await orderDetail.save();
     });
@@ -67,19 +77,20 @@ router.post("/save-order", auth, async (req, res) => {
 });
 
 router.post("/save-order-price", auth, async (req, res) => {
-  const { orders } = req.body;
-
+  const { orders, isFree } = req.body;
   try {
     if (orders.length <= 0) {
       res.status(500).send("Server error");
     }
     let totalPrice = 0;
     orders.map((item) => {
-      totalPrice = totalPrice + parseInt(item.price);
+      totalPrice = !isFree ? totalPrice + parseInt(item.price) : 0;
+      payment_type = item.payment_type
     });
     orders.map(async (item) => {
       let orderDetail = await OrderDetail.findById(item._id);
-      orderDetail.price = item.price;
+      orderDetail.price = !isFree ? item.price : 0;
+      orderDetail.comment = item.comment;
       orderDetail.payment_type = item.payment_type;
       await orderDetail.save();
     });
@@ -97,18 +108,51 @@ router.post("/save-order-price", auth, async (req, res) => {
   }
 });
 
+// set hold
+
+router.post("/hold", auth, async (req, res) => {
+  const { id, internal_comment } = req.body;
+  console.log(internal_comment, "this is hold id");
+
+  try {
+    let order = await Order.findById(id);
+    if (order.hold === 0) {
+      order.hold = 1;
+    } else {
+      order.hold = 0;
+    }
+    order.internal_comment = internal_comment;
+    // if(order.internal_coment) {
+    //   order
+    // }
+    await order.save();
+
+    return res.json({
+      success: true
+    })
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error")
+  }
+})
+
 //update order
 
 router.post("/img-update", auth, async (req, res) => {
-  const { orders } = req.body;
-
+  const { orders, id, internal_comment } = req.body;
   try {
+    let order = await Order.findById(id);
+    order.internal_comment = internal_comment;
+    await order.save();
+
     if (orders.length <= 0) {
       res.status(500).send("Server error");
     }
     orders.map(async (item, index) => {
       let orderDetail = await OrderDetail.findById(item._id);
-      orderDetail.client_art_up = req.files[index] ? req.files[index].filename : null;
+      orderDetail.client_art_up = req.files[index] ? req.files[index].filename : orderDetail.client_art_up;
+      orderDetail.comment = item.comment;
       await orderDetail.save();
     });
 
@@ -116,13 +160,12 @@ router.post("/img-update", auth, async (req, res) => {
       success: true,
     });
   } catch (err) {
-    res.status(500).send("Server error");
+    res.status(500).send("Server error!");
   }
 });
 
 router.post("/assign-staff", auth, async (req, res) => {
   const { orders } = req.body;
-
   try {
     if (orders.length <= 0) {
       res.status(500).send("Server error");
@@ -131,6 +174,7 @@ router.post("/assign-staff", auth, async (req, res) => {
     orders.map(async (item, index) => {
       let orderDetail = await OrderDetail.findById(item._id);
       orderDetail.staff_id = item.staff_id;
+      orderDetail.comment = item.comment;
       await orderDetail.save();
     });
     return res.json({
@@ -182,7 +226,7 @@ router.get("/list", async (req, res) => {
       }
       : {};
     const { limit, offset } = getPagination(page, perPage);
-    const orders = await Order.paginate(condition, {
+    const orders = await OrderDetail.paginate(condition, {
       offset,
       limit,
     });
@@ -211,7 +255,7 @@ router.get("/approve", async (req, res) => {
       limit,
     });
     res.json(orders);
-    console.log(orders)
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -235,7 +279,7 @@ router.get("/pending", async (req, res) => {
       limit,
     });
     res.json(orders);
-    console.log(orders)
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -262,7 +306,7 @@ router.get("/inproduction", async (req, res) => {
       limit,
     });
     res.json(orders);
-    console.log(orders)
+
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
@@ -354,10 +398,10 @@ router.get("/current/:id", async (req, res) => {
       }
       : { user_id: req.params.id };
 
-    const orders = await Order.find(condition)
+    const orders = await OrderDetail.find(condition)
       .skip(skip)
       .limit(limit);
-    const count = await Order.countDocuments(condition);
+    const count = await OrderDetail.countDocuments(condition);
     res.json({
       orders,
       totalPages: Math.ceil(count / limit),
@@ -371,7 +415,7 @@ router.get("/current/:id", async (req, res) => {
 
 router.delete("/:id", auth, async (req, res) => {
   try {
-    await Order.findOneAndDelete({ _id: req.params.id });
+    await OrderDetail.findOneAndDelete({ _id: req.params.id });
     res.json({
       state: true,
     });
@@ -447,7 +491,7 @@ router.get("/monthly", async (req, res) => {
             $gte: startOfYear,
             $lt: endOfYear
           },
-          status: "6"
+          status: "7"
         }
       },
       {
@@ -486,7 +530,7 @@ router.get("/today/price", async (req, res) => {
         $gte: startOfDay,
         $lt: endOfDay
       },
-      status: '6'
+      status: '7'
     });
 
     res.json({
@@ -512,7 +556,7 @@ router.get("/monthly/price", async (req, res) => {
             $gte: startOfYear,
             $lte: endOfYear
           },
-          status: '6'
+          status: '7'
         }
       },
       {
@@ -542,7 +586,7 @@ router.get("/totalprice", async (req, res) => {
   try {
 
     const orders = await Order.find({
-      status: '6'
+      status: '7'
     });
 
     res.json({
@@ -560,7 +604,7 @@ router.get("/paid/:id", async (req, res) => {
 
     const orders = await Order.find({
       user_id: id,
-      status: '6'
+      status: '7'
     });
 
     let totalPrice = 0;
@@ -596,7 +640,7 @@ router.get("weekly/paid/:id", async (req, res) => {
             $gte: startOfWeek,
             $lte: endOfWeek
           },
-          status: '6'
+          status: '7'
         }
       },
       {
@@ -645,70 +689,70 @@ router.get("/send-invoice-email", async (req, res) => {
   }
 });
 
-async function sendPayPalInvoice(email, subject, body, amount) {
-  const invoice = {
-    merchant_info: {
-      email: "YOUR_PAYPAL_EMAIL",
-      business_name: "YOUR_BUSINESS_NAME",
-    },
-    billing_info: [
-      {
-        email: email,
-      },
-    ],
-    items: [
-      {
-        name: "Invoice",
-        quantity: 1,
-        unit_price: {
-          currency: "USD",
-          value: amount,
-        },
-      },
-    ],
-    note: body,
-    amount: {
-      currency: "USD",
-      total: amount,
-    },
-  };
+// async function sendPayPalInvoice(email, subject, body, amount) {
+//   const invoice = {
+//     merchant_info: {
+//       email: "YOUR_PAYPAL_EMAIL",
+//       business_name: "YOUR_BUSINESS_NAME",
+//     },
+//     billing_info: [
+//       {
+//         email: email,
+//       },
+//     ],
+//     items: [
+//       {
+//         name: "Invoice",
+//         quantity: 1,
+//         unit_price: {
+//           currency: "USD",
+//           value: amount,
+//         },
+//       },
+//     ],
+//     note: body,
+//     amount: {
+//       currency: "USD",
+//       total: amount,
+//     },
+//   };
 
-  try {
-    const createdInvoice = await paypal.invoice.create(invoice);
-    const invoiceId = createdInvoice.id;
+//   try {
+//     const createdInvoice = await paypal.invoice.create(invoice);
+//     const invoiceId = createdInvoice.id;
 
-    // Create a nodemailer transporter
-    const transporter = nodemailer.createTransport({
-      service: "YOUR_EMAIL_SERVICE",
-      auth: {
-        user: "YOUR_EMAIL",
-        pass: "YOUR_EMAIL_PASSWORD",
-      },
-    });
+//     // Create a nodemailer transporter
+//     const transporter = nodemailer.createTransport({
+//       service: "YOUR_EMAIL_SERVICE",
+//       auth: {
+//         user: "YOUR_EMAIL",
+//         pass: "YOUR_EMAIL_PASSWORD",
+//       },
+//     });
 
-    // Send the email
-    const mailOptions = {
-      from: "YOUR_EMAIL",
-      to: email,
-      subject: subject,
-      text: body,
-      attachments: [
-        {
-          filename: "invoice.pdf",
-          path: `https://www.paypal.com/invoice/p/#${invoiceId}`,
-        },
-      ],
-    };
+//     // Send the email
+//     const mailOptions = {
+//       from: "YOUR_EMAIL",
+//       to: email,
+//       subject: subject,
+//       text: body,
+//       attachments: [
+//         {
+//           filename: "invoice.pdf",
+//           path: `https://www.paypal.com/invoice/p/#${invoiceId}`,
+//         },
+//       ],
+//     };
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log("Email sent: " + info.response);
-      }
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
+//     transporter.sendMail(mailOptions, function (error, info) {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         console.log("Email sent: " + info.response);
+//       }
+//     });
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
 module.exports = router;

@@ -39,7 +39,7 @@ export default function userPermitModal(props) {
             to_user_id: props.user._id,
             message: message,
         };
-        console.log(permitUser)
+  
         try {
             const response = await UserService.permitUser(permitUser);
             setMessageFlag(false)

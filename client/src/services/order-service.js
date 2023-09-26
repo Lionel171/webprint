@@ -55,6 +55,10 @@ class OrderService {
     const saveOrderPriceEndpoint = "api/orders/save-order-price";
     return await HttpService.post(saveOrderPriceEndpoint, payload);
   };
+  setHold = async (payload) => {
+    const setholdEndpoint = "api/orders/hold";
+    return await HttpService.post(setholdEndpoint, payload);
+  }
   
 
   getOrderDetailList = async (order_id) => {

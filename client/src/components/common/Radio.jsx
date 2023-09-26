@@ -126,9 +126,6 @@ export function RadioHorizontal({ label, items, value, onChange, onClick, active
 }
 
 export function RadioVertical({ items, value, setSelected, activeColor }) {
-	useEffect(() => {
-		console.log(value);
-	}, []);
 	return (
 		<RadioGroup value={value} onChange={setSelected}>
 			<RadioGroup.Label className='sr-only'> Pricing items </RadioGroup.Label>

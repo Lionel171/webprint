@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, PencilSquareIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, EyeIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import ReactTimeAgo from 'react-time-ago';
 import DropDown from './Dropdown';
-import { SelectMenu, SelectNoSearch } from '@/components/common/Select';
+import { SelectNoSearch } from '@/components/common/Select';
 
-import { useMaterialTailwindController, setOpenSidenav } from "@/context";
-import { useNavigate, Router, NavLink } from 'react-router-dom';
+// import { useMaterialTailwindController, setOpenSidenav } from "@/context";
+import { useNavigate, NavLink } from 'react-router-dom';
 import CustomPagination from "../../../../components/common/CustomPagination";
 const statusList = [
   { id: '0', name: "All" },
@@ -25,13 +25,22 @@ const paymentTypeList = [
   { id: '5', name: "Free" },
 ]
 
+
+const serviceTypeList = [
+  { id: 0, name: "", value: "" },
+  { id: 1, name: "We Print DTF", value: "we_print_dtf" },
+  { id: 2, name: "Embroidery", value: "embroidery" },
+  { id: 3, name: "Screen Printing", value: "screen_printing" },
+  { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
+  { id: 5, name: "Signs & Banners", value: "signs_banners" },
+];
+
 export default function Content({
   orders,
   editFunction,
   deleteFunction,
   searchTxt,
   setSearchTxt,
-  isAdmin,
   currentPage,
   totalPages,
   total,
@@ -40,13 +49,14 @@ export default function Content({
   onPageChange,
 }) {
   const navigate = useNavigate();
-  const [controller, dispatch] = useMaterialTailwindController();
+  // const [controller, dispatch] = useMaterialTailwindController();
   const [filterOrders, setFilterOrders] = useState([]);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
 
   useEffect(() => {
     setFilterOrders(orders);
+    console.log(filterOrders, "this is filter orders")
   }, [orders]);
 
 
@@ -79,7 +89,7 @@ export default function Content({
     } else {
       setSelectedStatus(selectedStatus);
     }
-
+   
     console.log(selectedStatus, "status ?????")
   }
 
@@ -108,22 +118,22 @@ export default function Content({
         <div className="mt-3 w-full sm:mt-0 sm:ml-4 sm:col-3">
           <div className="flex rounded-md shadow-sm mb-5">
             <div className="relative grow focus-within:z-10">
-            <SelectNoSearch
-              labelName={'Status'}
-              onChange={(e) => onChangeStatus(e)}
-              items={statusList}
-            />
+              <SelectNoSearch
+                labelName={'Status'}
+                onChange={(e) => onChangeStatus(e)}
+                items={statusList}
+              />
             </div>
           </div>
         </div>
         <div className="mt-3 w-full sm:mt-0 sm:ml-4 sm:col-3 ">
           <div className="flex rounded-md shadow-sm mb-5">
             <div className="relative grow focus-within:z-10">
-            <SelectNoSearch
-              labelName="Payment Type"
-              onChange={(e) => onChangePaymentType(e)}
-              items={paymentTypeList}
-            />
+              <SelectNoSearch
+                labelName="Payment Type"
+                onChange={(e) => onChangePaymentType(e)}
+                items={paymentTypeList}
+              />
             </div>
           </div>
         </div>
@@ -182,7 +192,19 @@ export default function Content({
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
               >
+                No
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+              >
                 Title
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+              >
+                OrderID
               </th>
               <th
                 scope="col"
@@ -194,7 +216,13 @@ export default function Content({
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
               >
-                Value
+                Price
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
+              >
+                Product Service
               </th>
               <th
                 scope="col"
@@ -215,12 +243,20 @@ export default function Content({
               </th>
             </tr>
           </thead>
-          <tbody className="border-b border-gray-200 dark:border-gray-700">
+          <tbody className="border-b border-gray-200 dark:border-gray-700 ">
             {orders &&
               filterOrders.map((order, index) => (
-                <tr key={index} className='border-b border-gray-200 dark:border-gray-700'>
+                <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3'>
+                  <td className="whitespace-nowrap py-4 text-sm text-gray-800 text-center">
+                      <dl className="font-medium">
+                        <dt className="sr-only">Order</dt>
+                        <dd className="mt-1 truncate text-[15px] text-gray-700">
+                          {index + 1}
+                        </dd>
+                      </dl>
+                    </td>
                   <NavLink to={"/dashboard/orders/view"} state={order}>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 text-center ml-2">
                       <dl className="font-medium">
                         <dt className="sr-only">Order</dt>
                         <dd className="mt-1 truncate text-[15px] text-gray-700">
@@ -230,72 +266,93 @@ export default function Content({
                     </td>
                   </NavLink>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                    {parseInt(order.status) === 1 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-red-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        Pending Review
-                      </span>
-                    ) : parseInt(order.status) === 2 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-yellow-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        Pre-Production
-                      </span>
-                    ) : parseInt(order.status) === 3 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-green-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        Ready for Production
-                      </span>
-                    ) : parseInt(order.status) === 4 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-blue-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        In Production
-                      </span>
-                    ) : parseInt(order.status) === 5 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-blue-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        Complete
-                      </span>
-                    ) : parseInt(order.status) === 6 ? (
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-indigo-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        Final Inspection
-                      </span>
+                    <dl className="font-medium">
+                      <dt className="sr-only">Order</dt>
+                      <dd className="mt-1 truncate text-[15px] text-gray-700">
+                        {order.order_id}
+                      </dd>
+                    </dl>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    {order.hold === 0 ? (
+                      parseInt(order.status) === 1 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-red-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Pending Review
+                        </span>
+                      ) : parseInt(order.status) === 2 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-yellow-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Pre-Production
+                        </span>
+                      ) : parseInt(order.status) === 3 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-green-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Ready for Production
+                        </span>
+                      ) : parseInt(order.status) === 4 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-blue-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          In Production
+                        </span>
+                      ) : parseInt(order.status) === 5 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-blue-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Complete
+                        </span>
+                      ) : parseInt(order.status) === 6 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-indigo-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Final Inspection
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-indigo-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Ready for pickup/ship
+                        </span>
+                      )
                     ) : (
                       <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
                         <svg
@@ -305,12 +362,16 @@ export default function Content({
                         >
                           <circle cx={3} cy={3} r={3} />
                         </svg>
-                        Ready for pickup/ship
+                        Holding
                       </span>
                     )}
+
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
-                    ${order.total_value}
+                    {order.price !== 0 ? '$' + order.price : '-------'}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
+                    {serviceTypeList[order.service_type].name}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 ">
                     {order.date && (

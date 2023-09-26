@@ -1,18 +1,20 @@
 
 import Input from '@/components/common/Input';
-import { PhotoIcon, UserCircleIcon } from '@heroicons/react/24/solid'
+import { PhotoIcon, PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid'
 import { useEffect, useState, useRef } from 'react';
-import DefaultImage from '../../../../public/img/default.png';
+import DefaultImage from '../../../../public/img/upload.jpg';
 import OrderService from "@/services/order-service"
 import { SelectNoSearch } from '@/components/common/Select';
-import { PlusCircleIcon } from '@heroicons/react/24/outline';
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/react/24/outline';
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
 import DepartmentService from "@/services/department-service";
+import { FaDownload, FaUpload } from 'react-icons/fa';
+import Tiff from 'tiff.js'
 
 
 const userTypeList = [
@@ -38,35 +40,38 @@ export function OrderEdit() {
     const order = location.state;
     const [title, setTitle] = useState('');
     const [titleFlag, setTitleFlag] = useState(false);
-    const [imageFiles, setImageFiles] = useState([]);
+    const [uploadFiles, setUplaodFiles] = useState([]);
+    const [uploadFile, setUplaodFile] = useState([]);
     const avatarFileRef = useRef([]);
-    const [avatarPhoto, setAvatarPhoto] = useState('');
-    const [avatarPhotoFlag, setAvatarPhotoFlag] = useState(false);
     const API_URL = process.env.API_URL;
     const [customer, setCustomer] = useState({});
     const [customerList, setCustomerList] = useState([]);
     const [customerFlag, setCustomerFlag] = useState(false);
     const [isView, setIsView] = useState(false);
-    const [user, setUser] = useState([]);
     const [orders, setOrders] = useState([]);
-    // const [paymentType, setPaymentType] = useState("");
-    
+    const [selectedUploadId, setSelectedUploadId] = useState(0)
+    const [isSave, setIsSave] = useState(false)
+
     const serviceTypeList = [
         { id: 0, name: "", value: "" },
-        { id: 1, name: "We Print DTF", value: "we_print_dtf" },
-        { id: 2, name: "Embroidery", value: "embroidery" },
-        { id: 3, name: "Screen Printing", value: "screen_printing" },
-        { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
-        { id: 5, name: "Signs & Banners", value: "signs_banners" },
-      ];
+        { id: 1, name: "Screen Peinr", value: "screen_print" },
+        { id: 2, name: "We Print DTF", value: "we_print_dtf" },
+        { id: 3, name: "Gang Sheet", value: "gang_sheet" },
+        { id: 4, name: "Signs & Banners", value: "signs_bannersr" },
+        { id: 5, name: "Embroidery", value: "embroidery" },
+        { id: 6, name: "Vinyl Transfer", value: "vinyl_transfer" },
+        { id: 7, name: "Sublimation", value: "sublimation" },
+    ];
 
     const addOrder = (title, id) => {
+        setIsSave(true);
         let order = {
             quantity: [""],
             size: [""],
             comment: '',
             payment_type: '',
-            client_art_up: null,
+            client_art_up: [null],
+            files: [null],
             service_type: 0,
             serviceTypeFlag: false,
             paymentTypeFlag: false,
@@ -76,12 +81,8 @@ export function OrderEdit() {
             imgFlag: false,
         };
         let temp = [...orders, order];
-        // const payment_type = paymentType;
-        // payment_type.push("");
-        // setPaymentType(payment_type);
-
+        setUplaodFile([])
         setOrders(temp);
-        console.log(temp)
     };
 
     const addSize = (index) => {
@@ -89,39 +90,155 @@ export function OrderEdit() {
         tempOrders[index].size.push("");
         tempOrders[index].quantity.push("");
         setOrders(tempOrders);
-        console.log(orders);
+
+    };
+
+    const AddUploadFile = (index) => {
+        let tempOrders = [...orders];
+        tempOrders[index].client_art_up.push(null);
+        setOrders(tempOrders);
+    }
+
+    const onDeleteUploadFile = (index, i) => {
+        let tempOrders = [...orders];
+        tempOrders[index].client_art_up = tempOrders[index].client_art_up.filter((uploadfile, subindex) => subindex !== i);
+        setOrders(tempOrders);
     };
 
 
-    const onChangeImagePhoto = (event, index) => {
+    const onDeleteSize = (index) => {
+        let tempOrders = [...orders];
+        tempOrders[index].size.pop();
+        tempOrders[index].quantity.pop();
+        setOrders(tempOrders);
+    };
+
+
+    const onChangeImagePhoto = (event, index, i) => {
+
         if (event.target.files && event.target.files[0]) {
-            let tempFilie = [...imageFiles]
-            tempFilie[index] = event.target.files[0];
-            setImageFiles(tempFilie);
-            let reader = new FileReader();
-            reader.onload = event => {
+            let tempFile = [...uploadFile];
+            let tempFiles = [...uploadFiles];
+
+
+            // Push the selected files into the tempFile array
+            console.log(event.target.files, event.target.files.length)
+
+            for (let j = 0; j < event.target.files.length; j++) {
+                tempFile[i] = event.target.files[j];
+            }
+            tempFiles[index] = tempFile;
+
+            setUplaodFile(tempFile);
+            setUplaodFiles(tempFiles);
+
+
+            // Get the file extension
+            const fileExtension = event.target.files[0].name.split('.').pop();
+
+            // Check if the file is an image
+            const isImage = event.target.files[0].type.startsWith('image/');
+
+            if (!isImage) {
+                const fileName = event.target.files[0].name;
+
+                // Update the orders state with the file name and extension
                 const temp = orders.map((obj, subindex) => {
                     if (subindex === index) {
+                        const updatedFile = obj.client_art_up.map((uploadfile, sub_subindex) => {
+                            if (sub_subindex === i) {
+                                return fileName
+                            }
+                            return uploadfile
+                        })
+                        const flag = updatedFile.some((file) => file === null);
+
                         return {
                             ...obj,
-                            client_art_up: event.target.result,
-                            imgFlag: false,
+                            client_art_up: updatedFile,
+                            fileExtension: fileExtension,
+                            imgFlag: flag,
                         };
                     }
                     return obj;
                 });
                 setOrders(temp);
-            };
-            reader.readAsDataURL(event.target.files[0]);
+            } else {
+                if (event.target.files[0].type === 'image/tiff') {
+                    const reader = new FileReader();
+
+                    reader.onload = async () => {
+                        const tiff = new Tiff({ buffer: reader.result });
+
+                        // Convert the TIFF to a canvas
+                        const canvas = tiff.toCanvas();
+
+                        // Convert the canvas to a data URL
+                        const dataUrl = canvas.toDataURL('image/png');
+
+                        // Update the orders state with the data URL
+                        const temp = orders.map((obj, subindex) => {
+                            if (subindex === index) {
+                                const updatedFile = obj.client_art_up.map((uploadfile, sub_subindex) => {
+                                    if (sub_subindex === i) {
+                                        return dataUrl
+                                    }
+                                    return uploadfile
+
+                                })
+                                const flag = updatedFile.some((file) => file === null);
+
+                                return {
+                                    ...obj,
+                                    client_art_up: updatedFile,
+                                    imgFlag: flag,
+                                };
+                            }
+                            return obj;
+                        });
+                        setOrders(temp);
+                    };
+
+                    reader.readAsArrayBuffer(event.target.files[0]);
+                } else {
+                    let reader = new FileReader();
+                    reader.onload = event => {
+                        const temp = orders.map((obj, subindex) => {
+                            if (subindex === index) {
+                                const updatedFile = obj.client_art_up.map((uploadfile, sub_subindex) => {
+                                    if (sub_subindex === i) {
+                                        return event.target.result
+                                    }
+                                    return uploadfile
+
+                                })
+                                const flag = updatedFile.some((file) => file === null);
+
+                                return {
+                                    ...obj,
+                                    client_art_up: updatedFile,
+                                    imgFlag: flag,
+                                };
+                            }
+                            return obj;
+                        });
+                        setOrders(temp);
+                    };
+                    reader.readAsDataURL(event.target.files[0]);
+                }
+
+            }
         }
     };
 
-    const avatarImageClick = (index) => {
+    const avatarImageClick = (index, i) => {
         if (order) {
             return;
         }
+        setSelectedUploadId(i)
         avatarFileRef.current[index].click();
     };
+
 
     const onChangeQuantity = (value, index, i) => {
         const temp = orders.map((obj, subindex) => {
@@ -220,15 +337,15 @@ export function OrderEdit() {
             return index !== subIndex;
         });
         setOrders(temp);
-        let tempFile = [...imageFiles]
+        let tempFile = [...uploadFile]
         tempFile = tempFile.filter((obj, subIndex) => {
             return index !== subIndex;
         });
-        setImageFiles(tempFile);
+        setUplaodFile(tempFile);
     };
 
     const saveOrder = async () => {
-        console.log(orders, "adadd>>>>>")
+
         let flag = true;
 
         if (title === "") {
@@ -269,7 +386,7 @@ export function OrderEdit() {
                 };
             }
 
-            if (obj.client_art_up === "") {
+            if (obj.client_art_up === "" || obj.client_art_up.length === 0) {
                 flag = false;
                 return {
                     ...obj,
@@ -288,9 +405,10 @@ export function OrderEdit() {
 
         let newOrder = {
             title: title,
-            files: imageFiles,
+            files: uploadFiles,
             orders: orders,
         };
+
         if (isAdmin) {
             newOrder['customerId'] = customer.id
         }
@@ -306,7 +424,6 @@ export function OrderEdit() {
                 text: `${localStorage.getItem("username")} requested new order.`
             };
             const email_response = await userService.sendEmail(messageData);
-            console.log(email_response, "email_Res")
         }
     }
 
@@ -317,7 +434,6 @@ export function OrderEdit() {
         async function fetchData() {
             const response = await OrderService.getOrderDetailList(order._id);
             setOrders(response.entities);
-            console.log(orders)
         }
 
         async function fetchCustomerList() {
@@ -460,20 +576,35 @@ export function OrderEdit() {
                                                             disabled={isView}
                                                         />
                                                     </div>
+                                                    {i > 0 ? (
+                                                        <div className="items-end h-full mt-2 pt-4">
+                                                            <MinusCircleIcon
+                                                                className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                                onClick={() => onDeleteSize(index)}
+                                                            />
+                                                            <label>Delete</label>
+
+                                                            <p><small>You can delete this (size and quantity)</small></p>
+
+
+                                                        </div>
+                                                    ) : (
+                                                        <div className="items-end h-full  mt-2 pt-4">
+                                                            <PlusCircleIcon
+                                                                className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                                onClick={() => addSize(index)}
+                                                            />
+                                                            <label>Add more</label>
+
+                                                            <p><small>You can add more (size and quantity)</small></p>
+                                                        </div>
+                                                    )}
+                                                    <br />
 
                                                 </>
+
                                             )
                                         })}
-
-                                        <div className="items-end h-full w-[50px] mt-2 pt-4">
-                                            <PlusCircleIcon
-                                                className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
-                                                onClick={() => addSize(index)}
-                                            />
-                                        </div>
-
-
-
 
                                         <div className="mt-2">
                                             <label className='block text-sm font-medium text-gray-700'>
@@ -495,83 +626,81 @@ export function OrderEdit() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex w-full justify-start  mt-8 sm:ml-10 ">
-                                        <div className="flex items-center ">
-                                            <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
-                                            <img
-                                                src={order.client_art_up ? isView ? API_URL + '/' + order.client_art_up : order.client_art_up : DefaultImage}
-                                                alt='avatarImage'
-                                                onClick={() => avatarImageClick(index)}
-                                                width={250}
-                                                height={250}
-                                                className=''
-                                                style={{ objectFit: 'contain' }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="items-end h-full w-[50px] mt-2">
+                                    {order.client_art_up.map((upload, i) => (
+                                        <React.Fragment key={`${i}-${upload}`}>
+                                            <div className=" mt-8 sm:ml-10 sm:pl-10">
+                                                <div className="">
+                                                    <input key={i}
+                                                        type="file"
+                                                        onChange={(event) => { onChangeImagePhoto(event, index, selectedUploadId) }}
+                                                        hidden
+                                                        name={i}
+                                                        ref={(el) => (avatarFileRef.current[index] = el)}
+                                                    />
+                                                    {upload && !upload.startsWith('data:image/') ? (
+                                                        <p className='hover:text-green-500 cursor-pointer' onClick={() => avatarImageClick(index, i)}>{upload} (This file is not able to image format)</p>
+                                                    ) : (
+                                                        <img
+                                                            src={upload ? (isView ? API_URL + "/" + upload : upload) : DefaultImage}
+                                                            alt={`This file is not able to display with image format(.${upload && upload.slice(upload.lastIndexOf('.') + 1).toLowerCase()}).`}
+                                                            id={`img${i}`}
+                                                            onClick={() => avatarImageClick(index, i)}
+                                                            width={250}
+                                                            height={250}
+                                                            className="cursor-pointer"
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {i > 0 ? (
+                                                <div className="items-end h-full mt-2 pt-4">
+                                                    <MinusCircleIcon
+                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                        onClick={() => onDeleteUploadFile(index, i)}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="items-end h-full w-[50px] mt-2 ml-1">
+                                                    <PlusCircleIcon
+                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                        onClick={() => AddUploadFile(index)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+
+                                    <div className="w-[50px] mt-2 ">
                                         <TrashIcon
                                             className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
                                             onClick={() => onDeleteButton(index)}
                                         />
                                     </div>
+
+
                                 </div>
                             ))}
-                        </div>
 
-                        {/* <div className="sm:col-span-3 sm:col-start-1">
-                            <legend className="text-sm font-semibold leading-6 text-gray-900">Is Tax Exempt</legend>
-                            <div className="mt-6 space-y-6">
-                                <div className="flex items-center gap-x-3">
-                                    <input
-                                        id="push-everything"
-                                        name="push-notifications"
-                                        type="radio"
-                                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    />
-                                    <label htmlFor="push-everything" className="block text-sm font-medium leading-6 text-gray-900">
-                                        Everything
-                                    </label>
-                                </div>
-                                <div className="flex items-center gap-x-3">
-                                    <input
-                                        id="push-email"
-                                        name="push-notifications"
-                                        type="radio"
-                                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    />
-                                    <label htmlFor="push-email" className="block text-sm font-medium leading-6 text-gray-900">
-                                        Same as email
-                                    </label>
-                                </div>
-                                <div className="flex items-center gap-x-3">
-                                    <input
-                                        id="push-nothing"
-                                        name="push-notifications"
-                                        type="radio"
-                                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                    />
-                                    <label htmlFor="push-nothing" className="block text-sm font-medium leading-6 text-gray-900">
-                                        No push notifications
-                                    </label>
-                                </div>
-                            </div>
-                        </div> */}
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-x-6">
-                <button type="button" className="text-sm font-semibold leading-6 text-gray-900">
+                <button type="button" className="rounded-md bg-red-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300">
                     Cancel
                 </button>
-                <button
-                    type="submit"
-                    onClick={saveOrder}
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                    Save
-                </button>
+                {isSave && (
+                    <button
+                        type="submit"
+                        onClick={saveOrder}
+                        className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                    >
+                        Save
+                    </button>
+                )}
+
             </div>
         </div>
     )

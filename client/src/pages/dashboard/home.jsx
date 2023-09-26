@@ -199,7 +199,8 @@ export function Home() {
 
 
   return (
-    localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager') ? (
+    // localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager')
+    !localStorage.getItem('role').includes('normal')  ? (
       <div className="mt-12">
         <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-5">
           {statisticsCardsData.map(({ icon, title, footer, value, ...rest }) =>
@@ -411,70 +412,93 @@ export function Home() {
             </CardBody>
           </Card>
         </div>
-      </div>
-    ) : (
-      <div className="mt-12">
-        <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-2">
-          {statisticsChartsData.map((props) => (
-            props.title === "Customers" ? (
-              <StatisticsChart
-                key={props.title}
-                {...props}
-                title="Weekly Payment"
-                chart={{
-                  ...props.chart,
-                  series: [
-                    {
-                      ...props.chart.series[0],
-                      data: weekCustomers,
-                    },
-                  ],
-                }}
-              // footer={
-              //   <Typography
-              //     variant="small"
-              //     className="flex items-center font-normal text-blue-gray-600"
-              //   >
-              //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
-              //     &nbsp;{props.footer}
-              //   </Typography>
-              // }
-              />
-            ) :
-              props.title === "Monthly Sales" ? (
-                <></>
-              ) :
-                (
-                  <StatisticsChart
-                    key={props.title}
-                    {...props}
-                    title="Monthly Payment"
-                    chart={{
-                      ...props.chart,
-                      series: [
-                        {
-                          ...props.chart.series[0],
-                          data: monthlyCompletedOrders,
-                        },
-                      ],
-                    }}
-                  // footer={
-                  //   <Typography
-                  //     variant="small"
-                  //     className="flex items-center font-normal text-blue-gray-600"
-                  //   >
-                  //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
-                  //     &nbsp;{props.footer}
-                  //   </Typography>
-                  // }
-                  />
-                )
+      </div>) : (
+         <section className="flex justify-center items-center  h-screen">
+         <Card>
+           <CardHeader color="blue" contentPosition="none">
+             <img
+               src="/img/welcome(3).jpg"
+               alt="The cover of Stubborn Attachments"
+             />
+           </CardHeader>
+           <CardBody>
+             <div className="flex flex-col items-center">
+     
+               <Typography color="blueGray" size="2xl" >
+                 <strong>Welcome to our company</strong>
+               </Typography>
 
-          ))}
-        </div>
-      </div>
+             </div>
+           </CardBody>
+           <div className="flex justify-center">
+           
+           </div>
+         </Card>
+       </section>
+      )
+  //   ) : (
+  //     <div className="mt-12">
+  //       <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-2">
+  //         {statisticsChartsData.map((props) => (
+  //           props.title === "Customers" ? (
+  //             <StatisticsChart
+  //               key={props.title}
+  //               {...props}
+  //               title="Weekly Payment"
+  //               chart={{
+  //                 ...props.chart,
+  //                 series: [
+  //                   {
+  //                     ...props.chart.series[0],
+  //                     data: weekCustomers,
+  //                   },
+  //                 ],
+  //               }}
+  //             // footer={
+  //             //   <Typography
+  //             //     variant="small"
+  //             //     className="flex items-center font-normal text-blue-gray-600"
+  //             //   >
+  //             //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+  //             //     &nbsp;{props.footer}
+  //             //   </Typography>
+  //             // }
+  //             />
+  //           ) :
+  //             props.title === "Monthly Sales" ? (
+  //               <></>
+  //             ) :
+  //               (
+  //                 <StatisticsChart
+  //                   key={props.title}
+  //                   {...props}
+  //                   title="Monthly Payment"
+  //                   chart={{
+  //                     ...props.chart,
+  //                     series: [
+  //                       {
+  //                         ...props.chart.series[0],
+  //                         data: monthlyCompletedOrders,
+  //                       },
+  //                     ],
+  //                   }}
+  //                 // footer={
+  //                 //   <Typography
+  //                 //     variant="small"
+  //                 //     className="flex items-center font-normal text-blue-gray-600"
+  //                 //   >
+  //                 //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+  //                 //     &nbsp;{props.footer}
+  //                 //   </Typography>
+  //                 // }
+  //                 />
+  //               )
 
-    )
+  //         ))}
+  //       </div>
+  //     </div>
+
+  //   )
 
   );
 }

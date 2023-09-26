@@ -43,7 +43,7 @@ export function timeSince(date) {
   if (interval > 1) {
     return Math.floor(interval) + ' minute ago';
   }
-  return Math.floor(seconds) + ' seconda ago';
+  return Math.floor(seconds) + ' seconds ago';
 }
 export const isSameSender = (messages, m, i, userId) => {
   return (
@@ -81,5 +81,3 @@ export const getChatPhoto = (activeChat, activeUser) => {
     ? API_URL + "/" + activeChat?.users[1]?.profile_image
     : API_URL + "/" +activeChat?.users[0]?.profile_image;
 };
-
-// API_URL + "/" + userWithProfileImage.profile_image 

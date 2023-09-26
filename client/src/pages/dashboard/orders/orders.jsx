@@ -22,6 +22,7 @@ export function Orders() {
   const [user, setUser] = useState('');
   const [role, setRole] = useState('');
   const [isDelete, setIsDelete] = useState(false);
+  const [isNextPage, setIsNextPage] = useState(false);
 
 
   const editItem = id => {
@@ -63,6 +64,7 @@ export function Orders() {
   }
   const onPageChange = (page) => {
     setCurrentPage(page);
+    setIsNextPage(true)
   };
   const setSearchTxt = (value) => {
     setSearch(value);
@@ -78,7 +80,7 @@ export function Orders() {
     if (user._id !== undefined) {
       fetchData('');
     }
-  }, [isDelete]);
+  }, [isDelete, isNextPage]);
   async function fetchData(search) {
     const query = {
       page: currentPage - 1,
@@ -114,6 +116,7 @@ export function Orders() {
     } else if (user.role.includes("normal")) {
       setLoadingData(true);
       const response = await OrderService.getOrderListByUserId(query, user._id);
+      console.log(response, "I am updated for customer")
       setOrders(response.orders);
       setTotalPages(response.totalPages);
       setTotal(response.orders.length);

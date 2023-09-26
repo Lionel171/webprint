@@ -410,6 +410,12 @@ export const routes = [
     role: "Production Manager",
     pages: [
       {
+        icon: <HomeIcon {...icon} />,
+        name: "dashboard",
+        path: "/home",
+        element: <Home />,
+      },
+      {
         icon: <UserCircleIcon {...icon} />,
         name: "profile",
         path: "/profile",
@@ -446,6 +452,12 @@ export const routes = [
     layout: "dashboard",
     role: "Production Staff",
     pages: [
+      {
+        icon: <HomeIcon {...icon} />,
+        name: "dashboard",
+        path: "/home",
+        element: <Home />,
+      },
       {
         icon: <UserCircleIcon {...icon} />,
         name: "profile",
@@ -502,6 +514,12 @@ export const routes = [
     layout: "dashboard",
     role: "normal",
     pages: [
+      // {
+      //   icon: <HomeIcon {...icon} />,
+      //   name: "home",
+      //   path: "/home",
+      //   element: <Home />,
+      // },
       {
         icon: <UserCircleIcon {...icon} />,
         name: "profile",

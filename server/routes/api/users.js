@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const auth = require("../../middleware/auth");
 // const { validationResult } = require("express-validator");
+const nodemailer = require("nodemailer");
 const { validationResult } = require("express-validator");
 // import formData from 'form-data';
 const formData = require("form-data");
@@ -583,9 +584,11 @@ router.get('/fetchUsers', auth, async (req, res) => {
 router.get('/staff-service', async (req, res) => {
   try {
     const { department } = req.query;
+    console.log(department, "departmetn staff")
     const staff = await User.find({
-      department: { $in: department }
-    })
+      department: { $in: department },
+      // role: { $in: ["Production Staff"] }
+    });
     const staffTypeList = staff.map((st, index) => ({
       name: st.contact_person,
       id: st._id,
@@ -593,34 +596,65 @@ router.get('/staff-service', async (req, res) => {
     }));   
     res.json({
       staff: staffTypeList
-    })
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error")
+    res.status(500).send("Server Error");
   }
-
-})
-
-//send email
-router.post("/sendEmail", async (req, res) => {
-  const client = mailgun.client({ username: "api", key: 'fe60c869863bad18f2b35332b101f08a-c30053db-91dce0e4' });
-  const messageData = {
-    from: req.body.from,
-    to: req.body.to,
-    // from: 'showstopperurbanwear@gmail.com',
-    // to: 'showstopperurbanwear@gmail.com',
-    subject: req.body.subject,
-    text: req.body.text
-  };
-  client.messages
-    .create('sandboxbabb1dd9978a40eba89c92c1c9e53c63.mailgun.org', messageData)
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
 });
+
+//send email using mailgun
+// router.post("/sendEmail", async (req, res) => {
+//   const client = mailgun.client({ username: "api", key: 'fe60c869863bad18f2b35332b101f08a-c30053db-91dce0e4' });
+//   const messageData = {
+//     from: req.body.from,
+//     to: req.body.to,
+//     // from: 'showstopperurbanwear@gmail.com',
+//     // to: 'showstopperurbanwear@gmail.com',
+//     subject: req.body.subject,
+//     text: req.body.text
+//   };
+//   client.messages
+//     .create('sandboxbabb1dd9978a40eba89c92c1c9e53c63.mailgun.org', messageData)
+//     .then((res) => {
+//       console.log(res);
+//     })
+//     .catch((err) => {
+//       console.error(err);
+//     });
+// });
+// -------------------------------------------------
+//using nodemailer
+router.post("/sendEmail", async (req, res) => {
+  try {
+    // Create a transporter object using your email service provider's SMTP settings
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'orochisugai@gmail.com',
+        pass: 'frsgnqfxbxmdurne',
+      },
+    });
+
+    // Create the email message
+    const messageData = {
+      from: req.body.from,
+      to: req.body.to,
+      subject: req.body.subject,
+      text: req.body.text,
+    };
+
+    // Send the email
+    const info = await transporter.sendMail(messageData);
+    console.log('Email sent:', info.response);
+
+    res.status(200).json({ success: true, message: 'Email sent successfully' });
+  } catch (error) {
+    console.log('Error sending email:', error);
+    res.status(500).json({ success: false, message: 'Failed to send email' });
+  }
+});
+
 
 
 module.exports = router;

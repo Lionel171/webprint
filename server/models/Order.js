@@ -9,6 +9,9 @@ const OrderSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Users",
     },
+    internal_comment: {
+      type: String
+    },
 
     title: {
       type: String,
@@ -22,6 +25,10 @@ const OrderSchema = new Schema(
       default: 0,
     },
     payment_req: {
+      type: Number,
+      default: 0,
+    },
+    hold: {
       type: Number,
       default: 0,
     },

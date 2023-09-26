@@ -42,7 +42,9 @@ export default function Content({
     deleteFunction(id);
   };
 
-  const len = users.length;
+
+  const len = users.filter(user => (!user.role.includes('admin') && !user.role.includes('normal'))).length;
+  console.log(users.filter(user => (!user.role.includes('admin') && !user.role.includes('normal'))), 'staff numbers')
   const rowCount = 10;
   const disCount = 5;
   const pageCount = Math.ceil(len / 10);
@@ -71,7 +73,7 @@ export default function Content({
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-  const uusers = users.slice((currentPage - 1) * rowCount, currentPage * rowCount);
+  const uusers = users.filter(user => (!user.role.includes('admin') && !user.role.includes("normal"))).slice((currentPage - 1) * rowCount, currentPage * rowCount);
 
   const openPermitModal = (user, status) => {
     setSelectedStatus(status.name)
@@ -88,7 +90,7 @@ export default function Content({
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
             <h1 className="text-base text-xl font-semibold leading-6 text-gray-900">
-              Users
+              Staffs
             </h1>
           </div>
           <div className="mt-3 w-full sm:mt-0 sm:ml-4 sm:w-[366.484px]">
@@ -187,15 +189,15 @@ export default function Content({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
-              {uusers.filter(user => (user.role[0] !== 'admin' && user.role[0] !== "normal")).map((user, index) => (
+              {uusers.map((user, index) => (
                 <tr key={index}>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                  <Link to={`/dashboard/users/edit/${user._id}`}>
-                    {user.name}
-                  </Link>
+                    <Link to={`/dashboard/users/edit/${user._id}`}>
+                      {user.name}
+                    </Link>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                    <div className="flex flex-col items-center justify-left gap-4 h-full">
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 " >
+                    <div className="flex-col items-center justify-center h-full">
                       <Avatar src={user.profile_image ? API_URL + '/' + user.profile_image : DefaultImage} alt={user.contact_person} size="sm" />
                       <div>
                         <Typography variant="small" color="blue-gray" className="font-semibold">
@@ -204,8 +206,6 @@ export default function Content({
                       </div>
                     </div>
                   </td>
-
-
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.email}
                   </td>
@@ -266,7 +266,12 @@ export default function Content({
         <div className="flex items-center justify-end bg-white px-1 py-3 sm:px-4">
           <div className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-700"></p>
+              <p className="text-sm text-gray-700">
+
+                showing {" "}
+                <span className="font-medium">{len}</span> results
+
+              </p>
             </div>
             <div>
               <nav

@@ -50,13 +50,14 @@ function Group() {
   }
   const handleSubmit = async () => {
     if (selectedUser.length >= 2) {
-
       await createGroup({
         chatName,
         users: JSON.stringify(selectedUser.map((e) => e._id))
       })
       dispatch(fetchChats())
       handleClose()
+    } else {
+      alert("You must select over 2 members")
     }
   }
   useEffect(() => {
@@ -97,7 +98,7 @@ function Group() {
                 selectedUser?.map((e) => {
                   return (
                     <button key={e} onClick={() => deleteSelected(e)} className='flex items-center gap-x-1 bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-green-400 border border-green-400'>
-                      <span >{e.name}</span>
+                      <span >{e.contact_person}</span>
                       <RxCross2 />
                     </button>
                   )

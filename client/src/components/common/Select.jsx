@@ -349,7 +349,7 @@ export function SelectNoSearch({
 					</Combobox.Options>
 				)}
 			</div>
-			{error ? <span className='text-sm text-red-400'>required</span> : null}
+			{error ? <span className='text-sm text-red-400'>This field is required</span> : null}
 		</Combobox>
 	);
 }
@@ -498,9 +498,7 @@ export function SelectRole({ children, items, labelName, onChange, value, error,
 
 export function SelectNormal({ items, onChange, value }) {
 	const [selected, setSelected] = useState(value);
-	useEffect(() => {
-		console.log(items);
-	}, []);
+
 	return (
 		<Listbox value={selected} onChange={onChange}>
 			{({ open }) => (

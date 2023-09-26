@@ -28,7 +28,6 @@ export function Navbar({ brandName, routes, action }) {
 
   const handleClickOutside = (event) => {
     // Close the side nav if it is open and the click is outside the nav area or inside the mobile navigation area
-    console.log("aaaaaaaaaaaaa")
     if (
       openNav &&
       !event.target.closest(".navbar-container") &&

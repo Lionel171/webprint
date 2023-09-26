@@ -49,8 +49,11 @@ const OrderSchema = new Schema(
     store_at_up: {
       type: String,
     },
+    original_art_up: {
+      type : Array , "default" : [""],
+    },
     client_art_up: {
-      type: String,
+      type : Array , "default" : [""],
     },
     hold: {
       type: Number,

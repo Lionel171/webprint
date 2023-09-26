@@ -164,9 +164,7 @@ export function SignUp() {
     };
     try {
       const response = await AuthService.register(myData);
-      console.log("response", response)
-      // authContext.login(response.access_token, response.user.role);
-      // if (response.success) {
+
         setIsMessage(true);
         const messageData = {
           from: 'showstopperurbanwear@gmail.com',

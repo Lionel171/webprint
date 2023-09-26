@@ -13,9 +13,9 @@ function Search({ type, isLoading, searchResults, handleClick, search }) {
               <div key={e._id} className='flex items-center justify-between'>
                 <div className='flex items-center gap-x-2'>
 
-                  <img className='w-[42px] h-[42px] rounded-[25px]' src={!e.profilePic ? "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg" : e.profile_image} alt="" />
+                  <img onClick={() => handleClick(e)} className='w-[42px] h-[42px] rounded-[25px]' src={!e.profilePic ? "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg" : e.profile_image} alt="" />
                   <div className='flex flex-col gap-y-[1px]'>
-                    <h5 className='text-[15px] text-[#111b21] tracking-wide font-medium'>{e.contact_person}</h5>
+                    <h5 className='mr-1 text-[15px] text-[#111b21] tracking-wide font-medium'>{e.contact_person}</h5>
                     <h5 className='text-[12px] text-[#68737c] tracking-wide font-normal'>{e.email}</h5>
                   </div>
                 </div>

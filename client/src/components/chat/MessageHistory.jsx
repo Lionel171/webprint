@@ -13,7 +13,6 @@ function MessageHistory({ messages }) {
       <ScrollableFeed className='scrollbar-hide'>
         {messages.length &&
           messages.map((m, i) => {
-            console.log(">>>>> message detail", m);
             return (<div className='flex items-center gap-x-[6px]' key={m._id} >
               {(isSameSender(messages, m, i, activeUser.id) ||
                 isLastMessage(messages, i, activeUser.id)) && (

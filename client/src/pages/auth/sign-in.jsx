@@ -69,32 +69,8 @@ export function SignIn() {
       return;
     }
 
-
-    // if (inputs.agree === false) {
-    //   setErrors({ ...errors, agreeError: true });
-    //   console.log("agree false");
-    //   return;
-    // }
-
-    // here will be the post action to add a user to the db
     const newUser = { email: inputs.email, password: inputs.password };
-    console.log(newUser)
-    // const myData = {
-    //   data: {
-    //     type: "users",
-    //     attributes: { ...newUser },
-    //     relationships: {
-    //       roles: {
-    //         data: [
-    //           {
-    //             type: "roles",
-    //             id: "1",
-    //           },
-    //         ],
-    //       },
-    //     },
-    //   },
-    // };
+
     try {
       const response = await AuthService.login(newUser);
       if (response.user.user_status === "permit") {

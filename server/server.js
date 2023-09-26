@@ -32,6 +32,7 @@ app.use(uploadFile);
 app.use(cors());
 
 // Routes
+
 app.use("/api/domains", require("./routes/api/old/domains"));
 app.use("/api/petTypes", require("./routes/api/old/petTypes"));
 app.use("/api/petDescriptions", require("./routes/api/old/petDescriptions"));
@@ -52,6 +53,10 @@ app.use("/api/message", require("./routes/api/messages"));
 
 //stripe for credit card
 app.use("/api/stripe-route", require("./routes/api/stripe-route"));
+//paypal
+app.use("/api/paypal", require("./routes/api/paypal"));
+//quickbooks
+// app.use("/api/quickbooks", require("./routes/api/quickbooks"));
 
 
 app.use(express.static("resources/assets"));
@@ -72,7 +77,7 @@ const server = app.listen(port, () => console.log(`Server up and running on port
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: 'http://185.148.129.206:5173',
+    origin: 'http://185.148.129.206:5174',
   },
 });
 io.on('connection', (socket) => {

@@ -22,16 +22,6 @@ export function Dashboard() {
 
   const boxRef = useRef()
 
-  // useEffect(() => {
-  //   window.onclick = (event) => {
-  //     if (event.target.contains(boxRef.current)
-  //       && event.target !== boxRef.current) {
-  //       setShowSidenav(false);
-  //       console.log(`You clicked Outside the box at ${new Date().toLocaleString()}`);
-  //     }
-  //   }
-  // }, []);
-
   useEffect(() => {
     let tempRoutes = [];
 
