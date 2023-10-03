@@ -12,7 +12,12 @@ import {
   MenuList,
   MenuItem,
   Avatar,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
 } from "@material-tailwind/react";
+
 import {
   UserCircleIcon,
   Cog6ToothIcon,
@@ -27,6 +32,7 @@ import {
   setOpenSidenav,
 } from "@/context";
 import UserService from "@/services/user-service";
+import OrderService from "@/services/order-service"
 import { useEffect, useState } from "react";
 import { useContext } from "react";
 import { AuthContext } from "@/context";
@@ -38,14 +44,60 @@ export function DashboardNavbar() {
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const [users, setUsers] = useState([]);
+  const [msgs, setMsgs] = useState([]);
   const [isShowed, setIsShowed] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [alertContent, setAlertContent] = useState("");
+  const [alertHeader, setAlertHeader] = useState("");
   const API_URL = process.env.API_URL;
+
+  const handleOpen = () => setOpen(!open);
+
+  function DialogCustomAnimation() {
+    return (
+      <>
+        <Dialog
+          open={open}
+          handler={handleOpen}
+          animate={{
+            mount: { scale: 1, y: 0 },
+            unmount: { scale: 0.9, y: -100 },
+          }}
+        >
+          <DialogHeader>{alertHeader}.</DialogHeader>
+          <DialogBody divider>
+            {alertContent}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="gradient" color="green" onClick={handleOpen}>
+              <span>OK</span>
+            </Button>
+          </DialogFooter>
+        </Dialog>
+      </>
+    );
+  }
 
   useEffect(() => {
     async function fetchData() {
-      if (localStorage.getItem('role') === "admin") {
+      if (localStorage.getItem('role').includes("admin")) {
         const response = await UserService.pendingUser();
         setUsers(response.entities);
+      }
+      if (localStorage.getItem('role').includes("normal")) {
+        const userid = localStorage.getItem('userid');
+        const response = await OrderService.getMsg(userid);
+        if (response.success) {
+          setMsgs(response.result);
+          // let staffs = []
+          // const froms = response.result.map( async (item, index) => {
+          //   const res = await UserService.getUserById(item.from);
+          //   staffs.push(res);
+          // } ) 
+          // console.log(froms, "HHHHHHHHHHHHHHHHHHHHHH")
+          // setUsers(response.entities);
+        }
+  
       }
     }
     fetchData();
@@ -56,6 +108,14 @@ export function DashboardNavbar() {
   const handleLogout = () => {
     authContext.logout();
   };
+
+  const viewMessage = async (msg) => {
+    setIsShowed(true)
+    setAlertHeader(`You received message about order ${msg.order_title} from WEPRINT`)
+    setAlertContent(`${msg.content}`);
+    setOpen(true)
+    await OrderService.isViewMsg({id: msg.order_id});
+  }
 
   function getTimeDifference(createdAt) {
     const currentDate = new Date();
@@ -80,6 +140,9 @@ export function DashboardNavbar() {
 
 
   return (
+    <>
+    <DialogCustomAnimation />
+
     <Navbar
       color={fixedNavbar ? "white" : "transparent"}
       className={`rounded-xl transition-all ${fixedNavbar
@@ -156,23 +219,32 @@ export function DashboardNavbar() {
                 <IconButton variant="text" color="blue-gray" onClick={() => setIsShowed(true)}>
                   <BellIcon className="h-5 w-5 text-blue-gray-500" />
                 </IconButton>
-                {users.length > 0 && !isShowed ? (
+                {localStorage.getItem('role').includes('admin') && (
+                  users.length > 0 && !isShowed ? (
+                    <div className="absolute -top-0 -right-1 bg-blue-500 text-white rounded-full flex items-center justify-center w-4 h-4 text-xs">
+                      {users.length}
+                    </div>
+                  ) : null
+                )}
+                {localStorage.getItem('role').includes('normal') && (
+                  (msgs  && !isShowed) && (
                   <div className="absolute -top-0 -right-1 bg-blue-500 text-white rounded-full flex items-center justify-center w-4 h-4 text-xs">
-                    {users.length}
+                    {msgs.length}
                   </div>
-                ) : null}
+                  )
+                )}
               </IconButton>
             </MenuHandler>
             <MenuList className="w-max border-0">
               log out
-              
-                {users.map((user) => (
+              {localStorage.getItem('role').includes('admin') && (
+                users.map((user) => (
                   <div key={user._id}>
                     <Link to={`/dashboard/customers/edit/${user._id}`}>
 
                     <MenuItem className="flex items-center gap-4">
                       <Avatar
-                        src={user.profile_image ? `http://185.148.129.206:5000/${user.profile_image}` : DefaultAvart}
+                        src={user.profile_image ? `http://185.148.129.206:5050/${user.profile_image}` : DefaultAvart}
                         alt={user.contact_person}
                         size="sm"
                         variant="circular"
@@ -196,13 +268,49 @@ export function DashboardNavbar() {
                     </MenuItem>
                     </Link>
                   </div>
-                ))}
+                ))
+              )}
+
+              {localStorage.getItem('role').includes('normal') && (
+                msgs.map((msg, index) => (
+                  <div key={index} onClick={() => viewMessage(msg)}>
+              
+                    <MenuItem className="flex items-center gap-4">
+                      <Avatar
+                        src={ DefaultAvart}
+                        alt={msg.from}
+                        size="sm"
+                        variant="circular"
+                      />
+                      <div>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="mb-1 font-normal"
+                        >
+                          <strong>New message</strong> from WePrint
+                        </Typography>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="flex items-center gap-1 text-xs font-normal opacity-60"
+                        >
+                          <ClockIcon className="h-3.5 w-3.5" /> {getTimeDifference(msg.updatedAt)}
+                        </Typography>
+                      </div>
+                    </MenuItem>
+           
+                  </div>
+                ))
+              )}
+            
             
             </MenuList>
           </Menu>
         </div>
       </div>
     </Navbar>
+    </>
   );
 }
 

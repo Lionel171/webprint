@@ -584,7 +584,6 @@ router.get('/fetchUsers', auth, async (req, res) => {
 router.get('/staff-service', async (req, res) => {
   try {
     const { department } = req.query;
-    console.log(department, "departmetn staff")
     const staff = await User.find({
       department: { $in: department },
       // role: { $in: ["Production Staff"] }
@@ -602,6 +601,7 @@ router.get('/staff-service', async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
 
 //send email using mailgun
 // router.post("/sendEmail", async (req, res) => {

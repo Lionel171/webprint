@@ -25,7 +25,7 @@ function Contacts() {
                 dispatch(setActiveChat(e))
               }} key={e._id} className={`flex items-center justify-between sm:gap-x-1 md:gap-x-1 mt-5 ${activeChat._id === e._id ? "bg-[#fafafa]" : "bg-[#fff]"} cursor-pointer  py-4 px-2`}>
                 <div className='flex items-center gap-x-3 sm:gap-x-1 md:gap-x-3'>
-                  <img className='w-12 h-12  sm:w-12 sm:h-12 rounded-[30px] shadow-lg object-cover' src={ getChatPhoto(e, activeUser) !== 'http://185.148.129.206:5000/undefined'  ? getChatPhoto(e, activeUser) : DefaultImage } alt='' />
+                  <img className='w-12 h-12  sm:w-12 sm:h-12 rounded-[30px] shadow-lg object-cover' src={ getChatPhoto(e, activeUser) !== 'http://185.148.129.206:5050/undefined'  ? getChatPhoto(e, activeUser) : DefaultImage } alt='' />
                   <div>
                     <h5 className='text-[13.6px] sm:text-[16px] text-[#2b2e33] font-bold'>{getChatName(e, activeUser)}</h5>
                     <p className='text-[13.6px] sm:text-[13.5px] font-medium text-[#56585c] '>  {e.latestMessage?.message.length > 30

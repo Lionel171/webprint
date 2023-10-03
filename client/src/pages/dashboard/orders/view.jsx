@@ -7,13 +7,22 @@ import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
-import { FaDownload, FaUpload } from 'react-icons/fa';
+import { FaDownload, FaUpload, FaPaperPlane } from 'react-icons/fa';
 import userService from '@/services/user-service';
 import OrderStep from './components/orderStep';
 import DefaultImage from '../../../../public/img/default.png';
 import { SelectNoSearch } from '@/components/common/Select';
 import { position } from "@chakra-ui/react";
 import axios from "axios";
+import Spinner from '../../../../public/img/spinner.gif';
+
+import {
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
 
 const API_URL = process.env.API_URL;
 
@@ -47,6 +56,7 @@ const controlList = [
   // { id: 3, name: "", role: "" },
 ];
 
+
 export function OrderEdit() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,16 +77,55 @@ export function OrderEdit() {
   const [originalImage, setOriginalImage] = useState([]);
 
   const [defaultImg, setDefaultImg] = useState([]);
-  const [fileName, setFileName] = useState('')
+  const [fileName, setFileName] = useState([])
   const [isUploadBtn, setIsUploadBtn] = useState(false)
   const [isFree, setIsFree] = useState(false)
   const [inComment, setInComment] = useState('');
+  const [customerComment, setCustomerComment] = useState('');
+  const [isSpinner, setIsSpinner] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [alertContent, setAlertContent] = useState("");
+  const [alertHeader, setAlertHeader] = useState("");
+  const [comment, setComment] = useState('');
+
+  const handleOpen = () => setOpen(!open);
+
+  function DialogCustomAnimation() {
+    return (
+      <>
+
+        <Dialog
+          open={open}
+          handler={handleOpen}
+          animate={{
+            mount: { scale: 1, y: 0 },
+            unmount: { scale: 0.9, y: -100 },
+          }}
+        >
+          <DialogHeader>{alertHeader}.</DialogHeader>
+          <DialogBody divider>
+            {alertContent}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="gradient" color="green" onClick={handleOpen}>
+              <span>OK</span>
+            </Button>
+          </DialogFooter>
+        </Dialog>
+      </>
+    );
+  }
+
 
 
   useEffect(() => {
     if (order.internal_comment) {
       setInComment(order.internal_comment)
     }
+    if (order.customer_comment) {
+      setCustomerComment(order.customer_comment)
+    }
+   
   }, [])
 
   const renderImage = (item, index, image) => {
@@ -111,7 +160,7 @@ export function OrderEdit() {
         }
       };
 
-      fetch(`http://185.148.129.206:5000/${image[index]}`)
+      fetch(`http://185.148.129.206:5050/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     } else {
@@ -131,7 +180,7 @@ export function OrderEdit() {
           imageContainer.appendChild(img);
         }
       };
-      fetch(`http://185.148.129.206:5000/${image[index]}`)
+      fetch(`http://185.148.129.206:5050/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     }
@@ -169,7 +218,7 @@ export function OrderEdit() {
         }
       };
 
-      fetch(`http://185.148.129.206:5000/${image[index]}`)
+      fetch(`http://185.148.129.206:5050/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     } else {
@@ -189,7 +238,7 @@ export function OrderEdit() {
           imageContainer.appendChild(img);
         }
       };
-      fetch(`http://185.148.129.206:5000/${image[index]}`)
+      fetch(`http://185.148.129.206:5050/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     }
@@ -232,6 +281,31 @@ export function OrderEdit() {
     getUserbyOrder();
   }, [orders])
 
+  const handleUpload = async (file, index, name) => {
+    setIsSpinner(true);
+    let newFile = {
+      id: order._id,
+      index: index,
+      files: file,
+    };
+
+    const response = await OrderService.uploadFile(newFile);
+
+    if (response.success) {
+      setIsSpinner(false);
+      setAlertHeader("Sucess!")
+      setAlertContent(`upload for file '${name}' is successful!`);
+      setOpen(true)
+    } else {
+      setIsSpinner(false);
+      setAlertHeader("Failed!")
+      setAlertContent(`upload for file '${name}' is failed!`);
+      setOpen(true)
+
+    }
+
+  }
+
   const onChangeImagePhoto = (event, index) => {
     if (event.target.files && event.target.files[0]) {
       let tempFilie = [...imageFiles];
@@ -243,22 +317,41 @@ export function OrderEdit() {
       // Check if the file is an image
       const isImage = event.target.files[0].type.startsWith('image/');
 
-      if (!isImage) {
-        const fileName = event.target.files[0].name;
 
-        // Update the orders state with the file name and extension
-        const temp = orders.map((obj, subindex) => {
-          if (subindex === index) {
+      const file = orders[0].client_art_up;
+      const filename = event.target.files[0].name;
+      setFileName(orders[0].fileName);
+      const file_name = fileName;
+
+      if (!isImage) {
+
+
+        let reader = new FileReader();
+        reader.onload = event => {
+
+          // Update the orders state with the file name and extension
+          const temp = orders.map((obj, subindex) => {
+            const temp_file = obj.client_art_up.map((ele, sub_subindex) => {
+              if (sub_subindex === index) {
+                file[index] = event.target.result;
+                file_name[index] = filename;
+              }
+              setFileName(file_name)
+
+              return file;
+            })
+            console.log(file, "temp file mmmm")
             return {
               ...obj,
-              client_art_up: fileName,
+              client_art_up: temp_file[index],
               fileExtension: fileExtension,
               imgFlag: false,
-            };
-          }
-          return obj;
-        });
-        setOrders(temp);
+            }
+          });
+          setOrders(temp);
+        }
+        reader.readAsDataURL(event.target.files[0]);
+
       } else {
 
         if (event.target.files[0].type === 'image/tiff' || event.target.files[0].type === 'image/tif') {
@@ -275,15 +368,24 @@ export function OrderEdit() {
 
             // Update the orders state with the data URL
             const temp = orders.map((obj, subindex) => {
-              if (subindex === index) {
-                return {
-                  ...obj,
-                  client_art_up: dataUrl,
-                  imgFlag: false,
-                };
+
+              const temp_file = obj.client_art_up.map((ele, sub_subindex) => {
+                if (sub_subindex === index) {
+                  file[index] = dataUrl;
+                  file_name[index] = filename;
+
+                }
+                setFileName(file_name)
+
+                return file;
+              })
+              return {
+                ...obj,
+                client_art_up: temp_file[index],
+                imgFlag: false,
               }
-              return obj;
             });
+
             setOrders(temp);
             setIsUploadBtn(true)
           };
@@ -293,54 +395,65 @@ export function OrderEdit() {
           let reader = new FileReader();
           reader.onload = event => {
             const temp = orders.map((obj, subindex) => {
-              if (subindex === index) {
-                return {
-                  ...obj,
-                  client_art_up: event.target.result,
-                  imgFlag: false,
-                };
+
+              const temp_file = obj.client_art_up.map((ele, sub_subindex) => {
+                if (sub_subindex === index) {
+                  file[index] = event.target.result;
+                  file_name[index] = filename;
+
+                }
+                setFileName(file_name)
+
+                return file;
+              })
+              return {
+                ...obj,
+                client_art_up: temp_file[index],
+                imgFlag: false,
               }
-              return obj;
             });
             setOrders(temp);
           };
           reader.readAsDataURL(event.target.files[0]);
         }
       }
+      ;
+
     }
 
-    // Get only the filename from the file path
-    setFileName(event.target.files[0].name);
+
 
     const default_img = defaultImg;
     default_img[index] = true;
+    setDefaultImg(default_img);
+
 
     if (order && order._id) {
       setIsView(false);
     }
-  };
 
+  };
 
   const avatarImageClick = (index) => {
     avatarFileRef.current[index].click();
 
   };
 
-  const onChangePaymentType = (item, index) => {
+  const onChangePaymentType = (item) => {
+
     const temp = orders.map((obj, subindex) => {
-      if (subindex === index) {
-        if (item.id === 5) {
-          setIsFree(true)
-        } else {
-          setIsFree(false)
-        }
-        return {
-          ...obj,
-          paymentTypeFlag: false,
-          payment_type: item.id,
-        };
+
+      if (item.id === 5) {
+        setIsFree(true)
+      } else {
+        setIsFree(false)
       }
-      return obj;
+      return {
+        ...obj,
+        paymentTypeFlag: false,
+        payment_type: item.id,
+      };
+
     });
 
     setOrders(temp);
@@ -348,48 +461,48 @@ export function OrderEdit() {
   };
 
   const onChangeStaff = (item, index) => {
+
     const temp = orders.map((obj, subindex) => {
-      if (subindex === index) {
-        return {
-          ...obj,
-          staffFlag: false,
-          staff_id: item.id,
-        };
-      }
-      return obj;
+
+      return {
+        ...obj,
+        staffFlag: false,
+        staff_id: item.id,
+      };
+
+
     });
     setOrders(temp);
 
   }
 
-  const onChangePrice = (value, index) => {
+  const onChangePrice = (value) => {
     const temp = orders.map((obj, subindex) => {
-      if (subindex === index) {
-        if (isFree) {
-          setTotalPrice(0)
-        } else {
-          setTotalPrice(value);
-        }
-        return {
-          ...obj,
-          price: value,
-          priceFlag: false,
-        };
+      if (isFree) {
+        setTotalPrice(0)
+      } else {
+        setTotalPrice(value);
       }
-      return obj;
+      return {
+        ...obj,
+        price: value,
+        priceFlag: false,
+      };
+
     });
     setOrders(temp);
+    console.log(orders, "price orders")
   };
 
-  const onChangeAbout = (value, index) => {
+  const onChangeAbout = (value) => {
+    setComment(value)
     const temp = orders.map((obj, subindex) => {
-      if (subindex === index) {
-        return {
-          ...obj,
-          comment: value,
-        };
-      }
-      return obj;
+
+      return {
+        ...obj,
+        comment: value,
+      };
+
     });
     setOrders(temp);
   };
@@ -412,8 +525,73 @@ export function OrderEdit() {
       fileExtension = splitUrl[1].split(";")[0]
       console.log(fileExtension, "else")
     }
+    console.log(imageUrl, "image")
     saveAs(imageUrl, `work_file.${fileExtension}`);
   };
+
+  const sendCustomerComment = async () => {
+
+    let flag = true;
+    if (customerComment === "") {
+      flag = false;
+      setIsSpinner(false);
+
+      setAlertHeader("Failed!")
+      setAlertContent(`You can not send this message.  Please make sure to provide the necessary information or content in the message box before sending`);
+      setOpen(true)
+
+    } else {
+      setIsSpinner(true);
+      let payload = {
+        message: customerComment,
+        order_id: order._id
+      }
+      const response = await OrderService.sendToCustomerMsg(payload);
+      setIsSpinner(false);
+
+      if (response.success) {
+        setAlertHeader("Sucess!")
+        setAlertContent(`Your message is sent successfully`);
+        setOpen(true)
+        //send email
+        const messageData = {
+          from: 'orochisugai@gmail.com',
+          // to: user.email,
+          to: 'kingdev.talent@gmail.com',
+          subject: 'Hello ' + user.contact_person + '.',
+          text: `You received message about order ${order.title} from WEPRINT.
+"${customerComment}"
+Please check notification on your dashbord of our site.
+from WEPRINT`,
+        };
+
+        try {
+          const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          });
+
+          if (response.ok) {
+            setIsSpinner(false);
+
+            alert('Email sent successfully!');
+          } else {
+            setIsSpinner(false);
+
+            alert('Failed to send email.');
+          }
+        } catch (error) {
+          console.error('Error sending email:', error);
+          alert('Failed to send email.');
+        }
+
+      }
+    }
+
+  }
 
 
   const saveOrder = async () => {
@@ -452,6 +630,8 @@ export function OrderEdit() {
       return;
     }
 
+    setIsSpinner(true);
+
     if ((localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && order.status === "1") {
       let newOrder = {
         isFree: isFree,
@@ -475,7 +655,7 @@ export function OrderEdit() {
         };
 
         try {
-          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+          const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -484,27 +664,29 @@ export function OrderEdit() {
           });
 
           if (response.ok) {
+            setIsSpinner(false);
+
             alert('Email sent successfully!');
           } else {
+            setIsSpinner(false);
+
             alert('Failed to send email.');
           }
         } catch (error) {
           console.error('Error sending email:', error);
           alert('Failed to send email.');
         }
-        // navigate("/dashboard/orders");
+        navigate("/dashboard/orders");
       }
 
     }
     if ((localStorage.getItem('role').includes("Artwork Manager") || localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes("Artwork Team Member")) && order.status === "2") {
       let newOrder = {
         id: order._id,
-        files: imageFiles,
-        orders: orders,
         internal_comment: inComment
       };
 
-      const response = await OrderService.updateImage(newOrder);
+      const response = await OrderService.updateOrder(newOrder);
 
 
       //change status
@@ -522,7 +704,7 @@ export function OrderEdit() {
       };
 
       try {
-        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -531,8 +713,12 @@ export function OrderEdit() {
         });
 
         if (response.ok) {
+          setIsSpinner(false);
+
           alert('Email sent successfully!');
         } else {
+          setIsSpinner(false);
+
           alert('Failed to send email.');
         }
       } catch (error) {
@@ -545,13 +731,10 @@ export function OrderEdit() {
     if ((localStorage.getItem("role").includes('Production Manager') || localStorage.getItem('role').includes("admin")) && order.status === "3") {
       let newOrder = {
         id: order._id,
-        files: imageFiles,
-        orders: orders,
         internal_comment: inComment
       };
 
-
-      const response = await OrderService.updateImage(newOrder);
+      const response = await OrderService.updateOrder(newOrder);
 
       const res = await OrderService.assignStaff({ orders: orders });
       // if (response.success) {
@@ -567,7 +750,7 @@ export function OrderEdit() {
       };
 
       try {
-        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -576,8 +759,10 @@ export function OrderEdit() {
         });
 
         if (response.ok) {
+          setIsSpinner(false);
           alert('Email sent successfully!');
         } else {
+          setIsSpinner(false);
           alert('Failed to send email.');
         }
       } catch (error) {
@@ -595,7 +780,7 @@ export function OrderEdit() {
         internal_comment: inComment
 
       };
-      const response = await OrderService.updateImage(newOrder);
+      const response = await OrderService.updateOrder(newOrder);
       await changeStaus(parseInt(order.status) + 1);
       const messageData = {
         from: 'orochisugai@gmail.com',
@@ -607,7 +792,7 @@ export function OrderEdit() {
 
 
       try {
-        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -616,8 +801,10 @@ export function OrderEdit() {
         });
 
         if (response.ok) {
+          setIsSpinner(false);
           alert('Email sent successfully!');
         } else {
+          setIsSpinner(false);
           alert('Failed to send email.');
         }
       } catch (error) {
@@ -648,7 +835,7 @@ export function OrderEdit() {
       console.log(messageData.text, "Current")
 
       try {
-        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -657,8 +844,10 @@ export function OrderEdit() {
         });
 
         if (response.ok) {
+          setIsSpinner(false);
           alert('Email sent successfully!');
         } else {
+          setIsSpinner(false);
           alert('Failed to send email.');
         }
       } catch (error) {
@@ -704,9 +893,10 @@ export function OrderEdit() {
       id: order._id,
       internal_comment: inComment
     }
-    console.log(payload, "this is hold ")
+    setIsSpinner(true);
     const response = await OrderService.setHold(payload);
     if (response.success) {
+      setIsSpinner(false);
       navigate("/dashboard/orders");
     }
   }
@@ -753,7 +943,7 @@ export function OrderEdit() {
           };
 
           try {
-            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -785,7 +975,7 @@ export function OrderEdit() {
           };
 
           try {
-            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -816,38 +1006,90 @@ export function OrderEdit() {
     async function fetchData() {
       const orderResponse = await OrderService.getOrderById(order._id);
       setOrder(orderResponse.order);
-      const response = await OrderService.getOrderDetailList(order._id);
-      setOrders(response.entities);
+
+      if (order.status === "6") {
+        setAlertHeader("Order Status!")
+        setAlertContent(`This order is inspected`);
+        setOpen(true)
+      }
+      
+      if (order.status === "7") {
+        setAlertHeader("Order Status!")
+        setAlertContent(`This order is ready for pick up`);
+        setOpen(true)
+      }
+      
+      // const response = await OrderService.getOrderDetailList(order._id);
+
+      // Fetch the data and populate orders_temp array
+      const orders_temp = [];
+      const file_name = order.client_art_up;
+      const order_temp = {
+        ...order,
+        paymentTypeFlag: false,
+        priceFlag: false,
+        fileName: file_name
+      }
+      orders_temp.push(order_temp);
+
+      // Update the state with orders_temp
+      setOrders(orders_temp);
+
       const image = [];
       const default_image = [];
       const original_image = [];
 
+      // response.entities.map((order, index) => {
+      //   image.push(order.client_art_up);
+      //   original_image.push(order.original_art_up);
+      //   default_image.push(false);
+      //   renderImage(order, index, image);
+      //   renderOriginalImage(order, index, original_image);
+      // })
 
-      response.entities.map((order, index) => {
-        image.push(order.client_art_up);
-        original_image.push(order.original_art_up);
-        default_image.push(false);
+      order.client_art_up.map((file, index) => {
+        image.push(file);
         renderImage(order, index, image);
+      });
+
+      order.original_art_up.map((o_file, index) => {
+        original_image.push(o_file);
+        default_image.push(false);
         renderOriginalImage(order, index, original_image);
-      })
+      });
 
-      setDefaultImg(default_image)
-      setOriginalImage(image)
+      setDefaultImg(default_image);
+      setOriginalImage(original_image);
 
-      let tempTotal = 0
-      response.entities.map(item => {
-        tempTotal = tempTotal + item.price;
-      })
-      setTotalPrice(tempTotal);
+      // let tempTotal = 0;
+      // response.entities.map(item => {
+      //   tempTotal = tempTotal + item.price;
+      // });
+      setTotalPrice(order.price);
+
     }
 
-    fetchData();
-    setIsView(true)
 
-  }, [])
+    fetchData();
+    setIsView(true);
+
+ 
+  }, []);
+
+
+
 
   return (
     <div>
+      <DialogCustomAnimation />
+      {isSpinner && (
+
+        <div className="fixed w-[80%] h-screen z-10  flex justify-center items-center">
+          <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
+        </div>
+
+      )}
+
       <div className="space-y-5">
         <div className="border-b border-gray-900/10 pb-12">
           <h2 className="text-base font-semibold leading-7 text-gray-900">
@@ -953,26 +1195,25 @@ export function OrderEdit() {
 
       <div className="mx-auto">
         {/* Order list */}
-        {orders.map((item, index) => (
-          index === 0 && (localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes("Sales Manager")) && order.status === "1" ? (
-            <div className="py-3 pl-10 pr-0 text-center font-semibold">
-              <p className="truncate text-gray-800 text-center mt-2">PaymentType</p>
-              <SelectNoSearch
-                onChange={(selectedOption) => onChangePaymentType(selectedOption, index)}
-                value={paymentTypeList.find((option) => option.id === item.payment_type)}
-                items={paymentTypeList}
-                error={item.paymentTypeFlag}
-              />
-            </div>
-          ) : item.payment_type ? (
-            <div className="truncate text-gray-800 text-center mt-2" style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              PaymentType: {order.total_value !== 0 ? paymentTypeList[item.payment_type].name : 'Free'}
-            </div>
-          ) : null
-        ))}
+
+        {(localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes("Sales Manager")) && order.status === "1" ? (
+          <div className="py-3 pl-10 pr-0 text-center font-semibold">
+            <p className="block text-sm font-medium text-gray-700">PaymentType</p>
+            <SelectNoSearch
+              onChange={(selectedOption) => onChangePaymentType(selectedOption)}
+              value={paymentTypeList.find((option) => option.id === order.payment_type)}
+              items={paymentTypeList}
+              error={orders[0] && orders[0].paymentTypeFlag}
+            />
+          </div>
+        ) : order.payment_type ? (
+          <div className="truncate text-gray-800 text-center mt-2" style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            PaymentType: {order.price !== 0 ? paymentTypeList[order.payment_type].name : 'Free'}
+          </div>
+        ) : null}
+
         <div className="mt-4  rounded-md sm:-mx-0 relative overflow-x-auto shadow-md sm:rounded-lg">
           <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-
             <colgroup>
               <col className="" />
               <col />
@@ -995,22 +1236,27 @@ export function OrderEdit() {
                   scope="col"
                   className=" py-3 pl-10 pr-0 text-center font-semibold "
                 >
-                  Customer Image(Original)
+                  Customer File(Original)
                 </th>
-                <th
-                  scope="col"
-                  className="py-3 pl-10 pr-0 text-center font-semibold"
-                >
-                  {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && (order.status === "2" || order.status === "3") || order.status === "4") && (<>Working Image</>)}
-                </th>
-                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && (order.status === "2" || order.status === "3") || order.status === "4") && (
+
+                {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
                   >
-                    Upload New Image
+                    Working File
                   </th>
                 )}
+
+                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff')) && (order.status === "2" || order.status === "3" || order.status === "4")) && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Upload New File
+                  </th>
+                )}
+
                 <th
                   scope="col"
                   className="py-3 pl-10 pr-0 text-center font-semibold"
@@ -1029,453 +1275,462 @@ export function OrderEdit() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((item, index) => (
-                <tr key={index} className="border-b border-gray-100">
-                  <td className="max-w-0 px-2 py-5 align-top ">
-                    <div className="truncate font-medium text-gray-900 text-left">
-                      {serviceTypeList[item.service_type].name}
-                    </div>
 
-                    <div className="mt-2">
-                      <label className='block text-sm font-medium text-gray-700'>
-                        Comment
-                      </label>
-                      <div className="mt-1">
-                        <textarea
-                          id="comment"
-                          name="comment"
-                          onChange={(e) =>
-                            onChangeAbout(e.target.value, index)
-                          }
-                          // disabled={isView}
-                          value={item.comment}
-                          rows={2}
-                          className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
-                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                        />
-                      </div>
-                    </div>
+              <tr key={order._id} className="border-b border-gray-100">
+                <td className="max-w-0 px-2 py-5 align-top ">
+                  <div className="truncate font-medium text-gray-900 text-left">
+                    {serviceTypeList[order.service_type].name}
+                  </div>
+                </td>
+                <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
+                  <div className="ttruncate text-gray-500 text-center">
+                    {order.quantity.map((quantity, index) => {
+                      return (
+                        order.size[index] + ': ' + quantity
+                      )
+                    }).join(', ')}
+                  </div>
+                </td>
+                <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                  {order.original_art_up && order.original_art_up[0] && (
+                    order.original_art_up.map((o_file, index) => {
+                      return (
+                        <>
+                          {o_file.split('.').pop() === "pdf" ? (
+                            <div className="flex justify-center">
+                              <button
+                                type="submit"
+                                onClick={() => { window.open(API_URL + "/" + o_file) }}
+                                className="text-center mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                              >
+                                VIEW PDF(.{o_file.split('.').pop()})
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center">
+                              <div id={`original_image-${index}`} />
+                            </div>
+                          )}
 
-                  </td>
+                          <div className="text-center mb-1">
+                            <button
+                              type="submit"
+                              onClick={() => downloadHandle(API_URL + "/" + o_file)}
+                              className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            >
+                              <FaDownload />
+                            </button>
+                          </div>
 
-
-                  <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
-                    <div className="ttruncate text-gray-500 text-center">
-                      {item.quantity.map((quantity, index) => {
-                        return (
-                          item.size[index] + ': ' + quantity
-                        )
-                      }).join(', ')}
-                    </div>
-                  </td>
-                  <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
-                    {item.original_art_up.split('.').pop() === "pdf" ? (
-                      <div className="flex justify-center">
-                        <button
-                          type="submit"
-                          onClick={() => { window.open(API_URL + "/" + item.original_art_up) }}
-                          className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                        >
-                          VIEW PDF(.{item.original_art_up.split('.').pop()})
-                        </button>
-                      </div>
-
-                    ) : (
-                      <div className="flex justify-center" >
-                        <div id={`original_image-${index}`} />
-                      </div>
-                    )}
-                    <div className="text-center" >
-                      <button
-                        type="submit"
-                        onClick={() => downloadHandle(API_URL + "/" + item.original_art_up)}
-                        className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                      >
-                        <FaDownload />
-                      </button>
-                    </div>
-                  </td>
-                  {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && (order.status === "2" || order.status === "3" || order.status === "4")) && (
-                    <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
-                      {originalImage[index].split('.').pop() === "pdf" ? (
-                        <div className="flex justify-center">
-                          <button
-                            type="submit"
-                            onClick={() => { window.open(API_URL + "/" + originalImage[index]) }}
-                            className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-
-                          >
-                            VIEW PDF(.{originalImage[index].split('.').pop()})
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-center" >
-                          <div id={`image-${index}`} />
-                        </div>
-                      )}
-
-                      {/* {(((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && (order.status === "2" || order.status === "1" || order.status === "3" || order.status === "4") )) ? ( */}
-                      <div className="text-center" >
-                        <button
-                          type="submit"
-                          onClick={() => downloadHandle(API_URL + "/" + originalImage[index])}
-                          className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                        >
-                          <FaDownload />
-                        </button>
-                      </div>
-                      {/* ) : null} */}
-                    </td>
+                        </>
+                      );
+                    })
                   )}
+                </td>
 
-                  <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
-                    <div className="flex justify-center">
-                      <div className="flex items-center mr-3">
-                        {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin')) && (order.status === "2" || order.status === "3" || order.status === "4")) ? (
-                          <>
-                            <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
-                            <div className="text-center" style={{ position: 'relative' }}>
-                              {item.client_art_up && !item.client_art_up.startsWith('data:image/') ? (
-                                <p>{defaultImg[index] ? (isView ? item.client_art_up : fileName) : "Upload"} </p>
-                              ) : (
-                                <img
-                                  src={item.client_art_up ? (isView ? API_URL + '/' + item.client_art_up : item.client_art_up) : DefaultImage}
-                                  alt={`This file is not able to display with image format(.${item.client_art_up.slice(item.client_art_up.lastIndexOf('.') + 1).toLowerCase()}).`}
 
-                                  onClick={() => avatarImageClick(index)}
-                                  height={100}
-                                  width={100}
-                                  style={{ objectFit: 'contain' }}
-                                />
-                              )}
-                              <div className="text-center" >
-                                <button
-                                  type="submit"
-                                  onClick={() => avatarImageClick(index)}
-                                  className="mr-2 text-center mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                                >
-                                  <FaUpload />
-                                </button>
-                                {defaultImg[index] && (
+                {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
+                  <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                    {order && order.client_art_up.map((o_file, index) => {
+                      return (
+                        <>
+                          {o_file.split('.').pop() === "pdf" ? (
+                            <div className="flex justify-center">
+                              <button
+                                type="submit"
+                                onClick={() => { window.open(API_URL + "/" + o_file) }}
+                                className="text-center mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                              >
+                                VIEW PDF(.{o_file.split('.').pop()})
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center">
+                              <div id={`image-${index}`} />
+                            </div>
+                          )}
+
+                          <div className="text-center mb-1">
+                            <button
+                              type="submit"
+                              onClick={() => downloadHandle(API_URL + "/" + o_file)}
+                              className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            >
+                              <FaDownload />
+                            </button>
+                          </div>
+                        </>
+                      );
+                    })}
+                  </td>
+                )}
+
+                {
+                  ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff')) && (order.status === "2" || order.status === "3" || order.status === "4")) && (
+                    <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                      {(orders[0] && orders[0].client_art_up) && (orders[0].client_art_up.map((file, index) => {
+
+                        // orders[0] && console.log(orders[0].client_art_up, defaultImg[index], "ordersordersorderos")
+                        return (
+                          <div className="flex justify-center" key={index}>
+                            <div className="flex items-center mr-3">
+                              <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
+                              <div className="text-center mb-3" style={{ position: 'relative' }}>
+                                {file && !file.startsWith('data:image/') ? (
+                                  <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "You can choose working file."}</p>
+                                ) : (
+                                  <img
+                                    src={file ? (isView ? API_URL + '/' + file : file) : DefaultImage}
+                                    alt={`This file is not able to display with image format(.${fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                    onClick={() => avatarImageClick(index)}
+                                    height={100}
+                                    width={100}
+                                    style={{ objectFit: 'contain' }}
+                                  />
+                                )}
+                                <div className="text-center">
                                   <button
                                     type="submit"
-                                    onClick={() => downloadHandle(item.client_art_up)}
-                                    className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                    onClick={() => avatarImageClick(index)}
+                                    className=" text-center mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                                   >
-                                    <FaDownload />
+                                    Choose File
                                   </button>
-                                )}
+                                  {defaultImg[index] && (
+                                    <>
+                                      <div className="text-center">
+                                        <button
+                                          type="submit"
+                                          onClick={() => downloadHandle(file)}
+                                          className="text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaDownload />
+                                        </button>
 
+                                        <button
+                                          type="submit"
+                                          onClick={() => handleUpload(imageFiles, index, fileName[index])}
+                                          className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaUpload />
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </>
-                        ) :
-                          (<div className="flex justify-center" >
-                            {/* {item.client_art_up && !item.client_art_up.startsWith('data:image/') ? (
-                              <p>{item.client_art_up} (This file is not able to image format)</p>
-                            ) : ( */}
-                            {item.client_art_up ? (
-                              item.client_art_up.split('.').pop() === "pdf" ? (
-                                <div className="flex justify-center">
-                                  <button
-                                    type="submit"
-                                    onClick={() => { window.open(API_URL + "/" + item.original_art_up) }}
-                                    className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                                  >
-                                    VIEW PDF(.{item.original_art_up.split('.').pop()})
-                                  </button>
-                                </div>
-                              ) : (
-                                <div id={`image-${index}`} />
-                              )
-                            ) : (
-                              <p>(This file is not able to display with image format)</p>
-                            )}
                           </div>
-                          )}
-                      </div>
+                        );
+                      }))}
+                    </td>
+                  )
+                }
+
+                {(localStorage.getItem('role') === 'admin' && order.status === "1") ? (
+                  <td className="py-5 pl-10  text-right align-top tabular-nums text-gray-700 text-left mr-2">
+                    {
+                      isFree ? (null) : (
+                        <Input
+                          type="number"
+                          onChange={(e) => onChangePrice(e.target.value)}
+                          value={isFree ? 0 : order.price}
+                          error={orders[0] && orders[0].priceFlag}
+                          maxLength={50}
+                          className="w-[20px]"
+                          disabled={isFree}
+                        />
+                      )
+                    }
+
+                  </td>
+                ) : (
+                  <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 mr-2">
+                    <div className="ttruncate text-gray-700 text-center mt-3">
+                      ${!isFree ? order.price : 0}
                     </div>
                   </td>
-                  {(localStorage.getItem('role') === 'admin' && order.status === "1") ? (
-                    <td className="py-5 pl-10  text-right align-top tabular-nums text-gray-700 text-left">
-                      {
-                        isFree ? (null) : (
-                          <Input
-                            type="number"
-                            onChange={(e) => onChangePrice(e.target.value, index)}
-                            value={isFree ? 0 : item.price}
-                            error={item.priceFlag}
-                            maxLength={50}
-                            className="w-[20px]"
-                            disabled={isFree}
-                          />
-                        )
-                      }
-
-                    </td>
-                  ) : (
-                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
-                      <div className="ttruncate text-gray-700 text-center mt-3">
-                        ${!isFree ? item.price : 0}
-                      </div>
-                    </td>
-                  )}
-                  {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && order.status === "3") && (
+                )}
+                {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && order.status === "3") && (
 
 
-                    <td className="ml-5 max-w-0 px-0 py-5 align-top text-center ">
-                      <div className='mr-2'>
-                        <SelectNoSearch
-                          className="mr-2"
-                          onChange={(selectedOption) => onChangeStaff(selectedOption, index)}
-                          items={staffList.filter(st => st.department === serviceTypeList[item.service_type].name)}
-                        />
-                      </div>
-                    </td>
-                  )}
+                  <td className="ml-5 max-w-0 px-0 py-5 align-top text-center ">
+                    <div className='mr-2'>
+                      <SelectNoSearch
+                        className="mr-2"
+                        onChange={(selectedOption) => onChangeStaff(selectedOption)}
+                        items={staffList.filter(st => st.department === serviceTypeList[order.service_type].name)}
+                      />
+                    </div>
+                  </td>
+                )}
 
-                </tr>
-              ))}
+              </tr>
+
             </tbody>
           </table>
+          <div className="border-b border-gray-900/10 pb-2 mb-4"></div>
+          <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6 m-2">
+            <div className="mt-2 flex flex-col col-span-4 md:col-span-4 ">
+              <label className='block text-sm font-medium text-gray-700'>
+                Comment
+              </label>
+              <div className="mt-1">
+                <p className="truncate text-gray-700 text-center mt-3">{order.comment}</p>
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
-      {((localStorage.getItem("role").includes('admin') || localStorage.getItem('role').includes('Sales Manager')) && order.status === '1') ? (
-        <div className="mt-6 flex items-center justify-end gap-x-6">
-          <Link
-            to={`/dashboard/orders`}
-            className="text-sm font-semibold leading-6 text-gray-900"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            onClick={saveOrder}
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          >
-            Approve
-          </button>
-        </div>
-      ) : null}
-
-
-      {(localStorage.getItem("role").includes('Artwork Manager') || localStorage.getItem('role').includes("admin")) && (
-        <div className="mt-6 flex items-center justify-end gap-x-6">
-
-          {order.status === '2' && (
-            <>
-              <div className="mt-2">
-                <label className='block text-sm font-medium text-gray-700'>
-                  Internal Comment
-                </label>
-                <div className="mt-1">
-                  <textarea
-                    type="text"
-                    id="incomment"
-                    name="incomment"
-                    onChange={(e) => 
-                      {
-                        setInComment(e.target.value)
-                      }
-                    }
-                    // disabled={isView}
-                    value={inComment}
-                    // rows={5}
-                    className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
-                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                  />
-                </div>
-              </div>
-              <Link
-                to={`/dashboard/orders`}
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Cancel
-              </Link>
-              {order.hold === 0 && (
-                <button
-                  type="submit"
-                  onClick={saveOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Start Work
-                </button>
-              )}
-
-              {order.hold === 0 ? (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Hold production
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Restart
-                </button>
-              )}
-
-            </>
-          )}
-        </div>
-      )
+      {
+        ((localStorage.getItem("role").includes('admin') || localStorage.getItem('role').includes('Sales Manager')) && order.status === '1') ? (
+          <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
+            <Link
+              to={`/dashboard/orders`}
+              className="text-sm font-semibold leading-6 text-gray-900"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              onClick={saveOrder}
+              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              Approve
+            </button>
+          </div>
+        ) : null
       }
-      {(localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("admin")) && (
-        <div className="mt-6 flex items-center justify-end gap-x-6">
 
-          {order.status === "3" && (
-            <>
-              <div className="mt-2">
-                <label className='block text-sm font-medium text-gray-700'>
-                  Internal Comment
-                </label>
-                <div className="mt-1">
-                  <textarea
-                    type="text"
-                    id="incomment"
-                    name="incomment"
-                    onChange={(e) => 
-                      {
-                        setInComment(e.target.value)
-                      }
-                    }
-                    // disabled={isView}
-                    value={inComment}
-                    // rows={5}
-                    className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
-                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                  />
-                </div>
-              </div>
-              <Link
-                to={`/dashboard/orders`}
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Cancel
-              </Link>
-              {order.hold === 0 && (
-                <button
-                  type="submit"
-                  onClick={saveOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  {/* Assign Task */}
-                  Save
-                </button>
-              )}
 
-              {order.hold === 0 ? (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Hold production
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Restart
-                </button>
-              )}
+      {
+        (localStorage.getItem("role").includes('Artwork Manager') || localStorage.getItem('role').includes("admin")) && (
+          <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
 
-            </>
-
-          )}
-
-        </div>
-      )}
-      {(localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("admin")) && (
-        <div className="mt-6 flex items-center justify-end gap-x-6">
-
-          {order.status === "4" ? (
-            <>
-              <div className="mt-2">
-                <label className='block text-sm font-medium text-gray-700'>
-                  Internal Comment
-                </label>
-                <div className="mt-1">
-                  <textarea
-                    type="text"
-                    id="incomment"
-                    name="incomment"
-                    onChange={(e) => 
-                      {
-                        setInComment(e.target.value)
-                      }
-                    }
-                    // disabled={isView}
-                    value={inComment}
-                    // rows={5}
-                    className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
-                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                  />
-                </div>
-              </div>
-              <Link
-                to={`/dashboard/orders`}
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Cancel
-              </Link>
-              {order.hold === 0 && (
-                <button
-                  type="submit"
-                  onClick={saveOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Complete
-                </button>
-              )}
-
-              {order.hold === 0 ? (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Hold production
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  onClick={holdOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Restart
-                </button>
-              )}
-
-            </>
-
-          ) :
-            order.status === "5" ? (
+            {order.status === '2' && (
               <>
+                <div className="mt-2 flex flex-col">
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Internal Comment
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      type="text"
+                      id="incomment"
+                      name="incomment"
+                      onChange={(e) => {
+                        setInComment(e.target.value)
+                      }
+                      }
+                      // disabled={isView}
+                      value={inComment}
+                      // rows={5}
+                      className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                    />
+                  </div>
+                </div>
                 <Link
                   to={`/dashboard/orders`}
                   className="text-sm font-semibold leading-6 text-gray-900"
                 >
                   Cancel
                 </Link>
-                <button
-                  type="submit"
-                  onClick={saveOrder}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                >
-                  Inspect
-                </button>
+                {order.hold === 0 && (
+                  <button
+                    type="submit"
+                    onClick={saveOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Start Work
+                  </button>
+                )}
+
+                {order.hold === 0 ? (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Hold production
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Restart
+                  </button>
+                )}
 
               </>
+            )}
+          </div>
+        )
+      }
+      {
+        (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("admin")) && (
+          <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
+
+            {order.status === "3" && (
+              <>
+                <div className="mt-2 flex flex-col">
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Internal Comment
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      type="text"
+                      id="incomment"
+                      name="incomment"
+                      onChange={(e) => {
+                        setInComment(e.target.value)
+                      }
+                      }
+                      // disabled={isView}
+                      value={inComment}
+                      // rows={5}
+                      className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                    />
+                  </div>
+                </div>
+                <Link
+                  to={`/dashboard/orders`}
+                  className="text-sm font-semibold leading-6 text-gray-900"
+                >
+                  Cancel
+                </Link>
+                {order.hold === 0 && (
+                  <button
+                    type="submit"
+                    onClick={saveOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    {/* Assign Task */}
+                    Save
+                  </button>
+                )}
+
+                {order.hold === 0 ? (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Hold production
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Restart
+                  </button>
+                )}
+
+              </>
+
+            )}
+
+          </div>
+        )
+      }
+      {
+        (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("admin")) && (
+          <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
+
+            {order.status === "4" ? (
+              <>
+                <div className="mt-2 flex flex-col">
+                  <label className='block text-sm font-medium text-gray-700'>
+                    To Customer
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      type="text"
+                      id="incomment"
+                      name="incomment"
+                      onChange={(e) => {
+                        setCustomerComment(e.target.value)
+                      }
+                      }
+                      // disabled={isView}
+                      value={customerComment}
+                      // rows={5}
+                      className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                    />
+                  </div>
+
+                </div>
+                <FaPaperPlane
+                  className="cursor-pointer text-blue-500 text-xl focus:bg-transparent focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none mt-2"
+                  onClick={sendCustomerComment}
+                />
+
+                <div className="mt-2">
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Internal Comment
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      type="text"
+                      id="incomment"
+                      name="incomment"
+                      onChange={(e) => {
+                        setInComment(e.target.value)
+                      }
+                      }
+                      // disabled={isView}
+                      value={inComment}
+                      // rows={5}
+                      className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                    />
+                  </div>
+                </div>
+                <Link
+                  to={`/dashboard/orders`}
+                  className="text-sm font-semibold leading-6 text-gray-900"
+                >
+                  Cancel
+                </Link>
+                {order.hold === 0 && (
+                  <button
+                    type="submit"
+                    onClick={saveOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Complete
+                  </button>
+                )}
+
+                {order.hold === 0 ? (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Hold production
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    onClick={holdOrder}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Restart
+                  </button>
+                )}
+
+              </>
+
             ) :
-              order.status === "6" ? (
+              order.status === "5" ? (
                 <>
                   <Link
                     to={`/dashboard/orders`}
@@ -1488,14 +1743,33 @@ export function OrderEdit() {
                     onClick={saveOrder}
                     className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   >
-                    Pick-up
+                    Inspect
                   </button>
 
                 </>
-              ) : (null)}
+              ) :
+                order.status === "6" ? (
+                  <>
+                    <Link
+                      to={`/dashboard/orders`}
+                      className="text-sm font-semibold leading-6 text-gray-900"
+                    >
+                      Cancel
+                    </Link>
+                    <button
+                      type="submit"
+                      onClick={saveOrder}
+                      className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                    >
+                      Pick-up
+                    </button>
 
-        </div>
-      )}
+                  </>
+                ) : (null)}
+
+          </div>
+        )
+      }
 
 
 

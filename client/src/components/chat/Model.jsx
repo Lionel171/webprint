@@ -94,7 +94,7 @@ function Model(props) {
     
     <>
       <button onClick={handleOpen}>
-        <img className='w-[40px] h-[40px] rounded-[25px] mt-2' alt="Profile image" src={getChatPhoto(activeChat, activeUser) !== 'http://185.148.129.206:5000/undefined'  ? getChatPhoto(activeChat, activeUser) : DefaultImage} />
+        <img className='w-[40px] h-[40px] rounded-[25px] mt-2' alt="Profile image" src={getChatPhoto(activeChat, activeUser) !== 'http://185.148.129.206:5050/undefined'  ? getChatPhoto(activeChat, activeUser) : DefaultImage} />
       </button>
       {
         activeChat?.isGroup ?
@@ -146,7 +146,7 @@ function Model(props) {
           >
             <Box sx={style}>
               <div className='w-[250px] h-[250px] flex flex-col items-center justify-center -mt-4'>
-                <img className='w-[70px] h-[70px] rounded-[35px] shadow-lg' src={getChatPhoto(activeChat, activeUser) !== 'http://185.148.129.206:5000/undefined'  ? getChatPhoto(activeChat, activeUser) : DefaultImage} alt="ss" />
+                <img className='w-[70px] h-[70px] rounded-[35px] shadow-lg' src={getChatPhoto(activeChat, activeUser) !== 'http://185.148.129.206:5050/undefined'  ? getChatPhoto(activeChat, activeUser) : DefaultImage} alt="ss" />
                 <h2 className='text-[17px] tracking-wider font-semibold text-[#313439]'>{getChatName(activeChat, activeUser)}</h2>
 
                 <h3 className='text-[14px] font-semibold text-[#268d61]'>{!activeChat?.isGroup && activeChat?.users[0]?._id === activeUser.id ? activeChat?.users[1]?.email : activeChat?.users[0]?.email}</h3>

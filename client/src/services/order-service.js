@@ -13,10 +13,14 @@ class OrderService {
     const getUserListEndpoint = `api/orders/list`;
     return await HttpService.getWithParams(getUserListEndpoint, payload);
   };
+  getOrderInvoices = async (payload) => {
+    const getOrderInvoicesEndpoint = 'api/orders/invoices';
+    return await HttpService.getWithParams(getOrderInvoicesEndpoint, payload)
+  }
 
   getOrderListByUserId = async (payload, user_id) => {
     const getCurrentUserEndpoint = `api/orders/current/${user_id}`;
-    return await HttpService.get(getCurrentUserEndpoint, payload);
+    return await HttpService.getWithParams(getCurrentUserEndpoint, payload);
   };
 
   getOderListByApprove = async (payload) => {
@@ -27,8 +31,8 @@ class OrderService {
     const getOderListByPendingEndpoint = 'api/orders/pending';
     return await HttpService.getWithParams(getOderListByPendingEndpoint, payload);
   }
-  getOderListByInProduction = async (payload) => {
-    const getOderListByCompleteEndpoint = 'api/orders/inproduction';
+  getOderListByInProduction = async (payload, user_id) => {
+    const getOderListByCompleteEndpoint = `api/orders/inproduction/${user_id}`;
     return await HttpService.getWithParams(getOderListByCompleteEndpoint, payload);
   }
   
@@ -40,12 +44,16 @@ class OrderService {
     const saveOrderrEndpoint = "api/orders/save-order";
     return await HttpService.post(saveOrderrEndpoint, payload);
   };
+  uploadFile = async (payload) => {
+    const uploadFileEndpoint = "api/orders/file-upload";
+    return await HttpService.post(uploadFileEndpoint, payload)
+  }
 
   updateImage = async (payload) => {
     const updateImageEndpoint = "api/orders/img-update";
     return await HttpService.post(updateImageEndpoint, payload);
   };
-
+  
   assignStaff = async (payload) => {
     const assignStaffEndpoint = "api/orders/assign-staff";
     return await HttpService.post(assignStaffEndpoint, payload);
@@ -60,7 +68,20 @@ class OrderService {
     return await HttpService.post(setholdEndpoint, payload);
   }
   
+  sendToCustomerMsg = async (payload) => {
+    const sendToCustomerMsgEndpoint = "api/orders/customer-comment";
+    return await HttpService.post(sendToCustomerMsgEndpoint, payload);
+  }
 
+  getMsg = async (id) => {
+    const getMesEndpoint = `api/orders/get-message?user_id=${id}`;
+    return await HttpService.get(getMesEndpoint);
+  }
+
+  isViewMsg = async (payload) => {
+    const isViewMsgEndpoint = 'api/orders/isview-message';
+    return await HttpService.post(isViewMsgEndpoint, payload);
+  }
   getOrderDetailList = async (order_id) => {
     const getOrderDetailListEndpoint = `api/order-details/list?order_id=${order_id}`;
     return await HttpService.get(getOrderDetailListEndpoint);
@@ -70,6 +91,11 @@ class OrderService {
     const getOrderEndpoint = `api/orders?order_id=${order_id}`;
     return await HttpService.get(getOrderEndpoint);
   };
+  
+  updateOrder = async (payload) => {
+    const updateOrderEndpoint = 'api/orders/update';
+    return await HttpService.post(updateOrderEndpoint, payload)
+  }
 
   updateStatus = async (payload) => {
     const getOrderEndpoint = `api/orders/update-status`;
@@ -105,6 +131,7 @@ class OrderService {
     return await HttpService.get(getMonthlyMoneyEndpoint);
   }
 
+ 
   //invoice email
 
   sendInvoiceEmail = async (order_id) => {

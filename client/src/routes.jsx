@@ -19,7 +19,7 @@ import {
   Department,
   Payments,
   Notifications,
-
+  Invoices
 } from "@/pages/dashboard";
 import {
   UserEdit
@@ -61,6 +61,12 @@ export const routes = [
         path: "/orders",
         element: <Orders />,
       },
+      // {
+      //   icon: <TableCellsIcon {...icon} />,
+      //   name: "Invoice generator",
+      //   path: "/invocies",
+      //   element: <Invoices />,
+      // },
       // {
       //   icon: <TableCellsIcon {...icon} />,
       //   name: "payments",

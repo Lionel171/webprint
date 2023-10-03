@@ -3,10 +3,13 @@ import { MagnifyingGlassIcon, EyeIcon, PlusCircleIcon } from '@heroicons/react/2
 import ReactTimeAgo from 'react-time-ago';
 import DropDown from './Dropdown';
 import { SelectNoSearch } from '@/components/common/Select';
+import Spinner from '../../../../../public/img/spinner.gif'
+
 
 // import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useNavigate, NavLink } from 'react-router-dom';
 import CustomPagination from "../../../../components/common/CustomPagination";
+
 const statusList = [
   { id: '0', name: "All" },
   { id: '1', name: "Pending Review" },
@@ -79,7 +82,7 @@ export default function Content({
     } else {
       setSelectedPaymentType(selectedPaymentType);
     }
-    console.log(selectedPaymentType, "payment????")
+
   }
 
   const onChangeStatus = (e) => {
@@ -89,8 +92,7 @@ export default function Content({
     } else {
       setSelectedStatus(selectedStatus);
     }
-   
-    console.log(selectedStatus, "status ?????")
+
   }
 
 
@@ -109,6 +111,11 @@ export default function Content({
   };
   return (
     <div className="lg:px-2">
+      {loadingData && (
+        <div className="fixed w-[80%] h-screen z-10  flex justify-center items-center">
+          <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
+        </div>
+      )}
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-base text-xl font-semibold leading-6 text-gray-900">
@@ -170,7 +177,7 @@ export default function Content({
             </div>
           </div>
         </div>
-        {(localStorage.getItem('role').includes('normal') || localStorage.getItem("role").includes("Sales Team Member")) && (
+        {(localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('normal') || localStorage.getItem("role").includes("Sales Team Member")) && (
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
             <NavLink
               className="block flex items-center rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -205,6 +212,12 @@ export default function Content({
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
               >
                 OrderID
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+              >
+                Customer
               </th>
               <th
                 scope="col"
@@ -248,13 +261,13 @@ export default function Content({
               filterOrders.map((order, index) => (
                 <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3'>
                   <td className="whitespace-nowrap py-4 text-sm text-gray-800 text-center">
-                      <dl className="font-medium">
-                        <dt className="sr-only">Order</dt>
-                        <dd className="mt-1 truncate text-[15px] text-gray-700">
-                          {index + 1}
-                        </dd>
-                      </dl>
-                    </td>
+                    <dl className="font-medium">
+                      <dt className="sr-only">Order</dt>
+                      <dd className="mt-1 truncate text-[15px] text-gray-700">
+                        {index + 1}
+                      </dd>
+                    </dl>
+                  </td>
                   <NavLink to={"/dashboard/orders/view"} state={order}>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 text-center ml-2">
                       <dl className="font-medium">
@@ -265,6 +278,14 @@ export default function Content({
                       </dl>
                     </td>
                   </NavLink>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    <dl className="font-medium">
+                      <dt className="sr-only">Order</dt>
+                      <dd className="mt-1 truncate text-[15px] text-gray-700">
+                        {order.order_id}
+                      </dd>
+                    </dl>
+                  </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     <dl className="font-medium">
                       <dt className="sr-only">Order</dt>

@@ -36,7 +36,7 @@ router.post("/save-order", auth, async (req, res) => {
     order = await Order.findOne({ _id: order._id }).populate("Users");
     orders.map(async (item, index) => {
       const client_art_up = [];
-      if(req.files) {
+      if (req.files) {
         const order_file = req.files.filter((file, i) => file.fieldname.startsWith(`files[${index}]`));
         order_file.map((obj, sub_i) => {
           client_art_up.push(obj.filename)
@@ -89,7 +89,8 @@ router.post("/save-order-price", auth, async (req, res) => {
     });
     orders.map(async (item) => {
       let orderDetail = await OrderDetail.findById(item._id);
-      orderDetail.price = !isFree ? item.price : 0;
+      orderDetail.price = item.price;
+      // orderDetail.price = !isFree ? item.price : 0;
       orderDetail.comment = item.comment;
       orderDetail.payment_type = item.payment_type;
       await orderDetail.save();
@@ -112,10 +113,9 @@ router.post("/save-order-price", auth, async (req, res) => {
 
 router.post("/hold", auth, async (req, res) => {
   const { id, internal_comment } = req.body;
-  console.log(internal_comment, "this is hold id");
 
   try {
-    let order = await Order.findById(id);
+    let order = await OrderDetail.findById(id);
     if (order.hold === 0) {
       order.hold = 1;
     } else {
@@ -137,32 +137,128 @@ router.post("/hold", auth, async (req, res) => {
   }
 })
 
-//update order
-
-router.post("/img-update", auth, async (req, res) => {
-  const { orders, id, internal_comment } = req.body;
+//upload working file
+router.post('/file-upload', auth, async (req, res) => {
+  const { id, index } = req.body;
   try {
-    let order = await Order.findById(id);
-    order.internal_comment = internal_comment;
-    await order.save();
-
-    if (orders.length <= 0) {
-      res.status(500).send("Server error");
-    }
-    orders.map(async (item, index) => {
-      let orderDetail = await OrderDetail.findById(item._id);
-      orderDetail.client_art_up = req.files[index] ? req.files[index].filename : orderDetail.client_art_up;
-      orderDetail.comment = item.comment;
-      await orderDetail.save();
-    });
-
+    const updatedOrderDetail = await OrderDetail.findByIdAndUpdate(
+      id,
+      {
+        $set: { [`client_art_up.${index}`]: req.files[0].filename },
+      },
+      { new: true }
+    );
     return res.json({
       success: true,
     });
   } catch (err) {
-    res.status(500).send("Server error!");
+    console.log(err);
+    res.status(500).send('Server Error');
   }
-});
+
+})
+// send message to customer
+router.post('/customer-comment', auth, async (req, res) => {
+  const { message, order_id } = req.body;
+  try {
+    const orderDetail = await OrderDetail.findById(order_id);
+    orderDetail.customer_comment = message;
+    orderDetail.customer_comment_is_viewd = false;
+    await orderDetail.save();
+
+    return res.json({
+      success: true,
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
+
+// get message from staff
+router.get('/get-message', auth, async (req, res) => {
+
+  try {
+    const orderDetail = await OrderDetail.find({ user_id: req.query.user_id });
+
+    const order_is_msg = orderDetail.filter(obj => obj.customer_comment && !obj.customer_comment_is_viewd);
+    const response = [];
+    order_is_msg.map((item, index) => {
+      response.push({
+        order_id: item._id,
+        order_title: item.title,
+        content: item.customer_comment,
+        from: item.staff_id,
+        updatedAt: item.updatedAt
+      })
+    })
+
+    return res.json({
+      success: true,
+      result: response,
+    })
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
+
+//is view message
+router.post('/isview-message', auth, async (req, res) => {
+  const { id } = req.body;
+  console.log(id, "hwy")
+  try {
+    const orderDetail = await OrderDetail.findById(id);
+    orderDetail.customer_comment_is_viewd = true;
+    await orderDetail.save()
+    return res.json({
+      success: true,
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
+
+//update order
+
+router.post("/update", auth, async (req, res) => {
+  const { id, internal_comment } = req.body;
+  try {
+    const orderDetail = await OrderDetail.findById(id);
+    orderDetail.internal_comment = internal_comment;
+    await orderDetail.save();
+    return res.json({
+      success: true,
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error")
+  }
+})
+
+// router.post("/img-update", auth, async (req, res) => {
+//   const { orders, id, internal_comment } = req.body;
+//   try {
+//     console.log(orders, "image updater")
+//     if (orders.length <= 0) {
+//       res.status(500).send("Server error");
+//     }
+//     orders.map(async (item, index) => {
+//       let orderDetail = await OrderDetail.findById(item._id);
+//       orderDetail.client_art_up = req.files[index] ? req.files[index].filename : orderDetail.client_art_up;
+//       orderDetail.comment = item.comment;
+//       await orderDetail.save();
+//     });
+
+//     return res.json({
+//       success: true,
+//     });
+//   } catch (err) {
+//     res.status(500).send("Server error!");
+//   }
+// });
 
 router.post("/assign-staff", auth, async (req, res) => {
   const { orders } = req.body;
@@ -171,12 +267,10 @@ router.post("/assign-staff", auth, async (req, res) => {
       res.status(500).send("Server error");
     }
 
-    orders.map(async (item, index) => {
-      let orderDetail = await OrderDetail.findById(item._id);
-      orderDetail.staff_id = item.staff_id;
-      orderDetail.comment = item.comment;
-      await orderDetail.save();
-    });
+    let orderDetail = await OrderDetail.findById(orders[0]._id);
+    orderDetail.staff_id = orders[0].staff_id;
+    await orderDetail.save();
+
     return res.json({
       success: true,
     })
@@ -201,9 +295,7 @@ router.get("/total", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const response = await Order.findById(req.query.order_id).populate(
-      "user_id"
-    );
+    const response = await OrderDetail.findById(req.query.order_id);
     res.json({
       state: true,
       order: response,
@@ -221,7 +313,7 @@ router.get("/list", async (req, res) => {
       ? {
         $or: [
           { title: { $regex: new RegExp(search), $options: "i" } },
-          { status: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
       : {};
@@ -236,7 +328,29 @@ router.get("/list", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-
+//get invoice orders
+router.get("/invoices", auth, async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    let condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : {};
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await Order.paginate(condition, {
+      offset,
+      limit,
+    });
+    res.json(orders);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
 //approve order
 router.get("/approve", async (req, res) => {
   try {
@@ -245,12 +359,12 @@ router.get("/approve", async (req, res) => {
       ? {
         $or: [
           { title: { $regex: new RegExp(search), $options: "i" } },
-          { status: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
       : { status: { $in: 2 } };
     const { limit, offset } = getPagination(page, perPage);
-    const orders = await Order.paginate(condition, {
+    const orders = await OrderDetail.paginate(condition, {
       offset,
       limit,
     });
@@ -269,12 +383,12 @@ router.get("/pending", async (req, res) => {
       ? {
         $or: [
           { title: { $regex: new RegExp(search), $options: "i" } },
-          { status: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
       : { status: { $in: 1 } };
     const { limit, offset } = getPagination(page, perPage);
-    const orders = await Order.paginate(condition, {
+    const orders = await OrderDetail.paginate(condition, {
       offset,
       limit,
     });
@@ -288,9 +402,8 @@ router.get("/pending", async (req, res) => {
 
 //in prodcution order
 
-router.get("/inproduction", async (req, res) => {
+router.get("/inproduction/:id", async (req, res) => {
   try {
-
     const { page, perPage, search } = req.query;
     var condition = search
       ? {
@@ -299,19 +412,19 @@ router.get("/inproduction", async (req, res) => {
           { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : { status: { $in: [4, 5, 6, 7] } };
+      : {
+        status: { $in: [4, 5, 6, 7] },
+        staff_id: req.params.id,
+      };
     const { limit, offset } = getPagination(page, perPage);
-    const orders = await Order.paginate(condition, {
-      offset,
-      limit,
-    });
+    const orders = await OrderDetail.paginate(condition, { offset, limit });
     res.json(orders);
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
 });
+
 
 // // in production
 // router.get("/in-production/:id", async (req, res) => {
@@ -378,40 +491,35 @@ router.get("/inproduction", async (req, res) => {
 //     res.status(500).send("Server Error");
 //   }
 // });
+
 router.get("/current/:id", async (req, res) => {
   try {
-    const { page = 1, perPage = 10, search = "" } = req.query;
+    const { page, perPage, search } = req.query;
 
-    const limit = parseInt(perPage);
-    const skip = (page - 1) * limit;
+
     const condition = search
       ? {
-        $and: [
-          { user_id: req.params.id },
-          {
-            $or: [
-              { title: { $regex: new RegExp(search), $options: "i" } },
-              { status: { $regex: new RegExp(search), $options: "i" } },
-            ],
-          },
+        user_id: req.params.id,
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
       : { user_id: req.params.id };
 
-    const orders = await OrderDetail.find(condition)
-      .skip(skip)
-      .limit(limit);
-    const count = await OrderDetail.countDocuments(condition);
-    res.json({
-      orders,
-      totalPages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
     });
+
+    res.json(orders);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
 });
+
 
 router.delete("/:id", auth, async (req, res) => {
   try {
@@ -430,7 +538,7 @@ router.put("/update-status", auth, async (req, res) => {
     let _id = req.user._id;
     const { order_id, status } = req.body;
 
-    let order = await Order.findById(order_id);
+    let order = await OrderDetail.findById(order_id);
     if (order) {
       order.status = status;
       await order.save();

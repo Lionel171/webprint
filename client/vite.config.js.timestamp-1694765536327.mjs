@@ -8,7 +8,7 @@ var vite_config_default = defineConfig({
   },
   define: {
     "process.env": {
-      API_URL: "http://185.148.129.206:5000",
+      API_URL: "http://185.148.129.206:5050",
       DEBUG: "true"
     }
   }

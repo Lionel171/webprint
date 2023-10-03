@@ -12,8 +12,8 @@ import React, { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
-import DepartmentService from "@/services/department-service";
-import { FaDownload, FaUpload } from 'react-icons/fa';
+import Spinner from '../../../../public/img/spinner.gif';
+ 
 import Tiff from 'tiff.js'
 
 
@@ -51,6 +51,7 @@ export function OrderEdit() {
     const [orders, setOrders] = useState([]);
     const [selectedUploadId, setSelectedUploadId] = useState(0)
     const [isSave, setIsSave] = useState(false)
+    const [isSpinner, setIsSpinner] = useState(false)
 
     const serviceTypeList = [
         { id: 0, name: "", value: "" },
@@ -345,14 +346,15 @@ export function OrderEdit() {
     };
 
     const saveOrder = async () => {
-
+        
         let flag = true;
-
+        
         if (title === "") {
             flag = false;
+            
             setTitleFlag(true);
         }
-        if (isAdmin && !customer._id) {
+        if (!isAdmin && !customer._id) {
             flag = false;
             setCustomerFlag(true);
         }
@@ -365,11 +367,11 @@ export function OrderEdit() {
                 };
             }
             // if (obj.payment_type === 0) {
-            //     flag = false;
-            //     return {
-            //         ...obj,
-            //         paymentTypeFlag: true,
-            //     };
+                //     flag = false;
+                //     return {
+                    //         ...obj,
+                    //         paymentTypeFlag: true,
+                    //     };
             // }
             if (obj.quantity === 0 || obj.quantity.length === 0) {
                 flag = false;
@@ -378,21 +380,22 @@ export function OrderEdit() {
                     quantityFlag: true,
                 };
             }
-            if (obj.size === '' || obj.size.length === 0) {
+            if (obj.size === [] || obj.size.length === 0) {
                 flag = false;
                 return {
                     ...obj,
                     sizeFlag: true,
                 };
             }
-
+            
             if (obj.client_art_up === "" || obj.client_art_up.length === 0) {
                 flag = false;
                 return {
                     ...obj,
                     imgFlag: true,
                 };
-            } else {
+            } 
+            else {
                 return {
                     ...obj
                 }
@@ -412,19 +415,40 @@ export function OrderEdit() {
         if (isAdmin) {
             newOrder['customerId'] = customer.id
         }
-
+        setIsSpinner(true)
         const response = await OrderService.saveOrder(newOrder);
         if (response.success) {
-            navigate("/dashboard/orders");
-            const messageData = {
-                from: 'showstopperurbanwear@gmail.com',
-                // from: localStorage.getItem('email'),
-                to: 'showstopperurbanwear@gmail.com',
-                subject: 'Hello.',
-                text: `${localStorage.getItem("username")} requested new order.`
-            };
-            const email_response = await userService.sendEmail(messageData);
+            
+            //sending email
+            // const messageData = {
+            //     from: 'orochisugai@gmail.com',
+            //     // to: user.email,
+            //     to: 'kingdev.talent@gmail.com',
+            //     subject: 'Hello ' + user.contact_person + '.',
+            //     text: `${localStorage.getItem("username")} requested new order.`,
+            // };
+            // try {
+            //     const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify(messageData),
+            //     });
+
+            //     if (response.ok) {
+            //         setIsSpinner(false)
+            //         alert('Email sent successfully!');
+            //     } else {
+            //         setIsSpinner(false)
+            //         alert('Failed to send email.');
+            //     }
+            // } catch (error) {
+            //     console.error('Error sending email:', error);
+            //     alert('Failed to send email.');
+            // }
         }
+        navigate("/dashboard/orders");
     }
 
     const onChangeCustomer = (item) => {
@@ -451,6 +475,11 @@ export function OrderEdit() {
 
     return (
         <div>
+            {isSpinner && (
+                <div className="fixed w-[80%] h-screen z-10  flex justify-center items-center">
+                  <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
+                </div>
+            )}
             <div className="space-y-12">
                 <div className="border-b border-gray-900/10 pb-12">
                     <h2 className="text-base font-semibold leading-7 text-gray-900">Order</h2>
@@ -471,7 +500,7 @@ export function OrderEdit() {
                                 maxLength={50}
                             />
                         </div>
-                        {isAdmin ?
+                        {/* {isAdmin ?
                             <div className="sm:col-span-3 mt-3">
                                 <SelectNoSearch
                                     labelName={'Service Type'}
@@ -495,7 +524,7 @@ export function OrderEdit() {
                                     </div>
                                 </NavLink>
                             </div> : null
-                        }
+                        } */}
                     </div>
                 </div>
 

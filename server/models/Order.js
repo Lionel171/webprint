@@ -12,14 +12,14 @@ const OrderSchema = new Schema(
     internal_comment: {
       type: String
     },
-
+    
     title: {
       type: String,
     },
-    status: {
-      type: String,
-      default: "pending payment",
-    },
+    // status: {
+    //   type: String,
+    //   default: "pending payment",
+    // },
     total_value: {
       type: Number,
       default: 0,

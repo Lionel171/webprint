@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const mongoosePaginate = require("mongoose-paginate-v2");
+
 
 // Create Schema
 const OrderSchema = new Schema(
@@ -40,11 +42,21 @@ const OrderSchema = new Schema(
       default: Date.now,
     },
     status: {
+      type: String,
+      default: '1',
+    },
+    hold: {
       type: Number,
-      default: 1,
+      default: 0,
     },
     comment: {
       type: String,
+    },
+    customer_comment: {
+      type: String,
+    },
+    customer_comment_is_viewd: {
+      type: Boolean,
     },
     store_at_up: {
       type: String,
@@ -58,6 +70,9 @@ const OrderSchema = new Schema(
     hold: {
       type: Number,
       default: 0,
+    },
+    internal_comment: {
+      type: String
     },
     due_date: {
       type: Date,
@@ -83,5 +98,6 @@ const OrderSchema = new Schema(
     timestamps: true,
   }
 );
+OrderSchema.plugin(mongoosePaginate);
 
 module.exports = OrderDetail = mongoose.model("OrderDetails", OrderSchema);

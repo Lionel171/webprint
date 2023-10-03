@@ -1,6 +1,4 @@
 
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { authorsTableData, projectsTableData } from "@/data";
 import Content from '@/pages/dashboard/orders/components/content';
 import { useEffect, useState } from "react";
 import OrderService from "@/services/order-service";
@@ -64,7 +62,7 @@ export function Orders() {
   }
   const onPageChange = (page) => {
     setCurrentPage(page);
-    setIsNextPage(true)
+    setIsNextPage(isNextPage ? false : true)
   };
   const setSearchTxt = (value) => {
     setSearch(value);
@@ -107,22 +105,20 @@ export function Orders() {
 
     } else if (user.role.includes("Production Staff")) {
       setLoadingData(true);
-      const response = await OrderService.getOderListByInProduction(query);
-      setOrders(response.docs);
+      const response = await OrderService.getOderListByInProduction(query, user._id );
       setTotalPages(response.totalPages);
+      setOrders(response.docs);
       setTotal(response.totalDocs);
       setCurrentPage(response.page);
       setLoadingData(false);
     } else if (user.role.includes("normal")) {
       setLoadingData(true);
       const response = await OrderService.getOrderListByUserId(query, user._id);
-      console.log(response, "I am updated for customer")
-      setOrders(response.orders);
+      setOrders(response.docs);
       setTotalPages(response.totalPages);
-      setTotal(response.orders.length);
-      setCurrentPage(response.currentPage);
+      setTotal(response.totalDocs);
+      setCurrentPage(response.page);
       setLoadingData(false);
-
     }
   }
   return (
