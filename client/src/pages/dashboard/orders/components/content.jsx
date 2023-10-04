@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MagnifyingGlassIcon, EyeIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import ReactTimeAgo from 'react-time-ago';
+import { FaSort } from 'react-icons/fa';
 import DropDown from './Dropdown';
 import { SelectNoSearch } from '@/components/common/Select';
 import Spinner from '../../../../../public/img/spinner.gif'
@@ -20,12 +21,12 @@ const statusList = [
   { id: '6', name: "Ready for pickup/ship" },
 ]
 const paymentTypeList = [
-  { id: '0', name: "All" },
-  { id: '1', name: "Credit Cart" },
-  { id: '2', name: "PayPal" },
-  { id: '3', name: "Offline" },
-  { id: '4', name: "Imported Payment" },
-  { id: '5', name: "Free" },
+  { id: 0, name: "All" },
+  { id: 1, name: "Credit Cart" },
+  { id: 2, name: "PayPal" },
+  { id: 3, name: "Offline" },
+  { id: 4, name: "Imported Payment" },
+  { id: 5, name: "Free" },
 ]
 
 
@@ -56,10 +57,11 @@ export default function Content({
   const [filterOrders, setFilterOrders] = useState([]);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
+  const [sortCriteria, setSortCriteria] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
     setFilterOrders(orders);
-    console.log(filterOrders, "this is filter orders")
   }, [orders]);
 
 
@@ -73,16 +75,17 @@ export default function Content({
     } else {
       setFilterOrders(orders);
     }
+
   }, [selectedPaymentType, selectedStatus]);
 
   const onChangePaymentType = (e) => {
     const selectedPaymentType = e.id;
-    if (selectedPaymentType === "0") {
+    if (selectedPaymentType === 0) {
       setSelectedPaymentType(null);
     } else {
       setSelectedPaymentType(selectedPaymentType);
     }
-
+    
   }
 
   const onChangeStatus = (e) => {
@@ -94,6 +97,55 @@ export default function Content({
     }
 
   }
+ 
+  const sortHandle = (criteria) => {
+    if (sortCriteria === criteria) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortCriteria(criteria);
+      setSortOrder("asc");
+    }
+    const sortedOrders = [...filterOrders].sort((a, b) => {
+      let valueA, valueB;
+      if (sortCriteria === "title") {
+        valueA = a.title.toLowerCase();
+        valueB = b.title.toLowerCase();
+        if (sortOrder === "asc") {
+          return valueA.localeCompare(valueB);
+        } else {
+          return valueB.localeCompare(valueA);
+        }
+      } else if (sortCriteria === "orderid") {
+        valueA = parseInt(a.order_id, 16) % 10000;
+        valueB = parseInt(b.order_id, 16) % 10000;
+      } else if (sortCriteria === "status") {
+        valueA = parseInt(a.status);
+        valueB = parseInt(b.status);
+      } else if (sortCriteria === "price") {
+        valueA = a.price;
+        valueB = b.price;
+      } else if (sortCriteria === "service") {
+        valueA = a.service_type;
+        valueB = b.service_type;
+      } else if (sortCriteria === "order_date") {
+        valueA = new Date(a.date).getTime();
+        valueB = new Date(b.date).getTime();
+      } else if (sortCriteria === "due_date") {
+        valueA = new Date(a.date).getTime();
+        valueB = new Date(b.date).getTime();
+
+      }
+
+      if (sortOrder === "asc") {
+        return valueA - valueB;
+      } else {
+        return valueB - valueA;
+      }
+    });
+
+    setFilterOrders(sortedOrders)
+  };
+
 
 
 
@@ -195,63 +247,71 @@ export default function Content({
         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead className={`text-xs text-gray-700 uppercase dark:text-gray-400 bg-blue-500`}>
             <tr>
+              <th scope="col" className="px-6 py-3 bg-gray-50 dark:bg-gray-800 items-center">
+                <div className="flex items-center">
+                  <p className="mr-2">Title</p>
+                  <FaSort onClick={() => sortHandle("title")} className="cursor-pointer" />
+                </div>
+              </th>
+
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
-                No
+                <div className="flex items-center">
+                  <p className="mr-2">OrderID</p>
+                  <FaSort onClick={() => sortHandle("orderid")} className="cursor-pointer" />
+                </div>
+              </th>
+
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
+              >
+                <div className="flex items-center">
+                  <p className="mr-2">Status</p>
+                  <FaSort onClick={() => sortHandle("status")} className='cursor-pointer' />
+                </div>
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
-                Title
+                <div className="flex items-center">
+                  <p className="mr-2">Price</p>
+                  <FaSort onClick={() => sortHandle("price")} className='cursor-pointer' />
+                </div>
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
-                OrderID
+                <div className="flex items-center">
+                  <p className="mr-2">Product Service</p>
+                  <FaSort onClick={() => sortHandle("service")} className='cursor-pointer' />
+                </div>
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
-                Customer
+                <div className="flex items-center">
+                  <p className="mr-2">Order Date</p>
+                  <FaSort onClick={() => sortHandle("order_date")} className='cursor-pointer' />
+                </div>
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
-                Status
+                <div className="flex items-center">
+                  <p className="mr-2">Due Date</p>
+                  <FaSort onClick={() => sortHandle("due_date")} className='cursor-pointer' />
+                </div>
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
-              >
-                Price
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
-              >
-                Product Service
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800 "
-              >
-                Order Date
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
-              >
-                Due Date
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
               </th>
             </tr>
@@ -260,14 +320,7 @@ export default function Content({
             {orders &&
               filterOrders.map((order, index) => (
                 <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3'>
-                  <td className="whitespace-nowrap py-4 text-sm text-gray-800 text-center">
-                    <dl className="font-medium">
-                      <dt className="sr-only">Order</dt>
-                      <dd className="mt-1 truncate text-[15px] text-gray-700">
-                        {index + 1}
-                      </dd>
-                    </dl>
-                  </td>
+
                   <NavLink to={"/dashboard/orders/view"} state={order}>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 text-center ml-2">
                       <dl className="font-medium">
@@ -282,18 +335,11 @@ export default function Content({
                     <dl className="font-medium">
                       <dt className="sr-only">Order</dt>
                       <dd className="mt-1 truncate text-[15px] text-gray-700">
-                        {order.order_id}
+                        #{parseInt(order.order_id, 16) % 10000}
                       </dd>
                     </dl>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                    <dl className="font-medium">
-                      <dt className="sr-only">Order</dt>
-                      <dd className="mt-1 truncate text-[15px] text-gray-700">
-                        {order.order_id}
-                      </dd>
-                    </dl>
-                  </td>
+
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {order.hold === 0 ? (
                       parseInt(order.status) === 1 ? (
@@ -392,7 +438,7 @@ export default function Content({
                     {order.price !== 0 ? '$' + order.price : '-------'}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
-                    {serviceTypeList[order.service_type].name}
+                    {serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 ">
                     {order.date && (

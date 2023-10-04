@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MagnifyingGlassIcon, PlusCircleIcon , ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PlusCircleIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ReactTimeAgo from 'react-time-ago';
 import DropDown from '@/components/dashboard/users/Dropdown';
 import { SelectMenu, SelectNoSearch } from '@/components/common/Select';
@@ -33,38 +33,104 @@ export default function Content({
     const deleteComfirm = id => {
         deleteFunction(id);
     };
+    // pending users length
+    const pending_len = users.filter(user => (user.role[0] === "normal" && user.user_status === "request")).length;
+    // permit users length
+    const permit_len = users.filter(user => (user.role[0] === "normal" && user.user_status === "permit")).length;
+    // cancel users length
+    const cancel_len = users.filter(user => (user.role[0] === "normal" && user.user_status === "cancel")).length;
 
-    const len = users.length;
     const rowCount = 10;
-    const disCount = 5;
-    const pageCount = Math.ceil(len / 10);
-    const [currentPage, setCurrentPage] = useState(1);
-    let pages = [];
-    if (pageCount < disCount) for (let i = 1; i <= pageCount; i++) pages.push(i);
-    else if (pageCount - currentPage + 1 <= disCount)
-        for (let i = pageCount - disCount + 1; i <= pageCount; i++) pages.push(i);
+    //pending users pagenagion
+    const pending_disCount = 5;
+    const pending_pageCount = Math.ceil(pending_len / 10);
+    const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+    let pending_pages = [];
+    if (pending_pageCount < pending_disCount) for (let i = 1; i <= pending_pageCount; i++) pending_pages.push(i);
+    else if (pending_pageCount - pendingCurrentPage + 1 <= pending_disCount)
+        for (let i = pending_pageCount - pending_disCount + 1; i <= pending_pageCount; i++) pending_pages.push(i);
     else {
-        let st = currentPage;
-        if (st > pageCount - disCount) st = pageCount - disCount + 1;
-        for (let i = st; i <= st + 1; i++) pages.push(i);
-        pages.push('...');
-        for (let i = pageCount - 1; i <= pageCount; i++) pages.push(i);
+        let st = pendingCurrentPage;
+        if (st > pending_pageCount - pending_disCount) st = pending_pageCount - pending_disCount + 1;
+        for (let i = st; i <= st + 1; i++) pending_pages.push(i);
+        pending_pages.push('...');
+        for (let i = pending_pageCount - 1; i <= pending_pageCount; i++) pending_pages.push(i);
     }
 
-    const setPage = page => {
-        if (typeof page === 'number') setCurrentPage(page);
+    const pending_setPage = page => {
+        if (typeof page === 'number') setPendingCurrentPage(page);
     };
 
-    const nextPage = () => {
-        if (currentPage < pageCount) setCurrentPage(currentPage + 1);
+    const pending_nextPage = () => {
+        if (pendingCurrentPage < pending_pageCount) setPendingCurrentPage(pendingCurrentPage + 1);
     };
 
-    const previousPage = () => {
-        if (currentPage > 1) setCurrentPage(currentPage - 1);
+    const pending_previousPage = () => {
+        if (pendingCurrentPage > 1) setPendingCurrentPage(pendingCurrentPage - 1);
     };
 
-    const uusers = users.slice((currentPage - 1) * rowCount, currentPage * rowCount);
-    console.log("uusers=>>>>>>>>>", uusers)
+    //permit users pagenagion
+    const permit_disCount = 5;
+    const permit_pageCount = Math.ceil(permit_len / 10);
+    const [permitCurrentPage, setPermitCurrentPage] = useState(1);
+    let permit_pages = [];
+    if (permit_pageCount < permit_disCount) for (let i = 1; i <= permit_pageCount; i++) permit_pages.push(i);
+    else if (permit_pageCount - permitCurrentPage + 1 <= permit_disCount)
+        for (let i = permit_pageCount - permit_disCount + 1; i <= permit_pageCount; i++) permit_pages.push(i);
+    else {
+        let st = permitCurrentPage;
+        if (st > permit_pageCount - permit_disCount) st = permit_pageCount - permit_disCount + 1;
+        for (let i = st; i <= st + 1; i++) permit_pages.push(i);
+        permit_pages.push('...');
+        for (let i = permit_pageCount - 1; i <= permit_pageCount; i++) permit_pages.push(i);
+    }
+
+    const permit_setPage = page => {
+        if (typeof page === 'number') setPermitCurrentPage(page);
+    };
+
+    const permit_nextPage = () => {
+        if (permitCurrentPage < permit_pageCount) setPermitCurrentPage(permitCurrentPage + 1);
+    };
+
+    const permit_previousPage = () => {
+        if (permitCurrentPage > 1) setPermitCurrentPage(permitCurrentPage - 1);
+    };
+    //cancel users pagenagion
+    const cancel_disCount = 5;
+    const cancel_pageCount = Math.ceil(cancel_len / 10);
+    const [cancelCurrentPage, setCancelCurrentPage] = useState(1);
+    let cancel_pages = [];
+    if (cancel_pageCount < cancel_disCount) for (let i = 1; i <= cancel_pageCount; i++) cancel_pages.push(i);
+    else if (cancel_pageCount - cancelCurrentPage + 1 <= cancel_disCount)
+        for (let i = cancel_pageCount - cancel_disCount + 1; i <= cancel_pageCount; i++) cancel_pages.push(i);
+    else {
+        let st = cancelCurrentPage;
+        if (st > cancel_pageCount - cancel_disCount) st = cancel_pageCount - cancel_disCount + 1;
+        for (let i = st; i <= st + 1; i++) cancel_pages.push(i);
+        cancel_pages.push('...');
+        for (let i = cancel_pageCount - 1; i <= cancel_pageCount; i++) cancel_pages.push(i);
+    }
+
+    const cancel_setPage = page => {
+        if (typeof page === 'number') setCancelCurrentPage(page);
+    };
+
+    const cancel_nextPage = () => {
+        if (cancelCurrentPage < cancel_pageCount) setCancelCurrentPage(cancelCurrentPage + 1);
+    };
+
+    const cancel_previousPage = () => {
+        if (cancelCurrentPage > 1) setCancelCurrentPage(cancelCurrentPage - 1);
+    };
+
+    //
+    const pending_users = users.filter(user => (user.role[0] === "normal" && user.user_status === "request")).slice((pendingCurrentPage - 1) * rowCount, pendingCurrentPage * rowCount);
+    const permit_users = users.filter(user => (user.role[0] === "normal" && user.user_status === "permit")).slice((permitCurrentPage - 1) * rowCount, permitCurrentPage * rowCount);
+    const cancel_users = users.filter(user => (user.role[0] === "normal" && user.user_status === "cancel")).slice((cancelCurrentPage - 1) * rowCount, cancelCurrentPage * rowCount);
+
+
+    // const uusers = users.slice((currentPage - 1) * rowCount, currentPage * rowCount);
 
     const openPermitModal = (user, status) => {
         setSelectedStatus(status.name)
@@ -191,7 +257,7 @@ export default function Content({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
-                            {uusers.filter(user => (user.role[0] === "normal" && user.user_status === "request")).map((user, index) => (
+                            {pending_users.map((user, index) => (
                                 <tr key={index}>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
@@ -262,6 +328,52 @@ export default function Content({
                             ))}
                         </tbody>
                     </table>
+                    <div className="flex items-center justify-end bg-white px-1 py-3 sm:px-4">
+                        <div className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <p className="text-sm text-gray-700"></p>
+                            </div>
+                            <div>
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
+                                >
+                                    <a
+                                        onClick={() => pending_previousPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-l-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${pendingCurrentPage === 1 ? " text-gray-400" : " text-gray-700"}`}
+                                    >
+                                        <span className="sr-only">Previous</span>
+                                        <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                    {pending_pages.map((i) => (
+                                        <a
+                                            key={i}
+                                            onClick={() => pending_setPage(i)}
+                                            className={`max-[340px]:hidden relative inline-flex cursor-pointer items-center px-4 py-2 text-sm font-semibold 
+            ${i === pendingCurrentPage
+                                                    ? " z-10 border border-blue-600 bg-blue-50 text-blue-600 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                    : " text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                                }`}
+                                        >
+                                            {i}
+                                        </a>
+                                    ))}
+                                    <a
+                                        onClick={() => pending_nextPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-r-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${pendingCurrentPage === pending_pageCount
+                                                ? " text-gray-400"
+                                                : " text-gray-700"
+                                            }`}
+                                    >
+                                        <span className="sr-only">Next</span>
+                                        <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 {/* -------permit users--------------- */}
                 <hr></hr>
@@ -318,7 +430,7 @@ export default function Content({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
-                            {uusers.filter(user => (user.role[0] === "normal" && user.user_status === "permit")).map((user, index) => (
+                            {permit_users.map((user, index) => (
                                 <tr key={index}>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
@@ -389,6 +501,52 @@ export default function Content({
                             ))}
                         </tbody>
                     </table>
+                    <div className="flex items-center justify-end bg-white px-1 py-3 sm:px-4">
+                        <div className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <p className="text-sm text-gray-700"></p>
+                            </div>
+                            <div>
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
+                                >
+                                    <a
+                                        onClick={() => permit_previousPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-l-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${permitCurrentPage === 1 ? " text-gray-400" : " text-gray-700"}`}
+                                    >
+                                        <span className="sr-only">Previous</span>
+                                        <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                    {permit_pages.map((i) => (
+                                        <a
+                                            key={i}
+                                            onClick={() => permit_setPage(i)}
+                                            className={`max-[340px]:hidden relative inline-flex cursor-pointer items-center px-4 py-2 text-sm font-semibold 
+            ${i === permitCurrentPage
+                                                    ? " z-10 border border-blue-600 bg-blue-50 text-blue-600 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                    : " text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                                }`}
+                                        >
+                                            {i}
+                                        </a>
+                                    ))}
+                                    <a
+                                        onClick={() => permit_nextPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-r-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${permitCurrentPage === permit_pageCount
+                                                ? " text-gray-400"
+                                                : " text-gray-700"
+                                            }`}
+                                    >
+                                        <span className="sr-only">Next</span>
+                                        <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 {/* -------Cancle users--------------- */}
                 <hr></hr>
@@ -445,7 +603,7 @@ export default function Content({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
-                            {uusers.filter(user => (user.role[0] === "normal" && user.user_status === "cancel")).map((user, index) => (
+                            {cancel_users.map((user, index) => (
                                 <tr key={index}>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
@@ -516,53 +674,54 @@ export default function Content({
                             ))}
                         </tbody>
                     </table>
-                </div>
-                <div className="flex items-center justify-end bg-white px-1 py-3 sm:px-4">
-                    <div className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                            <p className="text-sm text-gray-700"></p>
-                        </div>
-                        <div>
-                            <nav
-                                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                                aria-label="Pagination"
-                            >
-                                <a
-                                    onClick={() => previousPage()}
-                                    className={`relative inline-flex cursor-pointer items-center rounded-l-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
-          ${currentPage === 1 ? " text-gray-400" : " text-gray-700"}`}
+                    <div className="flex items-center justify-end bg-white px-1 py-3 sm:px-4">
+                        <div className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <p className="text-sm text-gray-700"></p>
+                            </div>
+                            <div>
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
                                 >
-                                    <span className="sr-only">Previous</span>
-                                    <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-                                </a>
-                                {pages.map((i) => (
                                     <a
-                                        key={i}
-                                        onClick={() => setPage(i)}
-                                        className={`max-[340px]:hidden relative inline-flex cursor-pointer items-center px-4 py-2 text-sm font-semibold 
-            ${i === currentPage
-                                                ? " z-10 border border-blue-600 bg-blue-50 text-blue-600 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                                                : " text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                        onClick={() => cancel_previousPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-l-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${cancelCurrentPage === 1 ? " text-gray-400" : " text-gray-700"}`}
+                                    >
+                                        <span className="sr-only">Previous</span>
+                                        <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                    {cancel_pages.map((i) => (
+                                        <a
+                                            key={i}
+                                            onClick={() => cancel_setPage(i)}
+                                            className={`max-[340px]:hidden relative inline-flex cursor-pointer items-center px-4 py-2 text-sm font-semibold 
+            ${i === cancelCurrentPage
+                                                    ? " z-10 border border-blue-600 bg-blue-50 text-blue-600 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                    : " text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                                }`}
+                                        >
+                                            {i}
+                                        </a>
+                                    ))}
+                                    <a
+                                        onClick={() => cancel_nextPage()}
+                                        className={`relative inline-flex cursor-pointer items-center rounded-r-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
+          ${cancelCurrentPage === cancel_pageCount
+                                                ? " text-gray-400"
+                                                : " text-gray-700"
                                             }`}
                                     >
-                                        {i}
+                                        <span className="sr-only">Next</span>
+                                        <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
                                     </a>
-                                ))}
-                                <a
-                                    onClick={() => nextPage()}
-                                    className={`relative inline-flex cursor-pointer items-center rounded-r-md px-2 py-2 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 
-          ${currentPage === pageCount
-                                            ? " text-gray-400"
-                                            : " text-gray-700"
-                                        }`}
-                                >
-                                    <span className="sr-only">Next</span>
-                                    <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-                                </a>
-                            </nav>
+                                </nav>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <UserPermitModal
                     type={selectedStatus}
                     open={openUserPermitModal}

@@ -7,13 +7,13 @@ import OrderService from "@/services/order-service"
 import { SelectNoSearch } from '@/components/common/Select';
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/react/24/outline';
 import { TrashIcon } from "@heroicons/react/20/solid";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate , Link} from "react-router-dom";
 import React, { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
 import Spinner from '../../../../public/img/spinner.gif';
- 
+
 import Tiff from 'tiff.js'
 
 
@@ -351,13 +351,9 @@ export function OrderEdit() {
         
         if (title === "") {
             flag = false;
-            
             setTitleFlag(true);
         }
-        if (!isAdmin && !customer._id) {
-            flag = false;
-            setCustomerFlag(true);
-        }
+      
         const temp = orders.map((obj, subindex) => {
             if (obj.service_type === 0) {
                 flag = false;
@@ -367,11 +363,11 @@ export function OrderEdit() {
                 };
             }
             // if (obj.payment_type === 0) {
-                //     flag = false;
-                //     return {
-                    //         ...obj,
-                    //         paymentTypeFlag: true,
-                    //     };
+            //     flag = false;
+            //     return {
+            //         ...obj,
+            //         paymentTypeFlag: true,
+            //     };
             // }
             if (obj.quantity === 0 || obj.quantity.length === 0) {
                 flag = false;
@@ -381,20 +377,21 @@ export function OrderEdit() {
                 };
             }
             if (obj.size === [] || obj.size.length === 0) {
+
                 flag = false;
                 return {
                     ...obj,
                     sizeFlag: true,
                 };
             }
-            
+
             if (obj.client_art_up === "" || obj.client_art_up.length === 0) {
                 flag = false;
                 return {
                     ...obj,
                     imgFlag: true,
                 };
-            } 
+            }
             else {
                 return {
                     ...obj
@@ -418,7 +415,7 @@ export function OrderEdit() {
         setIsSpinner(true)
         const response = await OrderService.saveOrder(newOrder);
         if (response.success) {
-            
+
             //sending email
             // const messageData = {
             //     from: 'orochisugai@gmail.com',
@@ -477,7 +474,7 @@ export function OrderEdit() {
         <div>
             {isSpinner && (
                 <div className="fixed w-[80%] h-screen z-10  flex justify-center items-center">
-                  <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
+                    <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
                 </div>
             )}
             <div className="space-y-12">
@@ -717,16 +714,19 @@ export function OrderEdit() {
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-x-6">
-                <button type="button" className="rounded-md bg-red-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300">
+                <Link
+                    to={`/dashboard/orders`}
+                    className="rounded-md bg-red-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
+                >
                     Cancel
-                </button>
+                </Link>
                 {isSave && (
                     <button
                         type="submit"
                         onClick={saveOrder}
                         className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                     >
-                        Save
+                        Send Order
                     </button>
                 )}
 

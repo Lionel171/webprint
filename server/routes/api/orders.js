@@ -314,6 +314,9 @@ router.get("/list", async (req, res) => {
         $or: [
           { title: { $regex: new RegExp(search), $options: "i" } },
           // { status: { $regex: new RegExp(search), $options: "i" } },
+          // { order_id: { $regex: new RegExp(search), $options: "i" } },
+          // { service_type: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
       : {};

@@ -19,7 +19,6 @@ import {
   Department,
   Payments,
   Notifications,
-  Invoices
 } from "@/pages/dashboard";
 import {
   UserEdit

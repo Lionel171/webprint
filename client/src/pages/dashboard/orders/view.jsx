@@ -128,6 +128,8 @@ export function OrderEdit() {
    
   }, [])
 
+ 
+
   const renderImage = (item, index, image) => {
     const fileExtension = image[index].slice(image[index].lastIndexOf('.') + 1).toLowerCase();
     const isTiff = fileExtension === 'tiff' || fileExtension === 'tif';
@@ -301,9 +303,7 @@ export function OrderEdit() {
       setAlertHeader("Failed!")
       setAlertContent(`upload for file '${name}' is failed!`);
       setOpen(true)
-
     }
-
   }
 
   const onChangeImagePhoto = (event, index) => {
@@ -1096,7 +1096,7 @@ from WEPRINT`,
             Order: {order.title}
           </h2>
           <p className="mt-1 text-sm leading-6 text-gray-600">
-            ID - {order._id}
+            ID -  #{parseInt(order.order_id, 16) % 10000}
           </p>
           <p className="mt-1 text-sm leading-6 text-gray-600">Customer Name: {user.contact_person}</p>
           <p className="mt-1 text-sm leading-6 text-gray-600">Customer Email: {user.email}</p>
@@ -1279,7 +1279,8 @@ from WEPRINT`,
               <tr key={order._id} className="border-b border-gray-100">
                 <td className="max-w-0 px-2 py-5 align-top ">
                   <div className="truncate font-medium text-gray-900 text-left">
-                    {serviceTypeList[order.service_type].name}
+                   
+                    { serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
                   </div>
                 </td>
                 <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">

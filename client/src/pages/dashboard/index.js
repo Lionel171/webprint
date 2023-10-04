@@ -9,6 +9,6 @@ export * from "@/pages/dashboard/customers/customers";
 export * from "@/pages/dashboard/payments";
 export * from "@/pages/dashboard/department";
 export * from "@/pages/dashboard/notifications";
-export * from "@/pages/dashboard/invocies/invocies";
+
 
 
