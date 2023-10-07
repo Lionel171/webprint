@@ -27,6 +27,11 @@ class OrderService {
     const getOderListByApproveEndpoint = 'api/orders/approve';
     return await HttpService.getWithParams(getOderListByApproveEndpoint, payload);
   }
+
+  getOderListByPreProduction = async (payload) => {
+    const getOderListByPreProductionEndpoint = "api/orders/pre-production";
+    return await HttpService.getWithParams(getOderListByPreProductionEndpoint, payload);
+  }
   getOderListByPending = async (payload) => {
     const getOderListByPendingEndpoint = 'api/orders/pending';
     return await HttpService.getWithParams(getOderListByPendingEndpoint, payload);
@@ -129,6 +134,10 @@ class OrderService {
   getMonthlyMoney = async () => {
     const getMonthlyMoneyEndpoint = `api/orders/monthly/price`;
     return await HttpService.get(getMonthlyMoneyEndpoint);
+  }
+  staffLogon = async (payload) => {
+    const staffLogonEndpoint = "api/orders/staff-logon";
+    return await HttpService.post(staffLogonEndpoint, payload);
   }
 
  

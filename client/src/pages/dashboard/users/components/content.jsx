@@ -190,7 +190,7 @@ export default function Content({
             </thead>
             <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
               {uusers.map((user, index) => (
-                <tr key={index}>
+                <tr key={index} className='hover:bg-indigo-50'>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     <Link to={`/dashboard/users/edit/${user._id}`}>
                       {user.name}

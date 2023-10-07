@@ -1,4 +1,5 @@
 import { saveAs } from "file-saver";
+
 import Input from '@/components/common/Input';
 import { useEffect, useState, useRef } from 'react';
 import OrderService from "@/services/order-service"
@@ -7,22 +8,30 @@ import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
-import { FaDownload, FaUpload, FaPaperPlane } from 'react-icons/fa';
+import { FaDownload, FaUpload, FaPaperPlane, FaRegEnvelope } from 'react-icons/fa';
 import userService from '@/services/user-service';
 import OrderStep from './components/orderStep';
 import DefaultImage from '../../../../public/img/default.png';
+import userIcon from '../../../../public/img/default_avatar.png'
 import { SelectNoSearch } from '@/components/common/Select';
 import { position } from "@chakra-ui/react";
 import axios from "axios";
 import Spinner from '../../../../public/img/spinner.gif';
-
+import {
+  CalendarDaysIcon,
+  UserCircleIcon,
+} from '@heroicons/react/20/solid'
+import { FaCreditCard, FaPaypal } from 'react-icons/fa';
 import {
   Button,
   Dialog,
   DialogHeader,
   DialogBody,
   DialogFooter,
+  Avatar,
 } from "@material-tailwind/react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const API_URL = process.env.API_URL;
 
@@ -33,11 +42,12 @@ import Tiff from 'tiff.js'
 
 const serviceTypeList = [
   { id: 0, name: "", value: "" },
-  { id: 1, name: "We Print DTF", value: "we_print_dtf" },
-  { id: 2, name: "Embroidery", value: "embroidery" },
-  { id: 3, name: "Screen Printing", value: "screen_printing" },
-  { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
-  { id: 5, name: "Signs & Banners", value: "signs_banners" },
+  { id: 1, name: "Screen Print", value: "screen_print" },
+  { id: 2, name: "We Print DTF", value: "we_print_dtf" },
+  { id: 3, name: "Gang Sheet", value: "gang_sheet" },
+  { id: 4, name: "Signs & Banners", value: "signs_bannersr" },
+  { id: 5, name: "Embroidery", value: "embroidery" },
+  { id: 6, name: "Vinyl Transfer", value: "vinyl_transfer" },
 ];
 
 const paymentTypeList = [
@@ -71,6 +81,7 @@ export function OrderEdit() {
   const [isView, setIsView] = useState(false);
   const [user, setUser] = useState([]);
   const [staff, setStaff] = useState([]);
+
   const [service, setService] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [userId, setUserId] = useState('');
@@ -87,13 +98,15 @@ export function OrderEdit() {
   const [alertContent, setAlertContent] = useState("");
   const [alertHeader, setAlertHeader] = useState("");
   const [comment, setComment] = useState('');
+  const [count, setCount] = useState(true);
+  const [logonState, setLogonState] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const handleOpen = () => setOpen(!open);
 
   function DialogCustomAnimation() {
     return (
       <>
-
         <Dialog
           open={open}
           handler={handleOpen}
@@ -125,10 +138,38 @@ export function OrderEdit() {
     if (order.customer_comment) {
       setCustomerComment(order.customer_comment)
     }
-   
+
+    setLogonState(order.staff_logon_state);
+
   }, [])
 
- 
+  const logon = async (payload) => {
+    const response = await OrderService.staffLogon(payload);
+    setIsSpinner(true);
+    if (response.successs) {
+      setIsSpinner(false);
+
+
+      payload.state ? setLogonState(true) : setLogonState(false);
+      if (logonState) {
+        setAlertHeader("Sucess!")
+        setAlertContent(`Log on is successful for this order!`);
+        setOpen(true)
+      } else {
+        setAlertHeader("Sucess!")
+        setAlertContent(`Log off is successful for this order!`);
+        setOpen(true)
+      }
+
+    } else {
+      setIsSpinner(false);
+      setAlertHeader("Failed!")
+      setAlertContent(`Log on/Log off is failed for this order!`);
+      setOpen(true)
+    }
+  }
+
+
 
   const renderImage = (item, index, image) => {
     const fileExtension = image[index].slice(image[index].lastIndexOf('.') + 1).toLowerCase();
@@ -162,7 +203,7 @@ export function OrderEdit() {
         }
       };
 
-      fetch(`http://185.148.129.206:5050/${image[index]}`)
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     } else {
@@ -182,7 +223,7 @@ export function OrderEdit() {
           imageContainer.appendChild(img);
         }
       };
-      fetch(`http://185.148.129.206:5050/${image[index]}`)
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     }
@@ -220,7 +261,7 @@ export function OrderEdit() {
         }
       };
 
-      fetch(`http://185.148.129.206:5050/${image[index]}`)
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     } else {
@@ -240,7 +281,7 @@ export function OrderEdit() {
           imageContainer.appendChild(img);
         }
       };
-      fetch(`http://185.148.129.206:5050/${image[index]}`)
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
         .then((response) => response.blob())
         .then((blob) => reader.readAsArrayBuffer(blob));
     }
@@ -251,15 +292,13 @@ export function OrderEdit() {
   useEffect(() => {
     const fetchData = async () => {
 
-      let department = service;
-      orders.map((order, index) => {
-        department.push(serviceTypeList[order.service_type].name);
-      })
-      setService(department);
-      const query = {
-        department: service
+
+      setService(serviceTypeList[order.service_type].name);
+      const payload = {
+        department: serviceTypeList[order.service_type].name
       }
-      const response = await userService.getStaffByService(query);
+
+      const response = await userService.getStaffByService(payload);
       setStaffList(response.staff)
 
     }
@@ -278,9 +317,20 @@ export function OrderEdit() {
     }
 
   }
+  // get staff by order
+  const getStaffbyOrder = async () => {
+    // if (order.id) {
+    const response = await userService.getUserById(order.staff_id);
+
+    if (response.state) {
+      setStaff(response.user);
+    }
+
+  }
 
   useEffect(() => {
     getUserbyOrder();
+    getStaffbyOrder();
   }, [orders])
 
   const handleUpload = async (file, index, name) => {
@@ -292,6 +342,7 @@ export function OrderEdit() {
     };
 
     const response = await OrderService.uploadFile(newFile);
+
 
     if (response.success) {
       setIsSpinner(false);
@@ -476,6 +527,23 @@ export function OrderEdit() {
 
   }
 
+  const onchangeDueDate = (date) => {
+    setSelectedDate(date);
+
+    const temp = orders.map((obj, subindex) => {
+
+      return {
+        ...obj,
+        duedateFlag: false,
+        due_date: date
+      };
+
+
+    });
+    setOrders(temp);
+
+  }
+
   const onChangePrice = (value) => {
     const temp = orders.map((obj, subindex) => {
       if (isFree) {
@@ -566,7 +634,7 @@ from WEPRINT`,
         };
 
         try {
-          const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -598,14 +666,14 @@ from WEPRINT`,
     let flag = true;
     const temp = orders.map((obj, subindex) => {
       if (obj.price < 0) {
+
         flag = false;
         return {
           ...obj,
           priceFlag: true,
         };
       }
-      if (obj.payment_type === 0) {
-
+      if (obj.payment_type === '0') {
         flag = false;
         return {
           ...obj,
@@ -613,12 +681,16 @@ from WEPRINT`,
         };
       }
       if (obj.client_art_up === "") {
+
+
         flag = false;
         return {
           ...obj,
           imgFlag: true,
         };
       } else {
+
+
         return {
           ...obj
         }
@@ -655,7 +727,7 @@ from WEPRINT`,
         };
 
         try {
-          const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -704,7 +776,7 @@ from WEPRINT`,
       };
 
       try {
-        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -750,7 +822,7 @@ from WEPRINT`,
       };
 
       try {
-        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -792,7 +864,7 @@ from WEPRINT`,
 
 
       try {
-        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -835,7 +907,7 @@ from WEPRINT`,
       console.log(messageData.text, "Current")
 
       try {
-        const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+        const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -917,18 +989,20 @@ from WEPRINT`,
     }
   };
 
-  const controlHandle = async (id) => {
-    if (id === 0) {
+  const controlHandle = async () => {
+   
       if (order.total_value == 0) {
         alert("Price is not setted. You can not send invoice email!");
         return;
       } else {
         const productData = {
-          price: order.total_value,
+          price: order.price,
           name: order.title
         }
 
-        if (order.payment_type === "1") {
+        console.log(productData, "dddd")
+
+        if (order.payment_type === 1) {
           const res = await axios.post(`${API_URL}/api/stripe-route/create-checkout-session`, productData);
 
           const resData = res.data;
@@ -943,7 +1017,7 @@ from WEPRINT`,
           };
 
           try {
-            const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -960,7 +1034,7 @@ from WEPRINT`,
             console.error('Error sending email:', error);
             alert('Failed to send email.');
           }
-        } else if (order.payment_type === "2") {
+        } else if (order.payment_type === 2) {
           const res = await axios.post(`${API_URL}/api/paypal/buy`, productData);
 
           const resData = res.data;
@@ -975,7 +1049,7 @@ from WEPRINT`,
           };
 
           try {
-            const response = await fetch('http://185.148.129.206:5050/api/users/sendEmail', {
+            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -995,11 +1069,8 @@ from WEPRINT`,
         } else {
           alert("This payment type is not supported yet.")
         }
-
       }
-
-
-    }
+    
   };
 
   useEffect(() => {
@@ -1007,18 +1078,23 @@ from WEPRINT`,
       const orderResponse = await OrderService.getOrderById(order._id);
       setOrder(orderResponse.order);
 
-      if (order.status === "6") {
-        setAlertHeader("Order Status!")
-        setAlertContent(`This order is inspected`);
-        setOpen(true)
+      if (count) {
+        console.log("why", count)
+        if (order.status === "6") {
+          setAlertHeader("Order Status!")
+          setAlertContent(`This order is inspected`);
+          setOpen(true)
+        }
+
+        if (order.status === "7") {
+          setAlertHeader("Order Status!")
+          setAlertContent(`This order is ready for pick up`);
+          setOpen(true)
+        }
+        setCount(false);
       }
-      
-      if (order.status === "7") {
-        setAlertHeader("Order Status!")
-        setAlertContent(`This order is ready for pick up`);
-        setOpen(true)
-      }
-      
+
+
       // const response = await OrderService.getOrderDetailList(order._id);
 
       // Fetch the data and populate orders_temp array
@@ -1073,7 +1149,7 @@ from WEPRINT`,
     fetchData();
     setIsView(true);
 
- 
+
   }, []);
 
 
@@ -1098,8 +1174,29 @@ from WEPRINT`,
           <p className="mt-1 text-sm leading-6 text-gray-600">
             ID -  #{parseInt(order.order_id, 16) % 10000}
           </p>
-          <p className="mt-1 text-sm leading-6 text-gray-600">Customer Name: {user.contact_person}</p>
-          <p className="mt-1 text-sm leading-6 text-gray-600">Customer Email: {user.email}</p>
+          {localStorage.getItem('role').includes('admin') || localStorage.getItem("role").includes("Sales Team Member") ? (
+            <>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Create By: {localStorage.getItem('role')}-{user.contact_person}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Customer Email: {user.email}</p>
+              <Avatar src={user.profile_image ? API_URL + '/' + user.profile_image : userIcon} alt={user.contact_person} size="sm" />
+            </>
+
+          ) : (
+            <>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Customer Name: {user.contact_person}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Customer Email: {user.email}</p>
+              <Avatar src={user.profile_image ? API_URL + '/' + user.profile_image : userIcon} alt={user.contact_person} size="sm" />
+            </>
+
+          )}
+
+          {(order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7") && (
+            <>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Staff Name: {staff.contact_person}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Staff Email: {staff.email}</p>
+              <Avatar src={staff.profile_image ? API_URL + '/' + staff.profile_image : userIcon} alt={staff.contact_person} size="sm" />
+            </>
+          )}
         </div>
         <div className="border-b border-gray-900/10 pb-2 mb-4">
           {order.status === "6" && (
@@ -1126,68 +1223,109 @@ from WEPRINT`,
               currentStatus={order.status}
               className="w-1/2"
             />
-            <dl className="w-1/2 flex-wrap">
+            <dl className="w-1/2 flex-wrap pl-2">
               { }
-              {controlList.map((item) => (
-                localStorage.getItem("role") === 'admin' && order.status !== "1" ? (
+
+              {((localStorage.getItem("role") === 'admin' || localStorage.getItem("role").includes('Sales Manager')) && order.status !== "1") ? (
+                <button
+                  
+                  type="button"
+                  onClick={controlHandle}
+                  className=" mt-2 flex  h-[40px] w-[130px] items-center justify-center  gap-x-4 rounded bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  <FaRegEnvelope />
+                  Invoice
+                </button>
+              ) : (null)}
+
+
+              {(localStorage.getItem("role").includes("Production Staff") && order.status === "4") && (
+                logonState ? (
                   <button
-                    key={item.id}
+                    key={order._id}
                     type="button"
-                    onClick={() => controlHandle(item.id, item.totalPrice)}
+                    onClick={() => logon({ id: order._id, state: false })}
                     className=" mt-2 flex  h-[40px] w-[130px] items-center justify-center  gap-x-4 rounded bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   >
-
-                    {item.name}
+                    Log Off
                   </button>
-                ) : (null)
+                ) : (
+                  <button
+                    key={order._id}
+                    type="button"
+                    onClick={() => logon({ id: order._id, state: true })}
+                    className=" mt-2 flex  h-[40px] w-[130px] items-center justify-center  gap-x-4 rounded bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    Log On
+                  </button>
+                )
 
-              ))}
 
-              {/* <div className="flex pl-6 pt-2">
-                  <dt className="text-sm font-semibold leading-6 text-gray-900">
-                    Total Price
-                  </dt>
-                  <dd className="ml-2 text-base font-semibold leading-6 text-gray-900">
-                    ${totalPrice}
-                  </dd>
-                </div>
-               
-                <div className="mt-2 flex w-full flex-none gap-x-4 border-t border-gray-900/5 px-6">
-                  <dt className="flex-none">
-                    <span className="sr-only">Client</span>
-                    <UserCircleIcon
-                      className="h-6 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </dt>
-                  <dd className="text-sm font-medium leading-6 text-gray-900">
-                    {order && order.user_id.name}
-                  </dd>
-                </div>
-                <div className="mt-2 flex w-full flex-none gap-x-4 px-6">
-                  <dt className="flex-none">
-                    <span className="sr-only">Due date</span>
-                    <CalendarDaysIcon
-                      className="h-6 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </dt>
-                  <dd className="text-sm leading-6 text-gray-500">
-                    <time dateTime="2023-01-31">{order && order.date}</time>
-                  </dd>
-                </div>
-                <div className="mt-2 flex w-full flex-none gap-x-4 px-6">
-                  <dt className="flex-none">
-                    <span className="sr-only">Status</span>
-                    <CreditCardIcon
-                      className="h-6 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </dt>
-                  <dd className="text-sm leading-6 text-gray-500">
-                    {order && order.payment_req}
-                  </dd>
-                </div> */}
+
+              )}
+              {((localStorage.getItem("role") === 'admin' || localStorage.getItem("role").includes('Sales Manager')) && order.status !== "1") && (
+                <>
+                  <div className="flex pl-6 pt-2 mr-2">
+                    <dt className="text-sm font-semibold leading-6 text-gray-900">
+                      Price
+                    </dt>
+                    <dd className="ml-2 text-base font-semibold leading-6 text-gray-900">
+                      ${totalPrice}
+                    </dd>
+                  </div>
+
+                  <div className="mt-2 flex w-full flex-none gap-x-4 border-t border-gray-900/5 px-6">
+                    <dt className="flex-none">
+                      <span className="sr-only">Client</span>
+                      <UserCircleIcon
+                        className="h-6 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </dt>
+                    <dd className="text-sm font-medium leading-6 text-gray-900">
+                      {localStorage.getItem('role').includes('normal') && user.contact_person}
+                    </dd>
+                  </div>
+                  <div className="mt-2 flex w-full flex-none gap-x-4 px-6">
+                    <dt className="flex-none">
+                      <span className="sr-only">Due date</span>
+                      <CalendarDaysIcon
+                        className="h-6 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </dt>
+                    <dd className="text-sm leading-6 text-gray-500">
+                      <time dateTime="2023-01-31">{order && order.date.substring(0, 10)}</time>
+                    </dd>
+                  </div>
+                  <div className="mt-2 flex w-full flex-none gap-x-4 px-6">
+                    {order.payment_type === 1 ? (
+                      <dt className="flex-none">
+                      <span className="sr-only">Status</span>
+                      <FaCreditCard
+                        className="h-6 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </dt>
+                    ) : 
+                    order.payment_type ===2 ? (
+                      <dt className="flex-none">
+                      <span className="sr-only">Status</span>
+                      <FaPaypal
+                        className="h-6 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                      </dt>
+                    ) : (null)}
+                    
+                    <dd className="text-sm leading-6 text-gray-500">
+                      {(order && order.payment_type) && paymentTypeList[order.payment_type].name}
+                    </dd>
+                  </div>
+                </>
+              )}
+
+
             </dl>
           </div>
         </div>
@@ -1256,13 +1394,25 @@ from WEPRINT`,
                     Upload New File
                   </th>
                 )}
+                {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Price
+                  </th>
 
-                <th
-                  scope="col"
-                  className="py-3 pl-10 pr-0 text-center font-semibold"
-                >
-                  Price
-                </th>
+                )}
+                {((localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('Production Manager')) && order.status === "1") && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Due Date
+                  </th>
+                )}
+
+
                 {((localStorage.getItem('role').includes("Production Manager") || localStorage.getItem('role').includes("admin")) && order.status === "3") && (
                   <th
                     scope="col"
@@ -1279,8 +1429,8 @@ from WEPRINT`,
               <tr key={order._id} className="border-b border-gray-100">
                 <td className="max-w-0 px-2 py-5 align-top ">
                   <div className="truncate font-medium text-gray-900 text-left">
-                   
-                    { serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
+
+                    {serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
                   </div>
                 </td>
                 <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
@@ -1428,7 +1578,7 @@ from WEPRINT`,
                   )
                 }
 
-                {(localStorage.getItem('role') === 'admin' && order.status === "1") ? (
+                {((localStorage.getItem('role') === 'admin' || localStorage.getItem('role').includes('Sales Manager') && order.status === "1")) ? (
                   <td className="py-5 pl-10  text-right align-top tabular-nums text-gray-700 text-left mr-2">
                     {
                       isFree ? (null) : (
@@ -1446,15 +1596,25 @@ from WEPRINT`,
 
                   </td>
                 ) : (
-                  <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 mr-2">
-                    <div className="ttruncate text-gray-700 text-center mt-3">
-                      ${!isFree ? order.price : 0}
-                    </div>
+                  (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                    <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 mr-2">
+                      <div className="ttruncate text-gray-700 text-center mt-3">
+                        ${!isFree ? order.price : 0}
+                      </div>
+                    </td>
+                  )
+                )}
+                {(((localStorage.getItem('role') === 'admin' || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('Production Manager')) && order.status === "1")) && (
+                  <td className="py-5 pl-10  text-right align-top tabular-nums text-gray-700 text-left mr-2">
+                    <DatePicker
+                      selected={selectedDate}
+                      onChange={(date) => onchangeDueDate(date)}
+                      className="custom-datepicker border rounded p-3 text-gray-800 mr-3"
+                    />
+
                   </td>
                 )}
                 {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && order.status === "3") && (
-
-
                   <td className="ml-5 max-w-0 px-0 py-5 align-top text-center ">
                     <div className='mr-2'>
                       <SelectNoSearch
@@ -1552,7 +1712,7 @@ from WEPRINT`,
                   <button
                     type="submit"
                     onClick={holdOrder}
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                    className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                   >
                     Hold production
                   </button>

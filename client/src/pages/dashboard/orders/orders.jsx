@@ -39,7 +39,7 @@ export function Orders() {
 
   const deleteComfirm = props => {
     setSelectedOrderId(props.id);
-    setConfirmMessage("Are you going to precess this action");
+    setConfirmMessage("Once deleted this process can not be undone");
     setIsConfirm(true);
   };
   const setFilter = value => {
@@ -56,7 +56,7 @@ export function Orders() {
       } else {
         setIsDelete(true);
       }
-      
+
     }
     setIsConfirm(false);
   }
@@ -86,7 +86,7 @@ export function Orders() {
       search: search,
     };
 
-    if (user.role.includes("admin") || user.role.includes('Sales Manager') || user.role.includes("Production Manager")) {
+    if (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes("Production Manager")) {
       setLoadingData(true);
       const response = await OrderService.getOrderList(query);
       setOrders(response.docs);
@@ -94,7 +94,7 @@ export function Orders() {
       setTotal(response.totalDocs);
       setCurrentPage(response.page);
       setLoadingData(false);
-    } else if (user.role.includes("Artwork Manager") || user.role.includes("Artwork Staff") || user.role.includes("Sales Team Member")) {
+    } else if (localStorage.getItem('role').includes("Sales Team Member")) {
       setLoadingData(true);
       const response = await OrderService.getOderListByApprove(query);
       setOrders(response.docs);
@@ -103,15 +103,24 @@ export function Orders() {
       setCurrentPage(response.page);
       setLoadingData(false);
 
-    } else if (user.role.includes("Production Staff")) {
+    } else if ( localStorage.getItem('role').includes("Artwork Manager") || localStorage.getItem('role').includes("Artwork Staff") ) {
       setLoadingData(true);
-      const response = await OrderService.getOderListByInProduction(query, user._id );
+      const response = await OrderService.getOderListByPreProduction(query);
+      setOrders(response.docs);
+      setTotalPages(response.totalPages);
+      setTotal(response.totalDocs);
+      setCurrentPage(response.page);
+      setLoadingData(false);
+
+    } else if (localStorage.getItem('role').includes("Production Staff")) {
+      setLoadingData(true);
+      const response = await OrderService.getOderListByInProduction(query, user._id);
       setTotalPages(response.totalPages);
       setOrders(response.docs);
       setTotal(response.totalDocs);
       setCurrentPage(response.page);
       setLoadingData(false);
-    } else if (user.role.includes("normal")) {
+    } else if (localStorage.getItem('role').includes("normal")) {
       setLoadingData(true);
       const response = await OrderService.getOrderListByUserId(query, user._id);
       setOrders(response.docs);

@@ -2,17 +2,19 @@
 import Input from '@/components/common/Input';
 import { PhotoIcon, PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid'
 import { useEffect, useState, useRef } from 'react';
-import DefaultImage from '../../../../public/img/upload.jpg';
+import DefaultImage from '../../../../public/img/default.png';
 import OrderService from "@/services/order-service"
 import { SelectNoSearch } from '@/components/common/Select';
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/react/24/outline';
 import { TrashIcon } from "@heroicons/react/20/solid";
-import { NavLink, useLocation, useNavigate , Link} from "react-router-dom";
+import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import React, { useContext } from "react";
 import { AuthContext } from "@/context";
 import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
 import Spinner from '../../../../public/img/spinner.gif';
+import { FaUpload } from 'react-icons/fa';
+
 
 import Tiff from 'tiff.js'
 
@@ -52,17 +54,29 @@ export function OrderEdit() {
     const [selectedUploadId, setSelectedUploadId] = useState(0)
     const [isSave, setIsSave] = useState(false)
     const [isSpinner, setIsSpinner] = useState(false)
+    // const [serviceTypeList, setServiceTypeList] = [];
 
     const serviceTypeList = [
         { id: 0, name: "", value: "" },
-        { id: 1, name: "Screen Peinr", value: "screen_print" },
+        { id: 1, name: "Screen Print", value: "screen_print" },
         { id: 2, name: "We Print DTF", value: "we_print_dtf" },
         { id: 3, name: "Gang Sheet", value: "gang_sheet" },
         { id: 4, name: "Signs & Banners", value: "signs_bannersr" },
         { id: 5, name: "Embroidery", value: "embroidery" },
         { id: 6, name: "Vinyl Transfer", value: "vinyl_transfer" },
-        { id: 7, name: "Sublimation", value: "sublimation" },
     ];
+
+    // useEffect(() => {
+    //     async function fetchData() {
+    //       const response = await DepartmentService.getDepartments();
+    //       response.department((item, index) => {
+
+    //       })
+    //       setServiceTypeList(response.department);
+    //       console.log(response.department, "departmetn test")
+    //     }
+    //     fetchData();
+    //   }, [])
 
     const addOrder = (title, id) => {
         setIsSave(true);
@@ -346,14 +360,14 @@ export function OrderEdit() {
     };
 
     const saveOrder = async () => {
-        
+
         let flag = true;
-        
+
         if (title === "") {
             flag = false;
             setTitleFlag(true);
         }
-      
+
         const temp = orders.map((obj, subindex) => {
             if (obj.service_type === 0) {
                 flag = false;
@@ -415,6 +429,7 @@ export function OrderEdit() {
         setIsSpinner(true)
         const response = await OrderService.saveOrder(newOrder);
         if (response.success) {
+            setIsSpinner(false)
 
             //sending email
             // const messageData = {
@@ -444,6 +459,9 @@ export function OrderEdit() {
             //     console.error('Error sending email:', error);
             //     alert('Failed to send email.');
             // }
+        } else {
+            setIsSpinner(true)
+            alert("Server Error")
         }
         navigate("/dashboard/orders");
     }
@@ -485,6 +503,9 @@ export function OrderEdit() {
                     </p>
                     <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                         <div className="sm:col-span-6">
+                            <div class="bg-red-200 rounded-full h-10 w-10 flex items-center justify-center mr-4 mb-1">
+                                <span class="text-white font-bold text-lg">1</span>
+                            </div>
                             <Input
                                 labelName={'Title'}
                                 onChange={(e) => {
@@ -526,41 +547,50 @@ export function OrderEdit() {
                 </div>
 
                 <div className="border-b border-gray-900/10 pb-12">
+
+
                     <h2 className="text-base font-semibold leading-7 text-gray-900">Order Detail</h2>
                     <p className="mt-1 text-sm leading-6 text-gray-600">Select artwork and service_type Type</p>
 
                     <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                         <div className="sm:col-span-6 ">
+                            {!isSave && (
+                                <button
+                                    onClick={() => addOrder("", "")}
+                                    className=" flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                >
+                                    <PlusCircleIcon
+                                        className=" text-white block mr-[5px]"
+                                        width={20} height={20}
+                                    />
+                                    <div className="text-sm font-medium text-white">
+                                        Add order detail
+                                    </div>
+                                </button>
+                            )}
 
-                            <button
-                                onClick={() => addOrder("", "")}
-                                className=" flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                            >
-                                <PlusCircleIcon
-                                    className=" text-white block mr-[5px]"
-                                    width={20} height={20}
-                                />
-                                <div className="text-sm font-medium text-white">
-                                    Add order detail
-                                </div>
-                            </button>
 
                             {orders.map((order, index) => (
-                                <div key={index} className='mt-10 block items-end sm:flex'>
-                                    <div className="w-full justify-end mt-10">
-                                        <div>
-                                            <SelectNoSearch
-                                                labelName={'Service Type'}
-                                                onChange={(item) =>
-                                                    onChangeServiceType(item, index)
-                                                }
-                                                value={order.service_type}
-                                                items={serviceTypeList}
-                                                error={order.serviceTypeFlag}
-                                                disabled={isView}
-                                            />
-                                        </div>
-                                        {/* <div className='mt-2'>
+                                <>
+                                    <div className="border-b border-gray-900/10 pb-12">
+                                        <div key={index} className='mt-10 block items-end sm:flex'>
+                                            <div className="w-full justify-end mt-10">
+                                                <div class="bg-red-200 rounded-full h-10 w-10 flex items-center justify-center mr-4 mb-2 mt-1">
+                                                    <span class="text-white font-bold text-lg">2</span>
+                                                </div>
+                                                <div>
+                                                    <SelectNoSearch
+                                                        labelName={'Service Type'}
+                                                        onChange={(item) =>
+                                                            onChangeServiceType(item, index)
+                                                        }
+                                                        value={order.service_type}
+                                                        items={serviceTypeList}
+                                                        error={order.serviceTypeFlag}
+                                                        disabled={isView}
+                                                    />
+                                                </div>
+                                                {/* <div className='mt-2'>
                                             <SelectNoSearch
                                                 labelName={'Payment Tpye'}
                                                 onChange={(item) =>
@@ -572,166 +602,227 @@ export function OrderEdit() {
                                                 disabled={isView}
                                             />
                                         </div> */}
-                                        {order.size.map((size, i) => {
-                                            return (
-                                                <>
-                                                    <div className="mt-3 col-3">
-                                                        <Input
-                                                            type='text'
-                                                            labelName={`Size ${i + 1}`}
+                                                {order.size.map((size, i) => {
+                                                    return (
+                                                        <>
+                                                            <div className="mt-3 col-3">
+                                                                <div class="bg-red-200 rounded-full h-8 w-8 flex items-center justify-center mr-4 mb-1 mt-1">
+                                                                    <span class="text-white font-bold text-lg">3</span>
+                                                                </div>
+                                                                <Input
+                                                                    type='text'
+                                                                    labelName={`Size ${i + 1}`}
+                                                                    onChange={(e) =>
+                                                                        onChangeSize(e.target.value, index, i)
+                                                                    }
+                                                                    value={size}
+                                                                    error={order.sizeFlag}
+                                                                    placeholder={"100*100"}
+                                                                    disabled={isView}
+                                                                />
+                                                            </div>
+                                                            <div className="mt-2">
+                                                                <div class="bg-red-200 rounded-full h-8 w-8 flex items-center justify-center mr-4 mb-1 mt-1">
+                                                                    <span class="text-white font-bold text-lg">4</span>
+                                                                </div>
+                                                                <Input
+                                                                    type='number'
+                                                                    labelName={`Quantity ${i + 1}`}
+                                                                    onChange={(e) =>
+                                                                        onChangeQuantity(e.target.value, index, i)
+                                                                    }
+                                                                    value={order.quantity}
+                                                                    error={order.quantityFlag}
+                                                                    maxLength={50}
+                                                                    minLength={1}
+                                                                    disabled={isView}
+                                                                />
+                                                            </div>
+                                                            {i > 0 ? (
+                                                                <div className="items-end h-full mt-2 pt-4">
+                                                                    <MinusCircleIcon
+                                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                                        onClick={() => onDeleteSize(index)}
+                                                                    />
+                                                                    <label>Delete</label>
+
+                                                                    <p><small>You can delete this (size and quantity)</small></p>
+
+
+                                                                </div>
+                                                            ) : (
+                                                                <div className="items-end h-full  mt-2 pt-4">
+                                                                    <PlusCircleIcon
+                                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                                        onClick={() => addSize(index)}
+                                                                    />
+                                                                    <span className="mt-1 mb-1 inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                                                                        <svg
+                                                                            className="h-1.5 w-1.5 fill-blue-500"
+                                                                            viewBox="0 0 6 6"
+                                                                            aria-hidden="true"
+                                                                        >
+                                                                            <circle cx={3} cy={3} r={3} />
+                                                                        </svg>
+                                                                        Add More
+                                                                    </span>
+                                                                    <p className="mt-1 text-sm leading-6 text-gray-600">You can add more (size and quantity)</p>
+                                                                </div>
+                                                            )}
+                                                            <br />
+
+                                                        </>
+
+                                                    )
+                                                })}
+
+                                                <div className="mt-2">
+                                                    <label className='block text-sm font-medium text-gray-700'>
+                                                        Comment
+                                                    </label>
+                                                    <div className="mt-1">
+                                                        <textarea
+                                                            id="comment"
+                                                            name="comment"
                                                             onChange={(e) =>
-                                                                onChangeSize(e.target.value, index, i)
+                                                                onChangeAbout(e.target.value, index)
                                                             }
-                                                            value={size}
-                                                            error={order.sizeFlag}
-                                                            placeholder={"100*100"}
                                                             disabled={isView}
+                                                            value={order.comment}
+                                                            rows={3}
+                                                            className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
                                                         />
                                                     </div>
-                                                    <div className="mt-2">
-                                                        <Input
-                                                            type='number'
-                                                            labelName={`Quantity ${i + 1}`}
-                                                            onChange={(e) =>
-                                                                onChangeQuantity(e.target.value, index, i)
-                                                            }
-                                                            value={order.quantity}
-                                                            error={order.quantityFlag}
-                                                            maxLength={50}
-                                                            minLength={1}
-                                                            disabled={isView}
-                                                        />
+                                                </div>
+                                            </div>
+                                            {order.client_art_up.map((upload, i) => (
+                                                <React.Fragment key={`${i}-${upload}`}>
+                                                    <div className=" mt-8 sm:ml-10 sm:pl-10 mr-4">
+                                                        <div className="">
+                                                            <input key={i}
+                                                                type="file"
+                                                                onChange={(event) => { onChangeImagePhoto(event, index, selectedUploadId) }}
+                                                                hidden
+                                                                name={i}
+                                                                ref={(el) => (avatarFileRef.current[index] = el)}
+                                                            />
+                                                            {upload && !upload.startsWith('data:image/') ? (
+                                                                <>
+                                                                    <p className='hover:text-green-500 cursor-pointer' onClick={() => avatarImageClick(index, i)}>{upload} (This file is not able to image format)</p>
+                                                                    <button
+                                                                        onClick={() => avatarImageClick(index, i)}
+                                                                        className="mt-1 ml-[21%] flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                                    >
+                                                                        <FaUpload
+                                                                            className=" text-white block mr-[5px]"
+                                                                            width={20} height={20}
+                                                                        />
+                                                                        <div className="text-sm font-medium text-white">
+                                                                            File Upload
+                                                                        </div>
+                                                                    </button>
+                                                                </>
+
+                                                            ) : (
+                                                                <>
+                                                                    <img
+                                                                        src={upload ? (isView ? API_URL + "/" + upload : upload) : DefaultImage}
+                                                                        alt={`This file is not able to display with image format(.${upload && upload.slice(upload.lastIndexOf('.') + 1).toLowerCase()}).`}
+                                                                        id={`img${i}`}
+                                                                        onClick={() => avatarImageClick(index, i)}
+                                                                        width={250}
+                                                                        height={250}
+                                                                        className="cursor-pointer"
+                                                                        style={{ cursor: 'pointer' }}
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => avatarImageClick(index, i)}
+                                                                        className="ml-[21%] mt-2 flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-center text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                                                    >
+                                                                        <FaUpload
+                                                                            className=" text-white block mr-[5px]"
+                                                                            width={20} height={20}
+                                                                        />
+                                                                        <div className="text-sm font-medium text-white">
+                                                                            File Upload
+                                                                        </div>
+                                                                    </button>
+                                                                </>
+
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     {i > 0 ? (
                                                         <div className="items-end h-full mt-2 pt-4">
                                                             <MinusCircleIcon
                                                                 className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
-                                                                onClick={() => onDeleteSize(index)}
+                                                                onClick={() => onDeleteUploadFile(index, i)}
                                                             />
-                                                            <label>Delete</label>
-
-                                                            <p><small>You can delete this (size and quantity)</small></p>
-
-
                                                         </div>
                                                     ) : (
-                                                        <div className="items-end h-full  mt-2 pt-4">
+                                                        <div className="items-end h-full w-[50px] mt-2 ml-1">
                                                             <PlusCircleIcon
                                                                 className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
-                                                                onClick={() => addSize(index)}
+                                                                onClick={() => AddUploadFile(index)}
                                                             />
-                                                            <label>Add more</label>
-
-                                                            <p><small>You can add more (size and quantity)</small></p>
                                                         </div>
                                                     )}
-                                                    <br />
+                                                </React.Fragment>
+                                            ))}
 
-                                                </>
-
-                                            )
-                                        })}
-
-                                        <div className="mt-2">
-                                            <label className='block text-sm font-medium text-gray-700'>
-                                                Comment
-                                            </label>
-                                            <div className="mt-1">
-                                                <textarea
-                                                    id="comment"
-                                                    name="comment"
-                                                    onChange={(e) =>
-                                                        onChangeAbout(e.target.value, index)
-                                                    }
-                                                    disabled={isView}
-                                                    value={order.comment}
-                                                    rows={3}
-                                                    className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
-                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
-                                                />
-                                            </div>
                                         </div>
                                     </div>
-                                    {order.client_art_up.map((upload, i) => (
-                                        <React.Fragment key={`${i}-${upload}`}>
-                                            <div className=" mt-8 sm:ml-10 sm:pl-10">
-                                                <div className="">
-                                                    <input key={i}
-                                                        type="file"
-                                                        onChange={(event) => { onChangeImagePhoto(event, index, selectedUploadId) }}
-                                                        hidden
-                                                        name={i}
-                                                        ref={(el) => (avatarFileRef.current[index] = el)}
-                                                    />
-                                                    {upload && !upload.startsWith('data:image/') ? (
-                                                        <p className='hover:text-green-500 cursor-pointer' onClick={() => avatarImageClick(index, i)}>{upload} (This file is not able to image format)</p>
-                                                    ) : (
-                                                        <img
-                                                            src={upload ? (isView ? API_URL + "/" + upload : upload) : DefaultImage}
-                                                            alt={`This file is not able to display with image format(.${upload && upload.slice(upload.lastIndexOf('.') + 1).toLowerCase()}).`}
-                                                            id={`img${i}`}
-                                                            onClick={() => avatarImageClick(index, i)}
-                                                            width={250}
-                                                            height={250}
-                                                            className="cursor-pointer"
-                                                            style={{ cursor: 'pointer' }}
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {i > 0 ? (
-                                                <div className="items-end h-full mt-2 pt-4">
-                                                    <MinusCircleIcon
-                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
-                                                        onClick={() => onDeleteUploadFile(index, i)}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="items-end h-full w-[50px] mt-2 ml-1">
-                                                    <PlusCircleIcon
-                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
-                                                        onClick={() => AddUploadFile(index)}
-                                                    />
-                                                </div>
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-
                                     <div className="w-[50px] mt-2 ">
                                         <TrashIcon
                                             className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
                                             onClick={() => onDeleteButton(index)}
                                         />
                                     </div>
+                                </>
 
 
-                                </div>
                             ))}
 
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div className="mt-6 flex items-center justify-end gap-x-6">
+            <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
                 <Link
                     to={`/dashboard/orders`}
                     className="rounded-md bg-red-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-300"
                 >
                     Cancel
                 </Link>
+
                 {isSave && (
-                    <button
-                        type="submit"
-                        onClick={saveOrder}
-                        className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                    >
-                        Send Order
-                    </button>
+                    <>
+                        <button
+                            onClick={() => addOrder("", "")}
+                            className="flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                        >
+                            <PlusCircleIcon
+                                className=" text-white block mr-[5px]"
+                                width={20} height={20}
+                            />
+                            <div className="text-sm font-medium text-white">
+                                Add Additional Service
+                            </div>
+                        </button>
+                        <button
+                            type="submit"
+                            onClick={saveOrder}
+                            className="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                        >
+                            Send Order
+                        </button>
+                    </>
+
                 )}
 
             </div>
-        </div>
+        </div >
     )
 }
 

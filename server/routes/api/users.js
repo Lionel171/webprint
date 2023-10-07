@@ -580,20 +580,21 @@ router.get('/fetchUsers', auth, async (req, res) => {
 })
 
 // get staff by service
-
-router.get('/staff-service', async (req, res) => {
+router.post('/staff-service', async (req, res) => {
   try {
-    const { department } = req.query;
+    const { department } = req.body;
     const staff = await User.find({
-      department: { $in: department },
-      // role: { $in: ["Production Staff"] }
+      department: department,
+      role: { $in: ["Production Staff"] } // Use $in operator with an array of role values
     });
+
     const staffTypeList = staff.map((st, index) => ({
       name: st.contact_person,
       id: st._id,
-      department: st.department
+      department: st.department,      
     }));   
-    res.json({
+
+    res.status(200).json({
       staff: staffTypeList
     });
   } catch (err) {
@@ -601,6 +602,7 @@ router.get('/staff-service', async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
 
 
 //send email using mailgun

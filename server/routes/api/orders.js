@@ -93,6 +93,7 @@ router.post("/save-order-price", auth, async (req, res) => {
       // orderDetail.price = !isFree ? item.price : 0;
       orderDetail.comment = item.comment;
       orderDetail.payment_type = item.payment_type;
+      orderDetail.date = item.due_date;
       await orderDetail.save();
     });
     let order = await Order.findById(orders[0].order_id);
@@ -283,7 +284,7 @@ router.post("/assign-staff", auth, async (req, res) => {
 
 router.get("/total", async (req, res) => {
   try {
-    const response = await Order.find();
+    const response = await OrderDetail.find();
     res.json({
       orders: response,
     })
@@ -371,6 +372,31 @@ router.get("/approve", async (req, res) => {
       offset,
       limit,
     });
+    res.json(orders);
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+router.get("/pre-production", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: "2" };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    console.log(orders, "otders test")
     res.json(orders);
 
   } catch (err) {
@@ -571,7 +597,7 @@ router.get("/today", async (req, res) => {
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Get the start of the day
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Get the end of the day
 
-    const orders = await Order.find({
+    const orders = await OrderDetail.find({
       createdAt: {
         $gte: startOfDay,
         $lt: endOfDay
@@ -618,7 +644,7 @@ router.get("/monthly", async (req, res) => {
       }
     ];
 
-    const count = await Order.aggregate(pipeline);
+    const count = await OrderDetail.aggregate(pipeline);
 
     res.json({
       count: count
@@ -636,13 +662,14 @@ router.get("/today/price", async (req, res) => {
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Get the start of the day
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Get the end of the day
 
-    const orders = await Order.find({
-      createdAt: {
+    const orders = await OrderDetail.find({
+      updatedAt: {
         $gte: startOfDay,
         $lt: endOfDay
       },
       status: '7'
     });
+
 
     res.json({
       orders: orders,
@@ -660,10 +687,10 @@ router.get("/monthly/price", async (req, res) => {
     const startOfYear = new Date(today.getFullYear(), 0, 1); // Get the start of the year
     const endOfYear = new Date(today.getFullYear(), 11, 31); // Get the end of the year
 
-    const orders = await Order.aggregate([
+    const orders = await OrderDetail.aggregate([
       {
         $match: {
-          createdAt: {
+          updatedAt: {
             $gte: startOfYear,
             $lte: endOfYear
           },
@@ -672,8 +699,8 @@ router.get("/monthly/price", async (req, res) => {
       },
       {
         $group: {
-          _id: { $month: "$createdAt" },
-          totalPrice: { $sum: "$total_value" }
+          _id: { $month: "$updatedAt" },
+          price: { $sum: "$price" }
         }
       },
       {
@@ -696,7 +723,7 @@ router.get("/monthly/price", async (req, res) => {
 router.get("/totalprice", async (req, res) => {
   try {
 
-    const orders = await Order.find({
+    const orders = await OrderDetail.find({
       status: '7'
     });
 
@@ -713,15 +740,13 @@ router.get("/paid/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const orders = await Order.find({
+    const orders = await OrderDetail.find({
       user_id: id,
       status: '7'
     });
 
-    let totalPrice = 0;
-    orders.forEach(order => {
-      totalPrice += order.total_value;
-    });
+    let totalPrice = orders.price;
+    
 
     res.json({
       totalPrice: totalPrice,
@@ -744,7 +769,7 @@ router.get("weekly/paid/:id", async (req, res) => {
     const endOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay() + 6);
 
     // Find orders within the current week for the given user
-    const orders = await Order.aggregate([
+    const orders = await OrderDetail.aggregate([
       {
         $match: {
           createdAt: {
@@ -783,8 +808,22 @@ router.get("weekly/paid/:id", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-
-router.get("/send-invoice-email", async (req, res) => {
+// staff logon states
+router.post('/staff-logon', auth, async (req, res) => {
+  const { id, state } = req.body;
+  try {
+    const order = await OrderDetail.findById(id);
+    order.staff_logon_state = state;
+    await order.save();
+    res.json({
+      successs: true
+    })
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error")
+  }
+})
+router.get("/send-invoice-email", auth, async (req, res) => {
   try {
     const response = await Order.findById(req.query.order_id).populate(
       "user_id"

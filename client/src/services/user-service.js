@@ -59,6 +59,12 @@ class UserService {
         const getStaffsByIdEndpoint = "api/users/staff-by-id";
         return await HttpService.getWithParams(getStaffsByIdEndpoint, payload)
     }
+
+    // get staff by service
+    getStaffByService = async (payload) => {
+        const getStaffByServiceEndpoint = 'api/users/staff-service';
+        return await HttpService.post(getStaffByServiceEndpoint, payload)
+    }
     //Email
     sendEmail = async (payload) => {
         const sendEmailToClients = `api/users/sendEmail`;

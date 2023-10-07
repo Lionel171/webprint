@@ -20,14 +20,14 @@ export function Customers() {
 
   const deleteComfirm = props => {
     setSelectedUserId(props.id);
-    setConfirmMessage("Are you going to precess this action");
+    setConfirmMessage("Once deleted this process can not be undone");
     setIsConfirm(true);
   };
   const setFilter = value => {
   };
   const controlAction = async () => {
     const response = await UserService.deleteUser(selectedUserId);
-    console.log(response.state, "deleted")
+
     if (response.state) {
       if (isDelete) {
         setIsDelete(false);

@@ -5,7 +5,13 @@ import { FaSort } from 'react-icons/fa';
 import DropDown from './Dropdown';
 import { SelectNoSearch } from '@/components/common/Select';
 import Spinner from '../../../../../public/img/spinner.gif'
-
+import {
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
 
 // import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useNavigate, NavLink } from 'react-router-dom';
@@ -59,6 +65,37 @@ export default function Content({
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [sortCriteria, setSortCriteria] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [open, setOpen] = useState(false);
+  const [alertContent, setAlertContent] = useState("");
+  const [alertHeader, setAlertHeader] = useState("");
+
+  const handleOpen = () => setOpen(!open);
+
+  function DialogCustomAnimation() {
+    return (
+      <>
+        <Dialog
+          open={open}
+          handler={handleOpen}
+          animate={{
+            mount: { scale: 1, y: 0 },
+            unmount: { scale: 0.9, y: -100 },
+          }}
+        >
+          <DialogHeader>{alertHeader}.</DialogHeader>
+          <DialogBody divider>
+            {alertContent}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="gradient" color="green" onClick={handleOpen}>
+              <span>OK</span>
+            </Button>
+          </DialogFooter>
+        </Dialog>
+      </>
+    );
+  }
+
 
   useEffect(() => {
     setFilterOrders(orders);
@@ -85,7 +122,7 @@ export default function Content({
     } else {
       setSelectedPaymentType(selectedPaymentType);
     }
-    
+
   }
 
   const onChangeStatus = (e) => {
@@ -97,7 +134,7 @@ export default function Content({
     }
 
   }
- 
+
   const sortHandle = (criteria) => {
     if (sortCriteria === criteria) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -163,6 +200,8 @@ export default function Content({
   };
   return (
     <div className="lg:px-2">
+      <DialogCustomAnimation />
+
       {loadingData && (
         <div className="fixed w-[80%] h-screen z-10  flex justify-center items-center">
           <img className='w-[100px] h-[100px] justify-center flex text-center' src={Spinner} alt="Loading..." />
@@ -253,7 +292,6 @@ export default function Content({
                   <FaSort onClick={() => sortHandle("title")} className="cursor-pointer" />
                 </div>
               </th>
-
               <th
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -263,7 +301,6 @@ export default function Content({
                   <FaSort onClick={() => sortHandle("orderid")} className="cursor-pointer" />
                 </div>
               </th>
-
               <th
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -273,15 +310,19 @@ export default function Content({
                   <FaSort onClick={() => sortHandle("status")} className='cursor-pointer' />
                 </div>
               </th>
-              <th
-                scope="col"
-                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
-              >
-                <div className="flex items-center">
-                  <p className="mr-2">Price</p>
-                  <FaSort onClick={() => sortHandle("price")} className='cursor-pointer' />
-                </div>
-              </th>
+              {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                <th
+                  scope="col"
+                  className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
+                >
+
+                  <div className="flex items-center">
+                    <p className="mr-2">Price</p>
+                    <FaSort onClick={() => sortHandle("price")} className='cursor-pointer' />
+                  </div>
+                </th>
+              )}
+
               <th
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -313,14 +354,21 @@ export default function Content({
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
               >
+                <div className="flex items-center">
+                  <p className="mr-2">Working State</p>
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
+              >
               </th>
             </tr>
           </thead>
           <tbody className="border-b border-gray-200 dark:border-gray-700 ">
             {orders &&
               filterOrders.map((order, index) => (
-                <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3'>
-
+                <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3 hover:bg-gray-200'>
                   <NavLink to={"/dashboard/orders/view"} state={order}>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 text-center ml-2">
                       <dl className="font-medium">
@@ -434,44 +482,109 @@ export default function Content({
                     )}
 
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
-                    {order.price !== 0 ? '$' + order.price : '-------'}
-                  </td>
+                  {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
+                      {order.price !== 0 ? '$' + order.price : '-------'}
+                    </td>
+                  )}
+
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
                     {serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 ">
-                    {order.date && (
+                    {order.createdAt && (
                       <ReactTimeAgo
-                        date={Date.parse(order.date)}
+                        date={Date.parse(order.createdAt)}
                         locale="en-US"
                         className="mr-2 font-bold"
                       />
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                    {new Date(order.date).toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' }).replaceAll('/', '.')}
-
+                    {(order.date && order.status !== "1") ? (new Date(order.date).toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' }).replaceAll('/', '.')) : ("------")}
                   </td>
+                  {(order.status === "4" || order.status === "5" || order.status === "6") ? (
+
+                    order.staff_logon_state ? (
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-blue-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Log On
+                        </span>
+                      </td>
+                    ) : (
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-red-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Log Off
+                        </span>
+                      </td>
+                    )
+
+                  ) : (
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                        <svg
+                          className="h-1.5 w-1.5 fill-green-500"
+                          viewBox="0 0 6 6"
+                          aria-hidden="true"
+                        >
+                          <circle cx={3} cy={3} r={3} />
+                        </svg>
+                        No Assign Staff
+                      </span>
+                    </td>
+                  )}
+
+
 
 
                   <td className="whitespace-nowrap px-3  py-4 text-right text-sm font-medium sm:pr-6">
                     <div className="flex">
+                      {(order.status !== "1" || order.status !== "2" || order.status !== "3") && (localStorage.getItem('role').includes('normal')) ? (
+                        <DropDown
+                          onDelete={() => {
+                            setAlertHeader("Warning!")
+                            setAlertContent(`Your order Been Submitted for processing, to cancel please contact Company by chat or phone 1-800-380-6106`);
+                            setOpen(true)
+                          }
+                          }
 
-                      <DropDown
-                        onDelete={() =>
-                          deleteComfirm({
-                            id: order._id,
-                            name: order.title,
-                          })
-                        }
+                        // onEdit={() => {
+                        //   navigate(`/dashboard/order/edit/${order._id}`);
+                        //   // navigate("/dashboard/orders/edit");
 
-                      // onEdit={() => {
-                      //   navigate(`/dashboard/order/edit/${order._id}`);
-                      //   // navigate("/dashboard/orders/edit");
+                        // }}
+                        />
+                      ) : (
+                        <DropDown
+                          onDelete={() =>
+                            deleteComfirm({
+                              id: order._id,
+                              name: order.title,
+                            })
+                          }
 
-                      // }}
-                      />
+                        // onEdit={() => {
+                        //   navigate(`/dashboard/order/edit/${order._id}`);
+                        //   // navigate("/dashboard/orders/edit");
+
+                        // }}
+                        />
+                      )}
+
                       <NavLink to={"/dashboard/orders/view"} state={order}>
                         <EyeIcon
                           width={20}

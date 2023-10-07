@@ -94,6 +94,7 @@ export const setOpenConfigurator = (dispatch, value) =>
 export const AuthContext = createContext({
   isAuthenticated: false,
   role: Constant.Normal,
+  selected_role:[],
   login: () => { },
   register: () => { },
   logout: () => { },

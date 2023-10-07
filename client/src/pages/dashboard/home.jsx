@@ -4,30 +4,16 @@ import {
   Card,
   CardHeader,
   CardBody,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-  Avatar,
-  Tooltip,
-  Progress,
 } from "@material-tailwind/react";
-import {
-  ClockIcon,
-  CheckIcon,
-  EllipsisVerticalIcon,
-  ArrowUpIcon,
-} from "@heroicons/react/24/outline";
+
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
 import {
   statisticsCardsData,
   statisticsChartsData,
-  projectsTableData,
   ordersOverviewData,
 } from "@/data";
-
+import Chart from "react-apexcharts";
 import OrderService from '@/services/order-service';
 import UserService from '@/services/user-service';
 
@@ -47,33 +33,45 @@ export function Home() {
   const [compeltedOrdersCount, setcCompeltedOrdersCount] = useState(0);
   const [pickupOrdersCount, setPickupOrdersCount] = useState(0);
   const [deliveryOrdersCount, setDeliveryOrdersCount] = useState(0);
-  const [myorders, setMyorders] = useState([]);
+  const [pieData, setPieData] = useState([]);
 
   //Total Orders
   useEffect(() => {
     async function fetchData() {
       const response = await OrderService.getOrders();
       setOrders(response.orders);
+
       const newOrders = response.orders.filter(order => order.status === "1");
       setNewOrdersCount(newOrders.length);
 
       const reviewOrders = response.orders.filter(order => order.status === "2");
       setReviewOrdersCount(reviewOrders.length);
 
-      const porcessingOrders = response.orders.filter(order => order.status === "3");
+      const porcessingOrders = response.orders.filter(order => order.status === "3" || order.status === "4");
       setPorcessingOrdersCount(porcessingOrders.length);
 
-      const compeltedOrders = response.orders.filter(order => order.status === "4");
+      const compeltedOrders = response.orders.filter(order => order.status === "5");
       setcCompeltedOrdersCount(compeltedOrders.length);
 
-      const pickupOrders = response.orders.filter(order => order.status === "5");
+      const pickupOrders = response.orders.filter(order => order.status === "6");
       setPickupOrdersCount(pickupOrders.length);
 
-      const deliveryOrders = response.orders.filter(order => order.status === "6");
+      const deliveryOrders = response.orders.filter(order => order.status === "7");
       setDeliveryOrdersCount(deliveryOrders.length);
+      const temp_data = [
+        { name: "NewOrders", value: newOrders.length },
+        { name: "ReviewOrders", value: newOrders.length },
+        { name: "PorcessingOrders", value: newOrders.length },
+        { name: "CompeltedOrders", value: newOrders.length },
+        { name: "PickupOrders", value: newOrders.length },
+        { name: "DeliveryOrders", value: newOrders.length }
+      ];
+      setPieData(temp_data)
     }
     fetchData();
   }, []);
+
+
 
 
 
@@ -82,7 +80,7 @@ export function Home() {
     async function fetchData() {
       const response = await OrderService.getTodayOrders();
       setTodayOrders(response.orders.length);
-      const completed_orders = response.orders.filter(status => status >= "4");
+      const completed_orders = response.orders.filter(status => status >= "5");
       setCompletedOrders(completed_orders.length);
     }
     fetchData();
@@ -102,7 +100,7 @@ export function Home() {
   useEffect(() => {
     async function fetchData() {
       const response = await OrderService.getTodayMoney();
-      const money = response.orders.map((res) => res.total_value);
+      const money = response.orders.map((res) => res.price);
 
       const total = money.reduce((acc, curr) => acc + curr, 0);
       setTodayMoney(total);
@@ -115,7 +113,7 @@ export function Home() {
   useEffect(() => {
     async function fetchData() {
       const response = await OrderService.getTotalMoney();
-      const money = response.orders.map((res) => res.total_value);
+      const money = response.orders.map((res) => res.price);
 
       const total = money.reduce((acc, curr) => acc + curr, 0);
       setTotalMoney(total);
@@ -166,7 +164,7 @@ export function Home() {
           updatedMonthlySales.push(0);
           response.orders.forEach((order) => {
             if (order._id === i + 1) {
-              updatedMonthlySales[i] = order.totalPrice;
+              updatedMonthlySales[i] = order.price;
             }
           });
         }
@@ -200,7 +198,7 @@ export function Home() {
 
   return (
     // localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager')
-    !localStorage.getItem('role').includes('normal')  ? (
+    (localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager')) ? (
       <div className="mt-12">
         <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-5">
           {statisticsCardsData.map(({ icon, title, footer, value, ...rest }) =>
@@ -366,7 +364,7 @@ export function Home() {
                 alt="The cover of Stubborn Attachments"
               />
             </CardHeader> */}
-            <CardBody className="pt-2">
+            <CardBody className="pt-2 w-[50%]">
               {/* <Typography variant="h6" color="blue-gray" className="mb-2">
                 Orders Overview
               </Typography> */}
@@ -413,92 +411,92 @@ export function Home() {
           </Card>
         </div>
       </div>) : (
-         <section className="flex justify-center items-center  h-screen">
-         <Card>
-           <CardHeader color="blue" contentPosition="none">
-             <img
-               src="/img/welcome(3).jpg"
-               alt="The cover of Stubborn Attachments"
-             />
-           </CardHeader>
-           <CardBody>
-             <div className="flex flex-col items-center">
-     
-               <Typography color="blueGray" size="2xl" >
-                 <strong>Welcome to our company</strong>
-               </Typography>
+      <section className="flex justify-center items-center  h-screen">
+        <Card>
+          <CardHeader color="blue" contentPosition="none">
+            <img
+              src="/img/welcome(3).jpg"
+              alt="The cover of Stubborn Attachments"
+            />
+          </CardHeader>
+          <CardBody>
+            <div className="flex flex-col items-center">
 
-             </div>
-           </CardBody>
-           <div className="flex justify-center">
-           
-           </div>
-         </Card>
-       </section>
-      )
-  //   ) : (
-  //     <div className="mt-12">
-  //       <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-2">
-  //         {statisticsChartsData.map((props) => (
-  //           props.title === "Customers" ? (
-  //             <StatisticsChart
-  //               key={props.title}
-  //               {...props}
-  //               title="Weekly Payment"
-  //               chart={{
-  //                 ...props.chart,
-  //                 series: [
-  //                   {
-  //                     ...props.chart.series[0],
-  //                     data: weekCustomers,
-  //                   },
-  //                 ],
-  //               }}
-  //             // footer={
-  //             //   <Typography
-  //             //     variant="small"
-  //             //     className="flex items-center font-normal text-blue-gray-600"
-  //             //   >
-  //             //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
-  //             //     &nbsp;{props.footer}
-  //             //   </Typography>
-  //             // }
-  //             />
-  //           ) :
-  //             props.title === "Monthly Sales" ? (
-  //               <></>
-  //             ) :
-  //               (
-  //                 <StatisticsChart
-  //                   key={props.title}
-  //                   {...props}
-  //                   title="Monthly Payment"
-  //                   chart={{
-  //                     ...props.chart,
-  //                     series: [
-  //                       {
-  //                         ...props.chart.series[0],
-  //                         data: monthlyCompletedOrders,
-  //                       },
-  //                     ],
-  //                   }}
-  //                 // footer={
-  //                 //   <Typography
-  //                 //     variant="small"
-  //                 //     className="flex items-center font-normal text-blue-gray-600"
-  //                 //   >
-  //                 //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
-  //                 //     &nbsp;{props.footer}
-  //                 //   </Typography>
-  //                 // }
-  //                 />
-  //               )
+              <Typography color="blueGray" size="2xl" >
+                <strong>Welcome to our company</strong>
+              </Typography>
 
-  //         ))}
-  //       </div>
-  //     </div>
+            </div>
+          </CardBody>
+          <div className="flex justify-center">
 
-  //   )
+          </div>
+        </Card>
+      </section>
+    )
+    //   ) : (
+    //     <div className="mt-12">
+    //       <div className=" pt-5 mb-6 grid grid-cols- gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-2">
+    //         {statisticsChartsData.map((props) => (
+    //           props.title === "Customers" ? (
+    //             <StatisticsChart
+    //               key={props.title}
+    //               {...props}
+    //               title="Weekly Payment"
+    //               chart={{
+    //                 ...props.chart,
+    //                 series: [
+    //                   {
+    //                     ...props.chart.series[0],
+    //                     data: weekCustomers,
+    //                   },
+    //                 ],
+    //               }}
+    //             // footer={
+    //             //   <Typography
+    //             //     variant="small"
+    //             //     className="flex items-center font-normal text-blue-gray-600"
+    //             //   >
+    //             //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+    //             //     &nbsp;{props.footer}
+    //             //   </Typography>
+    //             // }
+    //             />
+    //           ) :
+    //             props.title === "Monthly Sales" ? (
+    //               <></>
+    //             ) :
+    //               (
+    //                 <StatisticsChart
+    //                   key={props.title}
+    //                   {...props}
+    //                   title="Monthly Payment"
+    //                   chart={{
+    //                     ...props.chart,
+    //                     series: [
+    //                       {
+    //                         ...props.chart.series[0],
+    //                         data: monthlyCompletedOrders,
+    //                       },
+    //                     ],
+    //                   }}
+    //                 // footer={
+    //                 //   <Typography
+    //                 //     variant="small"
+    //                 //     className="flex items-center font-normal text-blue-gray-600"
+    //                 //   >
+    //                 //     <ClockIcon strokeWidth={2} className="h-4 w-4 text-inherit" />
+    //                 //     &nbsp;{props.footer}
+    //                 //   </Typography>
+    //                 // }
+    //                 />
+    //               )
+
+    //         ))}
+    //       </div>
+    //     </div>
+
+    //   )
 
   );
 }

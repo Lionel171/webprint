@@ -74,21 +74,25 @@ const OrderSchema = new Schema(
     internal_comment: {
       type: String
     },
+    staff_logon_state: {
+      type: Boolean,
+      default:false,
+    },
     due_date: {
       type: Date,
     },
-    sales_staff_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
-    },
-    art_staff_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
-    },
-    prod_staff_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
-    },
+    // sales_staff_id: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Users",
+    // },
+    // art_staff_id: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Users",
+    // },
+    // prod_staff_id: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Users",
+    // },
     is_deleted: {
       type: Boolean,
       default: false,

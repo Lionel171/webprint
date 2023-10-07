@@ -56,11 +56,10 @@ const ProductDisplay = () => {
         </CardHeader>
         <CardBody>
           <div className="flex flex-col items-center">
-            <Typography color="blueGray" size="2xl">
-              <strong>Production Name</strong>
-            </Typography>
-            <div className="sm:col-span-3">
+           
+            <div className="sm:col-span-3 mb-2">
               <Input
+                label="Production Name"
                 type="text"
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -71,11 +70,10 @@ const ProductDisplay = () => {
 
             </div>
 
-            <Typography color="blueGray" size="2xl">
-              <strong>Price</strong>
-            </Typography>
+           
             <div className="sm:col-span-3">
               <Input
+                label="Price"
                 type="text"
                 onChange={(e) => setPrice(e.target.value)}
                 required
@@ -91,16 +89,16 @@ const ProductDisplay = () => {
             color="red"
             size="lg"
             onClick={() => handleCheckout(price, name)}
-            className="mb-3"
+            className="mb-3 cursor-pointer hover:bg-red-200"
             disabled={!price || !name}
           >
             <FaCreditCard />
           </Button>
           <Button
-            color="blue"
+            variant="blue"
             size="lg"
             onClick={() => handlePaypalCheckout(price, name)}
-            className="mb-3 ml-3"
+            className="mb-3 ml-3 cursor-pointer hover:bg-blue-200"
             disabled={!price || !name}
           >
             <FaPaypal />

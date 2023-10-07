@@ -244,7 +244,7 @@ export function DashboardNavbar() {
 
                     <MenuItem className="flex items-center gap-4">
                       <Avatar
-                        src={user.profile_image ? `http://185.148.129.206:5050/${user.profile_image}` : DefaultAvart}
+                        src={user.profile_image ? `http://185.148.129.206:5000/${user.profile_image}` : DefaultAvart}
                         alt={user.contact_person}
                         size="sm"
                         variant="circular"

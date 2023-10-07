@@ -9,7 +9,10 @@ var storage = multer.diskStorage({
     cb(null, Date.now() + '.' + extension) //Appending .jpg
   }
 })
-var uploadFile = multer({ storage: storage }).any();
+var uploadFile = multer({ 
+  storage: storage,
+  limits: { fieldSize: 1024 * 1024 * 1024 }
+}).any();
 
 module.exports = uploadFile;
 

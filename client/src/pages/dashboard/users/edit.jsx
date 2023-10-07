@@ -27,12 +27,13 @@ import DepartmentService from "@/services/department-service";
 
 const userTypeList = [
   { id: 0, name: "" },
-  { id: 1, name: "Sales Manager" },
-  { id: 2, name: "Sales Team Member" },
-  { id: 3, name: "Artwork Manager" },
-  { id: 4, name: "Artwork Staff" },
-  { id: 5, name: "Production Manager" },
-  { id: 6, name: "Production Staff" },
+  { id: 1, name: "Admin" },
+  { id: 2, name: "Sales Manager" },
+  { id: 3, name: "Sales Team Member" },
+  { id: 4, name: "Artwork Manager" },
+  { id: 5, name: "Artwork Staff" },
+  { id: 6, name: "Production Manager" },
+  { id: 7, name: "Production Staff" },
   // { id: 7, name: "Customer Relation" },
 ];
 // const departmentTypeList = [

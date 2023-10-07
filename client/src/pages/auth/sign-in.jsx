@@ -13,6 +13,8 @@ import {
 import { useContext, useState } from "react";
 import { AuthContext } from "@/context";
 import AuthService from "@/services/auth-service";
+import SelectModal from "@/components/common/SelectModal";
+
 
 function Icon() {
   return (
@@ -38,7 +40,21 @@ export function SignIn() {
 
   const authContext = useContext(AuthContext);
   const [isMessage, setIsMessage] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [role, setRole] = useState([])
+  const [edited, setEdited] = useState(false);
+  const [user, setUser] = useState({})
 
+  const handleClose = () => {
+    setIsEdit(false);
+
+  }
+
+
+  const controlEdit = async () => {
+    setEdited(true);
+    setIsEdit(false);
+  }
 
   const [inputs, setInputs] = useState({
     email: "",
@@ -70,11 +86,17 @@ export function SignIn() {
     }
 
     const newUser = { email: inputs.email, password: inputs.password };
-
+    setUser(newUser)
     try {
       const response = await AuthService.login(newUser);
       if (response.user.user_status === "permit") {
-        authContext.login(response.accessToken, response.user.role, response.user.contact_person, response.user.email, response.user._id);
+        if (response.user.role.length > 1) {
+          setRole(response.user.role)
+          setIsEdit(true)
+        } else {
+          authContext.login(response.accessToken, response.user.role, response.user.contact_person, response.user.email, response.user._id);
+        }
+
       } else {
         setIsMessage(true);
       }
@@ -176,6 +198,14 @@ export function SignIn() {
             </Typography>
           </CardFooter>
         </Card>
+        <SelectModal
+          open={isEdit}
+          editItem={controlEdit}
+          handleClose={handleClose}
+          roles={role}
+          user={user}
+        // id={SelectedepartDmentId}
+        />
       </div>
     </>
   );

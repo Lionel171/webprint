@@ -53,6 +53,7 @@ export function Department() {
     async function fetchData() {
       const response = await DepartmentService.getDepartments();
       setDepartmentTypeList(response.department);
+      console.log(response.department, "departmetn test")
     }
     fetchData();
   }, [departmentList, isDelete, isEdit])
@@ -72,7 +73,7 @@ export function Department() {
 
   const deleteFunction = department => {
     setSelectedDepartmentId(department.id);
-    setConfirmMessage("Are you going to precess this action");
+    setConfirmMessage("Once deleted this process can not be undone");
     setIsConfirm(true);
   };
 
@@ -113,41 +114,43 @@ export function Department() {
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       <Card>
-  <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
-    <Typography variant="h6" color="white">
-      Add Department
-    </Typography>
-  </CardHeader>
-  <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-    <div className="mx-4 mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-      <div className="sm:col-span-3 mb-10 sm:text-center">
-        <Input
-          onChange={(e) => {
-            setDepartmentList({ name: e.target.value });
-          }}
-          value={departmentList.name}
-          maxLength={50}
-        />
-      </div>
-      <div className="flex flex-wrap justify-between items-center sm:col-span-3">
-        <button
-          onClick={() => setDepartmentList({ name: "" })}
-          type="button"
-          className="text-sm font-semibold leading-6 text-gray-900 mb-4 sm:mb-0"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          onClick={saveDepartment}
-          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </CardBody>
-</Card>
+        <CardHeader variant="gradient" color="blue" className="mb-8 p-6">
+          <Typography variant="h6" color="white">
+            Add Department
+          </Typography>
+        </CardHeader>
+        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+          <div className="mx-4 mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 ml-10 mr-10">
+            <div className="sm:col-span-3 mb-10 sm:text-center ml-3 mr-3">
+              <Input
+                label="Department Name"
+                onChange={(e) => {
+                  setDepartmentList({ name: e.target.value });
+                }}
+                value={departmentList.name}
+                maxLength={50}
+              />
+
+            </div>
+            <div className="flex flex-wrap justify-between items-center sm:col-span-3 mr-3 ml-3">
+              <button
+                onClick={() => setDepartmentList({ name: "" })}
+                type="button"
+                className="text-sm font-semibold leading-6 text-gray-900 mb-4 sm:mb-0"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={saveDepartment}
+                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
 
 
       <Card>
@@ -184,7 +187,7 @@ export function Department() {
                     }`;
 
                   return (
-                    <tr key={user._id}>
+                    <tr key={user._id} className='hover:bg-indigo-50'>
                       <td className={className}>
                         <div className="flex items-center gap-4">
                           <Avatar src={user.profile_image ? API_URL + '/' + user.profile_image : DefaultImage} alt={user.contact_person} size="sm" />
@@ -277,7 +280,7 @@ export function Department() {
                     }`;
 
                   return (
-                    <tr key={department._id}>
+                    <tr key={department._id} className='hover:bg-indigo-50'>
                       <td className={className}>
                         <div className="flex items-center gap-4">
                           {/* <Avatar src={img} alt={name} size="sm" /> */}

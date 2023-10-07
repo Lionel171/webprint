@@ -83,7 +83,7 @@ export default function ConfirmModal(props) {
 												type='checkbox'
 												className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2'
 											/>
-											<p className='text-sm text-gray-500'>Please confirm before precess</p>
+											<p className='text-sm text-gray-500'>Please select to confirm process</p>
 										</div>
 									</div>
 								</div>

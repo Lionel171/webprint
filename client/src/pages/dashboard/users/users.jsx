@@ -22,7 +22,7 @@ export function Users() {
 
   const deleteComfirm = props => {
     setSelectedUserId(props.id);
-    setConfirmMessage("Are you going to precess this action");
+    setConfirmMessage("Once deleted this process can not be undone");
     setIsConfirm(true);
   };
 

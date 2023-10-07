@@ -258,7 +258,7 @@ export default function Content({
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
                             {pending_users.map((user, index) => (
-                                <tr key={index}>
+                                <tr key={index} className='hover:bg-indigo-50'>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
                                             <dl className="font-medium">
@@ -431,7 +431,7 @@ export default function Content({
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
                             {permit_users.map((user, index) => (
-                                <tr key={index}>
+                                <tr key={index} className='hover:bg-indigo-50'>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
                                             <dl className="font-medium">
@@ -604,7 +604,7 @@ export default function Content({
                         </thead>
                         <tbody className="divide-y divide-gray-200 !border-b  !border-gray-200 bg-white">
                             {cancel_users.map((user, index) => (
-                                <tr key={index}>
+                                <tr key={index} className='hover:bg-indigo-50'>
                                     <Link to={`/dashboard/customers/edit/${user._id}`}>
                                         <td className="w-full max-w-0 px-1 py-4 pl-4 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none">
                                             <dl className="font-medium">
