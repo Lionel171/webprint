@@ -52,7 +52,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.put('/', async (req, res) => {
-  console.log("dddd", req.body)
+ 
   try {
     const { name, _id } = req.body;
     let department = await Department.findById({ _id });

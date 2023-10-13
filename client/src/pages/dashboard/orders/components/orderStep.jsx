@@ -26,15 +26,15 @@ const steps = [
   },
   {
     id: 4,
-    name: "In Production",
-    description: "Order is in production.",
+    name: "Artwork Department",
+    description: "Assign artwork staff.",
     href: "#",
-    status: "upcoming",
+    status: "current",
   },
   {
     id: 5,
-    name: "Complete",
-    description: "Order is completed.",
+    name: "In Production",
+    description: "Order is in production.",
     href: "#",
     status: "upcoming",
   },
@@ -49,6 +49,13 @@ const steps = [
     id: 7,
     name: "Ready for pickup/ ship",
     description: "Order is ready for pick up.",
+    href: "#",
+    status: "upcoming",
+  },
+  {
+    id: 8,
+    name: "Complete",
+    description: "Order is completed.",
     href: "#",
     status: "upcoming",
   },
@@ -69,6 +76,7 @@ function classNames(...classes) {
 
 
 export default function Example(props) {
+
     useEffect(() => {}, [props.currentStatus]);
   return (
     <nav aria-label="Progress">

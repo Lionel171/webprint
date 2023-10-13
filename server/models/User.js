@@ -35,10 +35,7 @@ const UserSchema = new Schema({
   address: {
     type: String,
   },
-  department: {
-    type: String,
-    default: ""
-  },
+  department:  { type: Array, "default": [""] },
   shipping_address: {
     type: String,
   },

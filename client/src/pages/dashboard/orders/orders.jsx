@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import OrderService from "@/services/order-service";
 import UserService from "@/services/user-service";
 import ConfirmModal from "@/components/common/comfirmModal";
+import DepartmentService from "@/services/department-service"
+
+
+
 export function Orders() {
   const [search, setSearch] = useState('');
   const [filterValue, setFilterValue] = useState('');
@@ -21,20 +25,43 @@ export function Orders() {
   const [role, setRole] = useState('');
   const [isDelete, setIsDelete] = useState(false);
   const [isNextPage, setIsNextPage] = useState(false);
-
+  const [departments, setDepartments] = useState([]);
+  const [deptId, setDeptId] = useState([]);
 
   const editItem = id => {
   };
 
+
+
   async function getCurrentUser() {
+
+    const temp_departments = [{ id: 0, name: "" }];
+    const res = await DepartmentService.getDepartments();
+
+    res.department.forEach((dep, index) => {
+      temp_departments[index + 1] = { id: index + 1, name: dep.name };
+    });
+    setDepartments(temp_departments);
+
 
     const response = await UserService.getUser();
     setUser(response.user)
+    const temp_index = []
+    response.user.department.map((dept, index) => {
+
+      const temp_dept = temp_departments.find((dep) => dep.name === dept);
+      temp_index.push(temp_dept.id);
+    })
+
+    setDeptId(temp_index);
+
 
   }
+
   useEffect(() => {
     setRole(localStorage.getItem('role'))
     getCurrentUser();
+
   }, [])
 
   const deleteComfirm = props => {
@@ -86,7 +113,14 @@ export function Orders() {
       search: search,
     };
 
-    if (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes("Production Manager")) {
+    const manager_query = {
+      ...query,
+      service: deptId,
+      userId: user._id
+    }
+ 
+
+    if (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) {
       setLoadingData(true);
       const response = await OrderService.getOrderList(query);
       setOrders(response.docs);
@@ -103,18 +137,33 @@ export function Orders() {
       setCurrentPage(response.page);
       setLoadingData(false);
 
-    } else if ( localStorage.getItem('role').includes("Artwork Manager") || localStorage.getItem('role').includes("Artwork Staff") ) {
+    } else if (localStorage.getItem('role').includes("Artwork Manager")) {
       setLoadingData(true);
-      const response = await OrderService.getOderListByPreProduction(query);
+      const response = await OrderService.getOderListForArtManager(manager_query);
       setOrders(response.docs);
       setTotalPages(response.totalPages);
       setTotal(response.totalDocs);
       setCurrentPage(response.page);
       setLoadingData(false);
-
+    } else if (localStorage.getItem('role').includes("Artwork Staff")) {
+      setLoadingData(true);
+      const response = await OrderService.getOderListForArtStaff(query, user._id);
+      setOrders(response.docs);
+      setTotalPages(response.totalPages);
+      setTotal(response.totalDocs);
+      setCurrentPage(response.page);
+      setLoadingData(false);
+    } else if (localStorage.getItem('role').includes("Production Manager")) {
+      setLoadingData(true);
+      const response = await OrderService.getOderListForProManager(manager_query);
+      setTotalPages(response.totalPages);
+      setOrders(response.docs);
+      setTotal(response.totalDocs);
+      setCurrentPage(response.page);
+      setLoadingData(false);
     } else if (localStorage.getItem('role').includes("Production Staff")) {
       setLoadingData(true);
-      const response = await OrderService.getOderListByInProduction(query, user._id);
+      const response = await OrderService.getOderListForProStaff(query, user._id);
       setTotalPages(response.totalPages);
       setOrders(response.docs);
       setTotal(response.totalDocs);
@@ -130,6 +179,7 @@ export function Orders() {
       setLoadingData(false);
     }
   }
+
   return (
     <div className=" flex flex-col gap-5">
       <div>

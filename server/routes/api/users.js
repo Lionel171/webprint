@@ -582,10 +582,17 @@ router.get('/fetchUsers', auth, async (req, res) => {
 // get staff by service
 router.post('/staff-service', async (req, res) => {
   try {
-    const { department } = req.body;
+    const { department, status } = req.body;
+
+    let staff_type = "";
+    if (status === "5" || status === "6") {
+      staff_type = "Production Staff"
+    } else if (status === "4") {
+      staff_type = "Artwork Staff"
+    }
     const staff = await User.find({
-      department: department,
-      role: { $in: ["Production Staff"] } // Use $in operator with an array of role values
+      department: {$in: [department]},
+      role: { $in: [staff_type] } // Use $in operator with an array of role values
     });
 
     const staffTypeList = staff.map((st, index) => ({

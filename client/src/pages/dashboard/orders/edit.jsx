@@ -14,6 +14,7 @@ import Constant from '@/utils/constant';
 import userService from '@/services/user-service';
 import Spinner from '../../../../public/img/spinner.gif';
 import { FaUpload } from 'react-icons/fa';
+import DepartmentService from "@/services/department-service"
 
 
 import Tiff from 'tiff.js'
@@ -54,6 +55,8 @@ export function OrderEdit() {
     const [selectedUploadId, setSelectedUploadId] = useState(0)
     const [isSave, setIsSave] = useState(false)
     const [isSpinner, setIsSpinner] = useState(false)
+    const [departments, setDepartments] = useState([]);
+
     // const [serviceTypeList, setServiceTypeList] = [];
 
     const serviceTypeList = [
@@ -66,17 +69,24 @@ export function OrderEdit() {
         { id: 6, name: "Vinyl Transfer", value: "vinyl_transfer" },
     ];
 
-    // useEffect(() => {
-    //     async function fetchData() {
-    //       const response = await DepartmentService.getDepartments();
-    //       response.department((item, index) => {
-
-    //       })
-    //       setServiceTypeList(response.department);
-    //       console.log(response.department, "departmetn test")
-    //     }
-    //     fetchData();
-    //   }, [])
+    useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const temp_departments = [{ id: 0, name: "" }];
+            const res = await DepartmentService.getDepartments();
+      
+            res.department.forEach((dep, index) => {
+              temp_departments[index + 1] = { id: index + 1, name: dep.name };
+            });
+            setDepartments(temp_departments);
+          } catch (error) {
+            // Handle error
+            console.log(error);
+          }
+        };
+      
+        fetchData();
+      }, []);
 
     const addOrder = (title, id) => {
         setIsSave(true);
@@ -585,7 +595,7 @@ export function OrderEdit() {
                                                             onChangeServiceType(item, index)
                                                         }
                                                         value={order.service_type}
-                                                        items={serviceTypeList}
+                                                        items={departments}
                                                         error={order.serviceTypeFlag}
                                                         disabled={isView}
                                                     />
@@ -648,7 +658,21 @@ export function OrderEdit() {
 
                                                                     <p><small>You can delete this (size and quantity)</small></p>
 
-
+                                                                    <PlusCircleIcon
+                                                                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                                                                        onClick={() => addSize(index)}
+                                                                    />
+                                                                    <span className="mt-1 mb-1 inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                                                                        <svg
+                                                                            className="h-1.5 w-1.5 fill-blue-500"
+                                                                            viewBox="0 0 6 6"
+                                                                            aria-hidden="true"
+                                                                        >
+                                                                            <circle cx={3} cy={3} r={3} />
+                                                                        </svg>
+                                                                        Add More
+                                                                    </span>
+                                                                    <p className="mt-1 text-sm leading-6 text-gray-600">You can add more (size and quantity)</p>
                                                                 </div>
                                                             ) : (
                                                                 <div className="items-end h-full  mt-2 pt-4">

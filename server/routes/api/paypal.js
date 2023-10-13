@@ -15,7 +15,7 @@ router.post('/buy', (req, res) => {
     res.header('Access-Control-Allow-Origin', 'http://185.148.129.206:5174');
   
     // create payment object
-    console.log(req.body.price,"ddddd")
+    console.log(req.body,"ddddd")
     const payment = {
         "intent": "authorize",
         "payer": {

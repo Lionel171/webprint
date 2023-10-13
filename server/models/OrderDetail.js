@@ -67,6 +67,13 @@ const OrderSchema = new Schema(
     client_art_up: {
       type : Array , "default" : [""],
     },
+    design_img: {
+      type : Array , "default" : [""],
+    },
+    approve_design: {
+      type: Number,
+    },
+  
     hold: {
       type: Number,
       default: 0,
@@ -78,6 +85,7 @@ const OrderSchema = new Schema(
       type: Boolean,
       default:false,
     },
+
     due_date: {
       type: Date,
     },

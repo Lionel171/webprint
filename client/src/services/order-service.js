@@ -10,8 +10,8 @@ class OrderService {
 
 
   getOrderList = async (payload) => {
-    const getUserListEndpoint = `api/orders/list`;
-    return await HttpService.getWithParams(getUserListEndpoint, payload);
+    const getOrderListEndpoint = `api/orders/list`;
+    return await HttpService.getWithParams(getOrderListEndpoint, payload);
   };
   getOrderInvoices = async (payload) => {
     const getOrderInvoicesEndpoint = 'api/orders/invoices';
@@ -27,20 +27,31 @@ class OrderService {
     const getOderListByApproveEndpoint = 'api/orders/approve';
     return await HttpService.getWithParams(getOderListByApproveEndpoint, payload);
   }
+  //get order list for artwork manager
+  getOderListForArtManager = async (payload, user) => {
+    const getOderListForArtManagerEndpoint = "api/orders/for-artmanager";
+    return await HttpService.getWithParams(getOderListForArtManagerEndpoint, payload);
+  }
+  //get order list for artwork staff
 
-  getOderListByPreProduction = async (payload) => {
-    const getOderListByPreProductionEndpoint = "api/orders/pre-production";
-    return await HttpService.getWithParams(getOderListByPreProductionEndpoint, payload);
+  getOderListForArtStaff = async (payload, user_id) => {
+    const getOderListForArtStaffEndpoint = `api/orders/artwork-dept/${user_id}`;
+    return await HttpService.getWithParams(getOderListForArtStaffEndpoint, payload);
+  }
+  //get order list for production manager
+  getOderListForProManager = async (payload) => {
+    const getOderListForProManagerEndpoint = "api/orders/for-promanager";
+    return await HttpService.getWithParams(getOderListForProManagerEndpoint, payload);
   }
   getOderListByPending = async (payload) => {
     const getOderListByPendingEndpoint = 'api/orders/pending';
     return await HttpService.getWithParams(getOderListByPendingEndpoint, payload);
   }
-  getOderListByInProduction = async (payload, user_id) => {
-    const getOderListByCompleteEndpoint = `api/orders/inproduction/${user_id}`;
+  getOderListForProStaff = async (payload, user_id) => {
+    const getOderListByCompleteEndpoint = `api/orders/for-prostaff/${user_id}`;
     return await HttpService.getWithParams(getOderListByCompleteEndpoint, payload);
   }
-  
+
   getPaidByUser = async (user_id) => {
     const getPaidByUserEndpoint = `api/orders/paid/${user_id}`;
     return await HttpService.get(getPaidByUserEndpoint);
@@ -58,10 +69,14 @@ class OrderService {
     const updateImageEndpoint = "api/orders/img-update";
     return await HttpService.post(updateImageEndpoint, payload);
   };
-  
+
   assignStaff = async (payload) => {
     const assignStaffEndpoint = "api/orders/assign-staff";
     return await HttpService.post(assignStaffEndpoint, payload);
+  };
+  releaseStaff = async (payload) => {
+    const releaseStaffEndpoint = "api/orders/release-staff";
+    return await HttpService.post(releaseStaffEndpoint, payload);
   };
 
   saveOrderPrice = async (payload) => {
@@ -72,7 +87,7 @@ class OrderService {
     const setholdEndpoint = "api/orders/hold";
     return await HttpService.post(setholdEndpoint, payload);
   }
-  
+
   sendToCustomerMsg = async (payload) => {
     const sendToCustomerMsgEndpoint = "api/orders/customer-comment";
     return await HttpService.post(sendToCustomerMsgEndpoint, payload);
@@ -96,7 +111,7 @@ class OrderService {
     const getOrderEndpoint = `api/orders?order_id=${order_id}`;
     return await HttpService.get(getOrderEndpoint);
   };
-  
+
   updateOrder = async (payload) => {
     const updateOrderEndpoint = 'api/orders/update';
     return await HttpService.post(updateOrderEndpoint, payload)
@@ -139,8 +154,12 @@ class OrderService {
     const staffLogonEndpoint = "api/orders/staff-logon";
     return await HttpService.post(staffLogonEndpoint, payload);
   }
+  ApproveDesign = async (payload) => {
+    const ApproveDesignEndpint = 'api/orders/approve-design';
+    return await HttpService.post(ApproveDesignEndpint, payload);
+  }
 
- 
+
   //invoice email
 
   sendInvoiceEmail = async (order_id) => {

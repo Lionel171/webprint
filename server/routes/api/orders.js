@@ -8,6 +8,7 @@ const Order = require("../../models/Order");
 const OrderDetail = require("../../models/OrderDetail");
 const OrderHistory = require("../../models/OrderHistory");
 const { getPagination } = require("../../config/utils");
+const mongoose = require("mongoose");
 
 // const paypal = require("paypal-rest-sdk");
 const nodemailer = require("nodemailer");
@@ -56,6 +57,7 @@ router.post("/save-order", auth, async (req, res) => {
         size: item.size,
         client_art_up: client_art_up,
         original_art_up: client_art_up,
+        design_img: client_art_up,
       });
       await orderDetail.save();
     });
@@ -140,24 +142,25 @@ router.post("/hold", auth, async (req, res) => {
 
 //upload working file
 router.post('/file-upload', auth, async (req, res) => {
-  const { id, index } = req.body;
+  const { id, index, select } = req.body;
   try {
-    const updatedOrderDetail = await OrderDetail.findByIdAndUpdate(
-      id,
-      {
-        $set: { [`client_art_up.${index}`]: req.files[0].filename },
-      },
-      { new: true }
-    );
-    return res.json({
-      success: true,
-    });
+    let updateField;
+    if (select === 'design') {
+      updateField = { [`design_img.${index}`]: req.files[0].filename, approve_design: 3 };
+    } else if (select === 'working') {
+      updateField = { [`client_art_up.${index}`]: req.files[0].filename };
+    } else {
+      return res.json({ success: false, error: 'Invalid select option' });
+    }
+
+    const updatedOrderDetail = await OrderDetail.findByIdAndUpdate(id, { $set: updateField }, { new: true });
+ 
+    return res.json({ success: true });
   } catch (err) {
     console.log(err);
     res.status(500).send('Server Error');
   }
-
-})
+});
 // send message to customer
 router.post('/customer-comment', auth, async (req, res) => {
   const { message, order_id } = req.body;
@@ -173,6 +176,27 @@ router.post('/customer-comment', auth, async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).send("Server Error");
+  }
+})
+
+// customer approve design
+router.post('/approve-design', auth, async (req, res) => {
+  const {id, approve_state} = req.body;
+  
+  try {
+    const order = await OrderDetail.findById(id);
+    order.approve_design = approve_state;
+    
+    await order.save();
+
+   
+
+    return res.json({
+      success: true,
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).send('Server Error')
   }
 })
 
@@ -226,18 +250,19 @@ router.post('/isview-message', auth, async (req, res) => {
 
 router.post("/update", auth, async (req, res) => {
   const { id, internal_comment } = req.body;
+
   try {
     const orderDetail = await OrderDetail.findById(id);
     orderDetail.internal_comment = internal_comment;
+    orderDetail.staff_logon_state = false;
     await orderDetail.save();
-    return res.json({
-      success: true,
-    })
+
+    return res.json({ success: true });
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server Error")
+    res.status(500).send("Server Error");
   }
-})
+});
 
 // router.post("/img-update", auth, async (req, res) => {
 //   const { orders, id, internal_comment } = req.body;
@@ -260,7 +285,7 @@ router.post("/update", auth, async (req, res) => {
 //     res.status(500).send("Server error!");
 //   }
 // });
-
+//assign staff
 router.post("/assign-staff", auth, async (req, res) => {
   const { orders } = req.body;
   try {
@@ -279,7 +304,29 @@ router.post("/assign-staff", auth, async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server Error")
   }
-})
+});
+//release staff
+
+
+router.post("/release-staff", auth, async (req, res) => {
+  const { orders } = req.body;
+  try {
+    if (orders.length <= 0) {
+      res.status(500).send("Server error");
+    }
+
+    const orderId = mongoose.Types.ObjectId(orders[0]._id);
+
+    await OrderDetail.findByIdAndUpdate(orderId, { $unset: { staff_id: 1 } });
+
+    return res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 //get total orders
 
 router.get("/total", async (req, res) => {
@@ -320,7 +367,7 @@ router.get("/list", async (req, res) => {
           // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : {};
+      : {status: { $in: [1, 2, 3, 4, 5, 6, 7] }};
     const { limit, offset } = getPagination(page, perPage);
     const orders = await OrderDetail.paginate(condition, {
       offset,
@@ -355,55 +402,6 @@ router.get("/invoices", auth, async (req, res) => {
     res.status(500).send("Server Error");
   }
 })
-//approve order
-router.get("/approve", async (req, res) => {
-  try {
-    const { page, perPage, search } = req.query;
-    var condition = search
-      ? {
-        $or: [
-          { title: { $regex: new RegExp(search), $options: "i" } },
-          // { status: { $regex: new RegExp(search), $options: "i" } },
-        ],
-      }
-      : { status: { $in: 2 } };
-    const { limit, offset } = getPagination(page, perPage);
-    const orders = await OrderDetail.paginate(condition, {
-      offset,
-      limit,
-    });
-    res.json(orders);
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
-
-router.get("/pre-production", async (req, res) => {
-  try {
-    const { page, perPage, search } = req.query;
-    var condition = search
-      ? {
-        $or: [
-          { title: { $regex: new RegExp(search), $options: "i" } },
-          // { status: { $regex: new RegExp(search), $options: "i" } },
-        ],
-      }
-      : { status: "2" };
-    const { limit, offset } = getPagination(page, perPage);
-    const orders = await OrderDetail.paginate(condition, {
-      offset,
-      limit,
-    });
-    console.log(orders, "otders test")
-    res.json(orders);
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
 //pending orders
 router.get("/pending", async (req, res) => {
   try {
@@ -428,10 +426,63 @@ router.get("/pending", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+//approve order
+router.get("/approve", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $in: 2 } };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    res.json(orders);
 
-//in prodcution order
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+// get order list for artwork manager
+router.get("/for-artmanager", async (req, res) => {
+  try {
+    const { page, perPage, search, service, userId } = req.query;
+    console.log(service, "qery service test");
 
-router.get("/inproduction/:id", async (req, res) => {
+    const condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+        status: "4",
+        service_type: { $in: service },
+      }
+      : {
+        status: "4",
+        service_type: { $in: service },
+      };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    console.log(orders, "orders test");
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+// get order list for artwork staff
+router.get("/artwork-dept/:id", async (req, res) => {
   try {
     const { page, perPage, search } = req.query;
     var condition = search
@@ -442,7 +493,7 @@ router.get("/inproduction/:id", async (req, res) => {
         ],
       }
       : {
-        status: { $in: [4, 5, 6, 7] },
+        status: { $in: [4] },
         staff_id: req.params.id,
       };
     const { limit, offset } = getPagination(page, perPage);
@@ -453,6 +504,64 @@ router.get("/inproduction/:id", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+// get order list for artwork manager
+router.get("/for-promanager", async (req, res) => {
+  try {
+    const { page, perPage, search, service, userId } = req.query;
+    console.log(service, "qery service test");
+
+    const condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+        status: { $in: [ 5, 6, 7] },
+        service_type: { $in: service },
+      }
+      : {
+        status: { $in: [ 5, 6, 7] },
+        service_type: { $in: service },
+      };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    console.log(orders, "orders test");
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+//get order list for production staff
+
+router.get("/for-prostaff/:id", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : {
+        status: { $in: [ 5, 6, 7] },
+        staff_id: req.params.id,
+      };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, { offset, limit });
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+
 
 
 // // in production
@@ -746,7 +855,7 @@ router.get("/paid/:id", async (req, res) => {
     });
 
     let totalPrice = orders.price;
-    
+
 
     res.json({
       totalPrice: totalPrice,

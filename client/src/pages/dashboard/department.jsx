@@ -53,7 +53,6 @@ export function Department() {
     async function fetchData() {
       const response = await DepartmentService.getDepartments();
       setDepartmentTypeList(response.department);
-      console.log(response.department, "departmetn test")
     }
     fetchData();
   }, [departmentList, isDelete, isEdit])
@@ -207,7 +206,7 @@ export function Department() {
                       </td>
                       <td className={className}>
                         <Typography className="text-xs font-semibold text-blue-gray-600">
-                          {user.department}
+                          {user.department.join(', ')}
                         </Typography>
                       </td>
                       <td className={className}>
@@ -294,7 +293,7 @@ export function Department() {
                         </div>
                       </td>
                       <td className={className}>
-                        {users.filter(user => user.department === department.name).map((member, key) => (
+                        {users.filter(user => user.department.includes(department.name)).map((member, key) => (
                           <Tooltip key={member._id} content={member.contact_person}>
                             <Avatar
                               src={member.profile_image ? API_URL + '/' + member.profile_image : DefaultImage}
@@ -312,7 +311,7 @@ export function Department() {
                           variant="small"
                           className="text-xs font-medium text-blue-gray-600"
                         >
-                          {users.filter(user => user.department === department.name).length}
+                          {users.filter(user => user.department.includes(department.name) ).length}
                         </Typography>
                       </td>
                       {/* <td className={className}>

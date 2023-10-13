@@ -169,12 +169,12 @@ export default function Content({
                 >
                   Role
                 </th>
-                {/* <th
+                <th
                   scope="col"
                   className="px-2 py-3.5 text-left text-sm font-semibold "
                 >
-                  Status
-                </th> */}
+                  Department
+                </th>
                 <th
                   scope="col"
                   className="truncate px-2 py-3.5 text-left text-sm  font-semibold "
@@ -211,6 +211,9 @@ export default function Content({
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.role.join(', ')}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                    {user.department.join(', ')}
                   </td>
                   {/* <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                     {user.user_status === "permit" ? (

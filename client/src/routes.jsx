@@ -80,7 +80,7 @@ export const routes = [
       // },
       {
         icon: <HomeModernIcon {...icon} />,
-        name: "staff",
+        name: "staff management",
         path: "/users",
         element: <Users />,
       },

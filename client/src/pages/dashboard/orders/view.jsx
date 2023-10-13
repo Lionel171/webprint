@@ -21,7 +21,7 @@ import {
   CalendarDaysIcon,
   UserCircleIcon,
 } from '@heroicons/react/20/solid'
-import { FaCreditCard, FaPaypal } from 'react-icons/fa';
+import { FaCreditCard, FaPaypal, FaBackward } from 'react-icons/fa';
 import {
   Button,
   Dialog,
@@ -74,7 +74,8 @@ export function OrderEdit() {
   const isAdmin = authContext.role === Constant.Admin ? true : false;
   const [order, setOrder] = useState(location.state);
   const [imageFiles, setImageFiles] = useState([]);
-  const avatarFileRef = useRef([]);
+  const uploadFileRef = useRef([]);
+  const designImgeRef = useRef([]);
   const [orders, setOrders] = useState([]);
   const API_URL = process.env.API_URL;
   const [totalPrice, setTotalPrice] = useState(0);
@@ -88,7 +89,10 @@ export function OrderEdit() {
   const [originalImage, setOriginalImage] = useState([]);
 
   const [defaultImg, setDefaultImg] = useState([]);
-  const [fileName, setFileName] = useState([])
+  const [defaultDesignImg, setDefaultDesignImg] = useState([]);
+  const [designImgName, setDesignImgName] = useState([]);
+  const [fileName, setFileName] = useState([]);
+  const [imageName, setImageName] = useState([]);
   const [isUploadBtn, setIsUploadBtn] = useState(false)
   const [isFree, setIsFree] = useState(false)
   const [inComment, setInComment] = useState('');
@@ -101,7 +105,8 @@ export function OrderEdit() {
   const [count, setCount] = useState(true);
   const [logonState, setLogonState] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-
+  const [departments, setDepartments] = useState([]);
+  const [isPreStatus, setIsPreStatus] = useState(false)
   const handleOpen = () => setOpen(!open);
 
   function DialogCustomAnimation() {
@@ -132,6 +137,8 @@ export function OrderEdit() {
 
 
   useEffect(() => {
+
+
     if (order.internal_comment) {
       setInComment(order.internal_comment)
     }
@@ -143,15 +150,61 @@ export function OrderEdit() {
 
   }, [])
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const temp_departments = [{ id: 0, name: "" }];
+        const res = await DepartmentService.getDepartments();
+
+        res.department.forEach((dep, index) => {
+          temp_departments[index + 1] = { id: index + 1, name: dep.name };
+        });
+        setDepartments(temp_departments);
+      } catch (error) {
+        // Handle error
+        console.log(error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+  const approveDesign = async (state) => {
+    const payload = {
+      id: order._id,
+      approve_state: state
+    }
+    setIsSpinner(true)
+    const res = await OrderService.ApproveDesign(payload);
+    setIsSpinner(false)
+    console.log(res.success)
+    if (res.success) {
+      if (state === 1) {
+
+        setAlertHeader("Sucess!")
+        setAlertContent(`You have approved this design. Thank you!`);
+        setOpen(true)
+      } else {
+        setAlertHeader("Sucess!")
+        setAlertContent(`You have disapproved this design. Leave your opnion on chatting room with us!`);
+        setOpen(true)
+      }
+
+    } else {
+      setAlertHeader("Failed!")
+      setAlertContent(`Your operation is failed!`);
+      setOpen(true)
+    }
+  }
+
   const logon = async (payload) => {
     const response = await OrderService.staffLogon(payload);
     setIsSpinner(true);
     if (response.successs) {
       setIsSpinner(false);
-
-
       payload.state ? setLogonState(true) : setLogonState(false);
-      if (logonState) {
+      if (!logonState) {
         setAlertHeader("Sucess!")
         setAlertContent(`Log on is successful for this order!`);
         setOpen(true)
@@ -165,6 +218,44 @@ export function OrderEdit() {
       setIsSpinner(false);
       setAlertHeader("Failed!")
       setAlertContent(`Log on/Log off is failed for this order!`);
+      setOpen(true)
+    }
+  }
+
+  const assignStaff = async () => {
+
+
+    if (orders[0].staff_id) {
+      const res = await OrderService.assignStaff({ orders: orders });
+
+      if (res.success) {
+        ;
+        setAlertHeader("Sucess!")
+        setAlertContent(`New staff is assigned for this work`);
+        setOpen(true)
+      }
+    } else {
+      setAlertHeader("WARNNING!")
+      setAlertContent(`You can not assign new staff. You should to select a staff.`);
+      setOpen(true)
+    }
+
+
+  }
+  const releaseStaff = async () => {
+
+    if (orders[0].staff_id) {
+      const res = await OrderService.releaseStaff({ orders: orders });
+
+      if (res.success) {
+        ;
+        setAlertHeader("Sucess!")
+        setAlertContent(`This staff is released for this work`);
+        setOpen(true)
+      }
+    } else {
+      setAlertHeader("WARNNING!")
+      setAlertContent(`You can not release this staff. There is no assigned staff`);
       setOpen(true)
     }
   }
@@ -287,19 +378,79 @@ export function OrderEdit() {
     }
   };
 
+  const renderDesignlImage = (item, index, image) => {
+    const fileExtension = image[index].slice(image[index].lastIndexOf('.') + 1).toLowerCase();
+    const isTiff = fileExtension === 'tiff' || fileExtension === 'tif';
+
+    if (isTiff) {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const buffer = e.target.result;
+        const tiff = new Tiff({ buffer });
+
+        // Get the first page of the TIFF
+        tiff.setDirectory(0);
+        const canvas = tiff.toCanvas();
+
+        // Convert the canvas to a PNG data URL
+        const url = canvas.toDataURL('image/png');
+
+        // Display the image
+        const img = new Image();
+        img.src = url;
+        img.alt = `This file is not able to display with image format(.${fileExtension}).`;
+        img.height = 100;
+        img.width = 100;
+        img.style.objectFit = 'contain';
+
+        const imageContainer = document.getElementById(`original_image-${index}`);
+        if (imageContainer) {
+          imageContainer.appendChild(img);
+        }
+      };
+
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
+        .then((response) => response.blob())
+        .then((blob) => reader.readAsArrayBuffer(blob));
+    } else {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const img = new Image();
+        img.src = order ? API_URL + '/' + image[index] : DefaultImage;
+        img.alt = `This file is not able to display with image format(.${fileExtension}).`;
+        img.height = 100;
+        img.width = 100;
+
+        img.style.objectFit = 'contain';
+
+        const imageContainer = document.getElementById(`design_image-${index}`);
+        if (imageContainer) {
+          imageContainer.appendChild(img);
+        }
+      };
+      fetch(`http://185.148.129.206:5000/${image[index]}`)
+        .then((response) => response.blob())
+        .then((blob) => reader.readAsArrayBuffer(blob));
+    }
+  };
+
 
 
   useEffect(() => {
     const fetchData = async () => {
 
 
-      setService(serviceTypeList[order.service_type].name);
+      setService(departments[order.service_type].name);
       const payload = {
-        department: serviceTypeList[order.service_type].name
+        department: departments[order.service_type].name,
+        status: order.status
       }
 
       const response = await userService.getStaffByService(payload);
       setStaffList(response.staff)
+      console.log(response.staff, "response sstaff")
 
     }
 
@@ -333,12 +484,13 @@ export function OrderEdit() {
     getStaffbyOrder();
   }, [orders])
 
-  const handleUpload = async (file, index, name) => {
+  const handleUpload = async (file, index, name, select) => {
     setIsSpinner(true);
     let newFile = {
       id: order._id,
       index: index,
       files: file,
+      select: select
     };
 
     const response = await OrderService.uploadFile(newFile);
@@ -358,6 +510,7 @@ export function OrderEdit() {
   }
 
   const onChangeImagePhoto = (event, index) => {
+
     if (event.target.files && event.target.files[0]) {
       let tempFilie = [...imageFiles];
       tempFilie[index] = event.target.files[0];
@@ -391,7 +544,6 @@ export function OrderEdit() {
 
               return file;
             })
-            console.log(file, "temp file mmmm")
             return {
               ...obj,
               client_art_up: temp_file[index],
@@ -436,6 +588,11 @@ export function OrderEdit() {
                 imgFlag: false,
               }
             });
+            //   design_img[index] = dataUrl;
+            //   img_name[index] = design_img_name;
+
+            // }
+            // setDesignImgName(img_name)
 
             setOrders(temp);
             setIsUploadBtn(true)
@@ -474,9 +631,10 @@ export function OrderEdit() {
 
 
 
-    const default_img = defaultImg;
-    default_img[index] = true;
-    setDefaultImg(default_img);
+    const default_file = defaultImg;
+    default_file[index] = true;
+    setDefaultImg(default_file);
+
 
 
     if (order && order._id) {
@@ -484,9 +642,114 @@ export function OrderEdit() {
     }
 
   };
+  const onChangeImage = (event, index) => {
 
-  const avatarImageClick = (index) => {
-    avatarFileRef.current[index].click();
+    if (event.target.files && event.target.files[0]) {
+      let tempFilie = [...imageFiles];
+      tempFilie[index] = event.target.files[0];
+      setImageFiles(tempFilie);
+      // Get the file extension
+      const fileExtension = event.target.files[0].name.split('.').pop();
+
+      // Check if the file is an image
+      const isImage = event.target.files[0].type.startsWith('image/');
+
+      const design_img = orders[0].design_img;
+      const design_img_name = event.target.files[0].name;
+      setDesignImgName(orders[0].fileName);
+      const img_name = designImgName;
+
+
+      if (!isImage) {
+
+        setAlertHeader("Failed!")
+        setAlertContent(`You can only upload imagee. Please try again with image file`);
+        setOpen(true)
+      } else {
+
+        if (event.target.files[0].type === 'image/tiff' || event.target.files[0].type === 'image/tif') {
+          const reader = new FileReader();
+
+          reader.onload = async () => {
+            const tiff = new Tiff({ buffer: reader.result });
+
+            // Convert the TIFF to a canvas
+            const canvas = tiff.toCanvas();
+
+            // Convert the canvas to a data URL
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // Update the orders state with the data URL
+            const temp = orders.map((obj, subindex) => {
+
+              const temp_file = obj.design_img.map((ele, sub_subindex) => {
+                if (sub_subindex === index) {
+                  design_img[index] = dataUrl;
+                  img_name[index] = design_img_name;
+
+                }
+                setDesignImgName(img_name)
+
+                return design_img;
+              })
+              return {
+                ...obj,
+                design_img: temp_file[index],
+                imgFlag: false,
+              }
+            });
+
+            setOrders(temp);
+            setIsUploadBtn(true)
+          };
+
+          reader.readAsArrayBuffer(event.target.files[0]);
+        } else {
+          let reader = new FileReader();
+          reader.onload = event => {
+            const temp = orders.map((obj, subindex) => {
+
+              const temp_file = obj.design_img.map((ele, sub_subindex) => {
+                if (sub_subindex === index) {
+                  design_img[index] = event.target.result;
+                  img_name[index] = design_img_name;
+
+                }
+                setDesignImgName(img_name)
+
+                return design_img;
+              })
+              return {
+                ...obj,
+                design_img: temp_file[index],
+                imgFlag: false,
+              }
+            });
+            setOrders(temp);
+          };
+          reader.readAsDataURL(event.target.files[0]);
+        }
+      }
+      ;
+
+    }
+
+    const default_img = defaultDesignImg;
+    default_img[index] = true;
+    setDefaultDesignImg(default_img);
+
+
+    if (order && order._id) {
+      setIsView(false);
+    }
+
+  };
+  const fileUploadClick = (index) => {
+    uploadFileRef.current[index].click();
+
+  };
+  const designImgClick = (index) => {
+    designImgeRef.current[index].click();
 
   };
 
@@ -664,7 +927,9 @@ from WEPRINT`,
 
   const saveOrder = async () => {
     let flag = true;
+
     const temp = orders.map((obj, subindex) => {
+
       if (obj.price < 0) {
 
         flag = false;
@@ -673,8 +938,22 @@ from WEPRINT`,
           priceFlag: true,
         };
       }
-      if (obj.payment_type === '0') {
+      if (order.status === "1") {
+        if (obj.due_date === undefined) {
+          flag = false;
+
+
+          return {
+            ...obj,
+            duedateFlag: true,
+          };
+        }
+      }
+
+      if (obj.payment_type === null) {
         flag = false;
+
+
         return {
           ...obj,
           paymentTypeFlag: true,
@@ -683,14 +962,13 @@ from WEPRINT`,
       if (obj.client_art_up === "") {
 
 
+
         flag = false;
         return {
           ...obj,
           imgFlag: true,
         };
       } else {
-
-
         return {
           ...obj
         }
@@ -712,10 +990,6 @@ from WEPRINT`,
 
       const response = await OrderService.saveOrderPrice(newOrder);
       if (response.success) {
-
-        //change status
-        await changeStaus(parseInt(order.status) + 1);
-
         //sending email
 
         const messageData = {
@@ -748,22 +1022,19 @@ from WEPRINT`,
           console.error('Error sending email:', error);
           alert('Failed to send email.');
         }
+        //change status
+        await changeStaus(parseInt(order.status) + 1);
         navigate("/dashboard/orders");
       }
 
     }
-    if ((localStorage.getItem('role').includes("Artwork Manager") || localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes("Artwork Team Member")) && order.status === "2") {
+    if ((localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes("Sales Manager")) && order.status === "2") {
       let newOrder = {
         id: order._id,
         internal_comment: inComment
       };
 
       const response = await OrderService.updateOrder(newOrder);
-
-
-      //change status
-      await changeStaus(parseInt(order.status) + 1);
-
       //sending email
 
       const messageData = {
@@ -797,10 +1068,12 @@ from WEPRINT`,
         console.error('Error sending email:', error);
         alert('Failed to send email.');
       }
+      //change status
+      await changeStaus(parseInt(order.status) + 1);
       navigate("/dashboard/orders");
 
     }
-    if ((localStorage.getItem("role").includes('Production Manager') || localStorage.getItem('role').includes("admin")) && order.status === "3") {
+    if ((localStorage.getItem("role").includes('Sales Manager') || localStorage.getItem('role').includes("admin")) && order.status === "3") {
       let newOrder = {
         id: order._id,
         internal_comment: inComment
@@ -808,9 +1081,9 @@ from WEPRINT`,
 
       const response = await OrderService.updateOrder(newOrder);
 
-      const res = await OrderService.assignStaff({ orders: orders });
+
       // if (response.success) {
-      await changeStaus(parseInt(order.status) + 1);
+
 
       //sending email
       const messageData = {
@@ -841,10 +1114,122 @@ from WEPRINT`,
         console.error('Error sending email:', error);
         alert('Failed to send email.');
       }
+      //change status
+      if (order.payment_type === 5) {
+        await changeStaus(parseInt(order.status) + 2);
+      } else {
+        await changeStaus(parseInt(order.status) + 1);
+
+      }
       navigate("/dashboard/orders");
       // }
     }
-    if ((localStorage.getItem("role").includes("Production Staff") || localStorage.getItem('role').includes("admin")) && (order.status === "4")) {
+    if (((localStorage.getItem("role").includes('admin') || localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Staff')) && order.status === '4')) {
+      let newOrder = {
+        id: order._id,
+        internal_comment: inComment,
+
+      }
+      if (localStorage.getItem("role").includes('admin')) {
+        const response = await OrderService.updateOrder(newOrder);
+
+
+        // if (response.success) {
+
+
+        //sending email
+        const messageData = {
+          from: 'orochisugai@gmail.com',
+          // to: user.email,
+          to: 'kingdev.talent@gmail.com',
+          subject: 'Hello ' + user.contact_person + '.',
+          text: `Your order is on artwork department status.`,
+        };
+
+        try {
+          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          });
+
+          if (response.ok) {
+            setIsSpinner(false);
+            alert('Email sent successfully!');
+          } else {
+            setIsSpinner(false);
+            alert('Failed to send email.');
+          }
+        } catch (error) {
+          console.error('Error sending email:', error);
+          alert('Failed to send email.');
+        }
+        //change status
+        // if (!localStorage.getItem('role').includes('Artwork Staff')) {
+
+        await changeStaus(parseInt(order.status) + 1);
+        // }
+        navigate("/dashboard/orders");
+      } else {
+        if (order.approve_design) {
+          const response = await OrderService.updateOrder(newOrder);
+
+
+          // if (response.success) {
+
+
+          //sending email
+          const messageData = {
+            from: 'orochisugai@gmail.com',
+            // to: user.email,
+            to: 'kingdev.talent@gmail.com',
+            subject: 'Hello ' + user.contact_person + '.',
+            text: `Your order is on artwork department status.`,
+          };
+
+          try {
+            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(messageData),
+            });
+
+            if (response.ok) {
+              setIsSpinner(false);
+              alert('Email sent successfully!');
+            } else {
+              setIsSpinner(false);
+              alert('Failed to send email.');
+            }
+          } catch (error) {
+            console.error('Error sending email:', error);
+            alert('Failed to send email.');
+          }
+          //change status
+          // if (!localStorage.getItem('role').includes('Artwork Staff')) {
+
+          await changeStaus(parseInt(order.status) + 1);
+          // }
+          navigate("/dashboard/orders");
+          // }
+        } else {
+          setIsSpinner(false);
+
+          setAlertHeader("Failed!")
+          setAlertContent(`Customer didn't approve your design . You need to wait up till customer approve this.`);
+          setOpen(true)
+        }
+      }
+
+
+
+
+    }
+    if ((localStorage.getItem("role").includes("Production Staff") || localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes("Production Manager")) && (order.status === "5")) {
       let newOrder = {
         id: order._id,
         files: imageFiles,
@@ -853,13 +1238,14 @@ from WEPRINT`,
 
       };
       const response = await OrderService.updateOrder(newOrder);
-      await changeStaus(parseInt(order.status) + 1);
+      const res = await OrderService.assignStaff({ orders: orders });
+
       const messageData = {
         from: 'orochisugai@gmail.com',
         // to: user.email,
         to: 'kingdev.talent@gmail.com',
         subject: 'Hello ' + user.contact_person + '.',
-        text: `Your order is completed.`,
+        text: `Your order is in production status.`,
       };
 
 
@@ -883,20 +1269,23 @@ from WEPRINT`,
         console.error('Error sending email:', error);
         alert('Failed to send email.');
       }
-
+      //change status
+      // if (!localStorage.getItem('role').includes('Production Staff')) {
+      await changeStaus(parseInt(order.status) + 1);
+      // }
       navigate("/dashboard/orders");
     }
-    if ((localStorage.getItem("role").includes("Production Staff") || localStorage.getItem('role').includes("admin")) && (order.status === "5" || order.status === "6")) {
+    if ((localStorage.getItem("role").includes("Production Staff") || localStorage.getItem('role').includes("admin")) && (order.status === "6" || order.status === "7")) {
       const response = await OrderService.saveOrderPrice({ orders: orders });
 
       //sending email
       let current_status = "";
-      if (order.status === "5") {
+      if (order.status === "6") {
         current_status = "on Final Inspaction"
       } else {
-        current_status = "Ready for Pick-Up/Shipped"
+        current_status = "ready for pick up"
       }
-      await changeStaus(parseInt(order.status) + 1);
+
       const messageData = {
         from: 'orochisugai@gmail.com',
         // to: user.email,
@@ -904,7 +1293,7 @@ from WEPRINT`,
         subject: 'Hello ' + user.contact_person + '.',
         text: `Your order is ${current_status}.`,
       };
-      console.log(messageData.text, "Current")
+
 
       try {
         const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
@@ -926,7 +1315,8 @@ from WEPRINT`,
         console.error('Error sending email:', error);
         alert('Failed to send email.');
       }
-
+      //change status
+      await changeStaus(parseInt(order.status) + 1);
       navigate("/dashboard/orders");
 
     }
@@ -974,9 +1364,10 @@ from WEPRINT`,
   }
 
   const changeStaus = async (step) => {
-    if (step < order.status) {
-      return;
+    if (step < 1) {
+      alert("You can not backward department")
     }
+
     const payload = {
       order_id: order._id,
       status: step
@@ -990,109 +1381,111 @@ from WEPRINT`,
   };
 
   const controlHandle = async () => {
-   
-      if (order.total_value == 0) {
-        alert("Price is not setted. You can not send invoice email!");
-        return;
-      } else {
-        const productData = {
-          price: order.price,
-          name: order.title
-        }
 
-        console.log(productData, "dddd")
-
-        if (order.payment_type === 1) {
-          const res = await axios.post(`${API_URL}/api/stripe-route/create-checkout-session`, productData);
-
-          const resData = res.data;
-          const url = resData.data.url;
-
-          const messageData = {
-            from: 'orochisugai@gmail.com',
-            // to: user.email,
-            to: 'kingdev.talent@gmail.com',
-            subject: 'Hello ' + '.',
-            text: `You received invoice email: ${url}`,
-          };
-
-          try {
-            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(messageData),
-            });
-
-            if (response.ok) {
-              alert('Email sent successfully!');
-            } else {
-              alert('Failed to send email.');
-            }
-          } catch (error) {
-            console.error('Error sending email:', error);
-            alert('Failed to send email.');
-          }
-        } else if (order.payment_type === 2) {
-          const res = await axios.post(`${API_URL}/api/paypal/buy`, productData);
-
-          const resData = res.data;
-          const url = resData.data.url;
-
-          const messageData = {
-            from: 'orochisugai@gmail.com',
-            // to: user.email,
-            to: 'kingdev.talent@gmail.com',
-            subject: 'Hello ' + '.',
-            text: `You received invoice email: ${url}`,
-          };
-
-          try {
-            const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(messageData),
-            });
-
-            if (response.ok) {
-              alert('Email sent successfully!');
-            } else {
-              alert('Failed to send email.');
-            }
-          } catch (error) {
-            console.error('Error sending email:', error);
-            alert('Failed to send email.');
-          }
-        } else {
-          alert("This payment type is not supported yet.")
-        }
+    if (order.total_value == 0) {
+      alert("Price is not setted. You can not send invoice email!");
+      return;
+    } else {
+      const productData = {
+        price: order.price,
+        name: order.title
       }
-    
+
+      console.log(productData, "dddd")
+
+      if (order.payment_type === 1) {
+        const res = await axios.post(`${API_URL}/api/stripe-route/create-checkout-session`, productData);
+
+        const resData = res.data;
+        const url = resData.data.url;
+
+        const messageData = {
+          from: 'orochisugai@gmail.com',
+          // to: user.email,
+          to: 'kingdev.talent@gmail.com',
+          subject: 'Hello ' + '.',
+          text: `You received invoice email: ${url}`,
+        };
+
+        try {
+          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          });
+
+          if (response.ok) {
+            alert('Email sent successfully!');
+          } else {
+            alert('Failed to send email.');
+          }
+        } catch (error) {
+          console.error('Error sending email:', error);
+          alert('Failed to send email.');
+        }
+      } else if (order.payment_type === 2) {
+        const res = await axios.post(`${API_URL}/api/paypal/buy`, productData);
+
+        const resData = res.data;
+        const url = resData.data.url;
+
+        const messageData = {
+          from: 'orochisugai@gmail.com',
+          // to: user.email,
+          to: 'kingdev.talent@gmail.com',
+          subject: 'Hello ' + '.',
+          text: `You received invoice email: ${url}`,
+        };
+
+        try {
+          const response = await fetch('http://185.148.129.206:5000/api/users/sendEmail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          });
+
+          if (response.ok) {
+            alert('Email sent successfully!');
+          } else {
+            alert('Failed to send email.');
+          }
+        } catch (error) {
+          console.error('Error sending email:', error);
+          alert('Failed to send email.');
+        }
+      } else {
+        alert("This payment type is not supported yet.")
+      }
+    }
+
   };
+
 
   useEffect(() => {
     async function fetchData() {
       const orderResponse = await OrderService.getOrderById(order._id);
       setOrder(orderResponse.order);
 
-      if (count) {
-        console.log("why", count)
-        if (order.status === "6") {
-          setAlertHeader("Order Status!")
-          setAlertContent(`This order is inspected`);
-          setOpen(true)
-        }
 
-        if (order.status === "7") {
-          setAlertHeader("Order Status!")
-          setAlertContent(`This order is ready for pick up`);
-          setOpen(true)
-        }
-        setCount(false);
-      }
+      // if (count) {
+
+      //   if (order.status === "7") {
+      //     setAlertHeader("Order Status!")
+      //     setAlertContent(`This order is inspected`);
+      //     setOpen(true)
+      //   }
+
+      //   if (order.status === "8") {
+      //     setAlertHeader("Order Status!")
+      //     setAlertContent(`This order is ready for pick up`);
+      //     setOpen(true)
+      //   }
+      //   setCount(false);
+      // }
 
 
       // const response = await OrderService.getOrderDetailList(order._id);
@@ -1100,11 +1493,23 @@ from WEPRINT`,
       // Fetch the data and populate orders_temp array
       const orders_temp = [];
       const file_name = order.client_art_up;
+      const design_temp = [];
+
+      // if (order.design_img !== [""]) {
+      // design_temp = order.design_img
+      // } else {
+      order.design_img.map((obj, index) => {
+        design_temp.push(obj)
+      })
+      // }
+      console.log(order.design_img, "what happend?")
       const order_temp = {
         ...order,
         paymentTypeFlag: false,
         priceFlag: false,
-        fileName: file_name
+        duedateFlag: false,
+        fileName: file_name,
+        designImgName: design_temp,
       }
       orders_temp.push(order_temp);
 
@@ -1114,6 +1519,7 @@ from WEPRINT`,
       const image = [];
       const default_image = [];
       const original_image = [];
+      const design_image = [];
 
       // response.entities.map((order, index) => {
       //   image.push(order.client_art_up);
@@ -1134,8 +1540,26 @@ from WEPRINT`,
         renderOriginalImage(order, index, original_image);
       });
 
+      order.design_img.map((img, index) => {
+        design_image.push(img);
+        default_image.push(false);
+        renderDesignlImage(order, index, design_image)
+      })
+      const imgName_temp = [];
+      order.original_art_up.map((ele, i) => {
+        imgName_temp.push("")
+      })
+
+      const default_design_temp = [];
+      order.original_art_up.map((ele, i) => {
+        default_design_temp.push(false);
+      })
+
       setDefaultImg(default_image);
+      setDefaultDesignImg(default_design_temp);
       setOriginalImage(original_image);
+      setDesignImgName(imgName_temp);
+      setFileName(original_image);
 
       // let tempTotal = 0;
       // response.entities.map(item => {
@@ -1150,7 +1574,15 @@ from WEPRINT`,
     setIsView(true);
 
 
-  }, []);
+  }, [isPreStatus]);
+
+  const previousStatus = async () => {
+    setIsSpinner(true);
+    await changeStaus(parseInt(order.status) - 1);
+
+    setIsSpinner(false);
+    navigate("/dashboard/orders");
+  }
 
 
 
@@ -1167,6 +1599,38 @@ from WEPRINT`,
       )}
 
       <div className="space-y-5">
+        {((localStorage.getItem('role').includes('admin')) && (order.status !== "1")) && (
+          <button
+            key={order._id}
+            type="button"
+            onClick={previousStatus}
+            className=" mt-2 flex  h-[40px] w-[250px] items-center justify-center  gap-x-4 rounded bg-green-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+          >
+            <FaBackward /> Return to Previous Department
+          </button>
+        )}
+        {((localStorage.getItem('role').includes('Artwork Manager')) && (order.status === "4")) && (
+          <button
+            key={order._id}
+            type="button"
+            onClick={previousStatus}
+            className=" mt-2 flex  h-[40px] w-[250px] items-center justify-center  gap-x-4 rounded bg-green-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+          >
+            <FaBackward /> Return to Previous Department
+          </button>
+        )}
+        {((localStorage.getItem('role').includes('Production Manager')) && (order.status === "5" || order.status === "6" || order.status === "7" || order.status === "8")) && (
+          <button
+            key={order._id}
+            type="button"
+            onClick={previousStatus}
+            className=" mt-2 flex  h-[40px] w-[250px] items-center justify-center  gap-x-4 rounded bg-green-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+          >
+            <FaBackward /> Return to Previous Department
+          </button>
+        )}
+
+
         <div className="border-b border-gray-900/10 pb-12">
           <h2 className="text-base font-semibold leading-7 text-gray-900">
             Order: {order.title}
@@ -1190,7 +1654,7 @@ from WEPRINT`,
 
           )}
 
-          {(order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7") && (
+          {(order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7" || order.status === "8") && (
             <>
               <p className="mt-1 text-sm leading-6 text-gray-600">Staff Name: {staff.contact_person}</p>
               <p className="mt-1 text-sm leading-6 text-gray-600">Staff Email: {staff.email}</p>
@@ -1198,14 +1662,15 @@ from WEPRINT`,
             </>
           )}
         </div>
+
         <div className="border-b border-gray-900/10 pb-2 mb-4">
-          {order.status === "6" && (
+          {order.status === "7" && (
             <h1 className="text-base font-semibold leading-7 text-gray-900">
-              Order was shipped Inspected!
+              Order was Inspected!
             </h1>
           )}
 
-          {order.status === "7" && (
+          {order.status === "8" && (
             <h1 className="text-base font-semibold leading-7 text-gray-900">
               Order was delivered successfully!
             </h1>
@@ -1221,6 +1686,7 @@ from WEPRINT`,
             <OrderStep
               changeStaus={() => { }}
               currentStatus={order.status}
+              currentPaymentType={order.payment_type}
               className="w-1/2"
             />
             <dl className="w-1/2 flex-wrap pl-2">
@@ -1228,7 +1694,7 @@ from WEPRINT`,
 
               {((localStorage.getItem("role") === 'admin' || localStorage.getItem("role").includes('Sales Manager')) && order.status !== "1") ? (
                 <button
-                  
+
                   type="button"
                   onClick={controlHandle}
                   className=" mt-2 flex  h-[40px] w-[130px] items-center justify-center  gap-x-4 rounded bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -1239,7 +1705,7 @@ from WEPRINT`,
               ) : (null)}
 
 
-              {(localStorage.getItem("role").includes("Production Staff") && order.status === "4") && (
+              {((localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("Artwork Staff")) && (order.status === "4" || order.status === "5" || order.status === "6")) && (
                 logonState ? (
                   <button
                     key={order._id}
@@ -1259,8 +1725,6 @@ from WEPRINT`,
                     Log On
                   </button>
                 )
-
-
 
               )}
               {((localStorage.getItem("role") === 'admin' || localStorage.getItem("role").includes('Sales Manager')) && order.status !== "1") && (
@@ -1301,23 +1765,23 @@ from WEPRINT`,
                   <div className="mt-2 flex w-full flex-none gap-x-4 px-6">
                     {order.payment_type === 1 ? (
                       <dt className="flex-none">
-                      <span className="sr-only">Status</span>
-                      <FaCreditCard
-                        className="h-6 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </dt>
-                    ) : 
-                    order.payment_type ===2 ? (
-                      <dt className="flex-none">
-                      <span className="sr-only">Status</span>
-                      <FaPaypal
-                        className="h-6 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
+                        <span className="sr-only">Status</span>
+                        <FaCreditCard
+                          className="h-6 w-5 text-gray-400"
+                          aria-hidden="true"
+                        />
                       </dt>
-                    ) : (null)}
-                    
+                    ) :
+                      order.payment_type === 2 ? (
+                        <dt className="flex-none">
+                          <span className="sr-only">Status</span>
+                          <FaPaypal
+                            className="h-6 w-5 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </dt>
+                      ) : (null)}
+
                     <dd className="text-sm leading-6 text-gray-500">
                       {(order && order.payment_type) && paymentTypeList[order.payment_type].name}
                     </dd>
@@ -1374,19 +1838,27 @@ from WEPRINT`,
                   scope="col"
                   className=" py-3 pl-10 pr-0 text-center font-semibold "
                 >
-                  Customer File(Original)
+                  {localStorage.getItem('role').includes('normal') ? ("My Order File(Original)") : ("Customer File(Original)")}
                 </th>
 
-                {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
+                {/* {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
                   >
                     Working File
                   </th>
+                )} */}
+                {((localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Design Proof
+                  </th>
                 )}
 
-                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff')) && (order.status === "2" || order.status === "3" || order.status === "4")) && (
+                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Staff') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff') || localStorage.getItem('role').includes('Production Manager')) && (order.status === "2" || order.status === "3" || order.status === "4" || order.status === "5")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
@@ -1394,7 +1866,24 @@ from WEPRINT`,
                     Upload New File
                   </th>
                 )}
-                {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                {((localStorage.getItem('role').includes('Sales Manager')) && (order.status === "2" || order.status === "3")) && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Upload New File
+                  </th>
+                )}
+                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "4")) && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                   Design Proof
+                  </th>
+                )}
+
+                {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('normal')) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
@@ -1413,12 +1902,20 @@ from WEPRINT`,
                 )}
 
 
-                {((localStorage.getItem('role').includes("Production Manager") || localStorage.getItem('role').includes("admin")) && order.status === "3") && (
+                {((localStorage.getItem('role').includes("Production Manager") || localStorage.getItem('role').includes("admin")) && (order.status === "5" || order.status === "6")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
                   >
-                    Assign Staff
+                    Assign Production Staff
+                  </th>
+                )}
+                {((localStorage.getItem('role').includes("Artwork Manager") || localStorage.getItem('role').includes("admin")) && order.status === "4") && (
+                  <th
+                    scope="col"
+                    className="py-3 pl-10 pr-0 text-center font-semibold"
+                  >
+                    Assign Artwork Staff
                   </th>
                 )}
 
@@ -1430,7 +1927,7 @@ from WEPRINT`,
                 <td className="max-w-0 px-2 py-5 align-top ">
                   <div className="truncate font-medium text-gray-900 text-left">
 
-                    {serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
+                    {departments[order.service_type] && departments[order.service_type].name}
                   </div>
                 </td>
                 <td className=" py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 ">
@@ -1480,7 +1977,7 @@ from WEPRINT`,
                 </td>
 
 
-                {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
+                {/* {((!localStorage.getItem('role').includes('normal')) && (order.status !== "1")) && (
                   <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                     {order && order.client_art_up.map((o_file, index) => {
                       return (
@@ -1514,10 +2011,184 @@ from WEPRINT`,
                       );
                     })}
                   </td>
+                )} */}
+
+                {((localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                  <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                    {(order && order.design_img) ? order.design_img.map((img, index) => {
+                      return (
+                        <>
+                          {img.split('.').pop() === "pdf" ? (
+                            <div className="flex justify-center">
+                              <button
+                                type="submit"
+                                onClick={() => { window.open(API_URL + "/" + img) }}
+                                className="text-center mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                              >
+                                VIEW PDF(.{img.split('.').pop()})
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center">
+                              <div id={`design_image-${index}`} />
+                            </div>
+                          )}
+
+                          <div className="text-center mb-1">
+                            <button
+                              type="submit"
+                              onClick={() => downloadHandle(API_URL + "/" + img)}
+                              className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            >
+                              <FaDownload />
+                            </button>
+
+                            <div className="text-center">
+                              <button
+                                type="submit"
+                                onClick={() => approveDesign(2)}
+                                className="text-center mr-0.5 mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                              >
+                                DISAPPROVE
+                              </button>
+
+                              <button
+                                type="submit"
+                                onClick={() => approveDesign(1)}
+                                className=" text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                              >
+                                APPROVE
+                              </button>
+                            </div>
+
+                          </div>
+                        </>
+                      );
+                    }) : ("No Design Fiel")}
+                  </td>
                 )}
 
                 {
-                  ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Team Member') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff')) && (order.status === "2" || order.status === "3" || order.status === "4")) && (
+                  ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Staff') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff') || localStorage.getItem('role').includes('Production Manager')) && (order.status === "2" || order.status === "3" || order.status === "4" || order.status === "5")) && (
+                    <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                      {(orders[0] && orders[0].client_art_up) && (orders[0].client_art_up.map((file, index) => {
+
+                        return (
+                          <div className="flex justify-center" key={index}>
+                            <div className="flex items-center mr-3">
+                              <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (uploadFileRef.current[index] = el)} />
+                              <div className="text-center mb-3" style={{ position: 'relative' }}>
+                                {file && !file.startsWith('data:image/') ? (
+                                  <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "choose working file."}</p>
+                                ) : (
+                                  <img
+                                    src={file ? (isView ? API_URL + '/' + file : file) : DefaultImage}
+                                    alt={`This file is not able to display with image format(.${fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                    onClick={() => fileUploadClick(index)}
+                                    height={100}
+                                    width={100}
+                                    style={{ objectFit: 'contain' }}
+                                  />
+                                )}
+                                <div className="text-center">
+                                  <button
+                                    type="submit"
+                                    onClick={() => fileUploadClick(index)}
+                                    className=" text-center mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                  >
+                                    Choose File
+                                  </button>
+                                  {defaultImg[index] && (
+                                    <>
+                                      <div className="text-center">
+                                        <button
+                                          type="submit"
+                                          onClick={() => downloadHandle(file)}
+                                          className="text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaDownload />
+                                        </button>
+
+                                        <button
+                                          type="submit"
+                                          onClick={() => handleUpload(imageFiles, index, fileName[index], "working")}
+                                          className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaUpload />
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }))}
+                    </td>
+                  )
+                }
+                {
+                  ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "4")) && (
+                    <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
+                      {(orders[0] && orders[0].design_img) && (orders[0].design_img.map((img, index) => {
+                        return (
+                          <div className="flex justify-center" key={index}>
+                            <div className="flex items-center mr-3">
+                              <input type='file' onChange={(event) => onChangeImage(event, index)} hidden ref={(el) => (designImgeRef.current[index] = el)} />
+                              <div className="text-center mb-3" style={{ position: 'relative' }}>
+                                {/* {img && !img.startsWith('data:image/') ? (
+                                  <p>{defaultDesignImg[index] ? (isView ? designImgName[index] : designImgName[index]) : "choose desgin image."}</p>
+                                ) : ( */}
+                                <img
+                                  src={img ? (isView ? API_URL + '/' + img : img) : DefaultImage}
+                                  alt={`This file is not able to display with image format(.${designImgName[index].slice(designImgName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                  onClick={() => designImgClick(index)}
+                                  height={100}
+                                  width={100}
+                                  style={{ objectFit: 'contain' }}
+                                />
+                                {/* )} */}
+                                <div className="text-center">
+                                  <button
+                                    type="submit"
+                                    onClick={() => designImgClick(index)}
+                                    className=" text-center mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                  >
+                                    Choose Image
+                                  </button>
+                                  {defaultDesignImg[index] && (
+                                    <>
+                                      <div className="text-center">
+                                        <button
+                                          type="submit"
+                                          onClick={() => downloadHandle(img)}
+                                          className="text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaDownload />
+                                        </button>
+
+                                        <button
+                                          type="submit"
+                                          onClick={() => handleUpload(imageFiles, index, fileName[index], "design")}
+                                          className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                        >
+                                          <FaUpload />
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }))}
+                    </td>
+                  )
+                }
+                {
+                  ((localStorage.getItem('role').includes('Sales Manager')) && (order.status === "2" || order.status === "3")) && (
                     <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                       {(orders[0] && orders[0].client_art_up) && (orders[0].client_art_up.map((file, index) => {
 
@@ -1528,7 +2199,7 @@ from WEPRINT`,
                               <input type='file' onChange={(event) => onChangeImagePhoto(event, index)} hidden ref={(el) => (avatarFileRef.current[index] = el)} />
                               <div className="text-center mb-3" style={{ position: 'relative' }}>
                                 {file && !file.startsWith('data:image/') ? (
-                                  <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "You can choose working file."}</p>
+                                  <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "choose working file."}</p>
                                 ) : (
                                   <img
                                     src={file ? (isView ? API_URL + '/' + file : file) : DefaultImage}
@@ -1560,7 +2231,7 @@ from WEPRINT`,
 
                                         <button
                                           type="submit"
-                                          onClick={() => handleUpload(imageFiles, index, fileName[index])}
+                                          onClick={() => handleUpload(imageFiles, index, fileName[index], "working")}
                                           className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                                         >
                                           <FaUpload />
@@ -1578,7 +2249,7 @@ from WEPRINT`,
                   )
                 }
 
-                {((localStorage.getItem('role') === 'admin' || localStorage.getItem('role').includes('Sales Manager') && order.status === "1")) ? (
+                {(((localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Sales Manager')) && order.status === "1")) ? (
                   <td className="py-5 pl-10  text-right align-top tabular-nums text-gray-700 text-left mr-2">
                     {
                       isFree ? (null) : (
@@ -1596,7 +2267,7 @@ from WEPRINT`,
 
                   </td>
                 ) : (
-                  (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                  (localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('normal')) && (
                     <td className="py-2 pl-10 pr-0 text-right align-top tabular-nums text-gray-700 mr-2">
                       <div className="ttruncate text-gray-700 text-center mt-3">
                         ${!isFree ? order.price : 0}
@@ -1611,18 +2282,66 @@ from WEPRINT`,
                       onChange={(date) => onchangeDueDate(date)}
                       className="custom-datepicker border rounded p-3 text-gray-800 mr-3"
                     />
+                    {(orders[0] && orders[0].duedateFlag) && <p className="mr-5 text-red-500">Please select a due date.</p>}
 
                   </td>
                 )}
-                {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && order.status === "3") && (
+                {((localStorage.getItem('role').includes('Production Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "5" || order.status === "6")) && (
                   <td className="ml-5 max-w-0 px-0 py-5 align-top text-center ">
                     <div className='mr-2'>
                       <SelectNoSearch
                         className="mr-2"
                         onChange={(selectedOption) => onChangeStaff(selectedOption)}
-                        items={staffList.filter(st => st.department === serviceTypeList[order.service_type].name)}
+                        items={staffList.filter(st => st.department.includes(departments[order.service_type].name))}
                       />
                     </div>
+                    <div className="text-center">
+                      <button
+                        type="submit"
+                        onClick={releaseStaff}
+                        className="text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                      >
+                        Release Staff
+                      </button>
+
+                      <button
+                        type="submit"
+                        onClick={assignStaff}
+                        className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      >
+                        Assign Staff
+                      </button>
+                    </div>
+
+                  </td>
+                )}
+                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && order.status === "4") && (
+                  <td className="ml-5 max-w-0 px-0 py-5 align-top text-center ">
+                    <div className='ml-2'>
+                      <SelectNoSearch
+                        className="ml-2"
+                        onChange={(selectedOption) => onChangeStaff(selectedOption)}
+                        items={staffList.filter(st => st.department.includes(departments[order.service_type].name))}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <button
+                        type="submit"
+                        onClick={releaseStaff}
+                        className="text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                      >
+                        Release Staff
+                      </button>
+
+                      <button
+                        type="submit"
+                        onClick={assignStaff}
+                        className=" text-center mr-0.5 mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      >
+                        Assign Staff
+                      </button>
+                    </div>
+
                   </td>
                 )}
 
@@ -1632,8 +2351,8 @@ from WEPRINT`,
           </table>
           <div className="border-b border-gray-900/10 pb-2 mb-4"></div>
           <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6 m-2">
-            <div className="mt-2 flex flex-col col-span-4 md:col-span-4 ">
-              <label className='block text-sm font-medium text-gray-700'>
+            <div className="mt-2 flex flex-col col-span-4 md:col-span-4 overflow-y-scroll" style={{ maxHeight: "200px" }}>
+              <label className="block text-sm font-medium text-gray-700">
                 Comment
               </label>
               <div className="mt-1">
@@ -1666,7 +2385,7 @@ from WEPRINT`,
 
 
       {
-        (localStorage.getItem("role").includes('Artwork Manager') || localStorage.getItem('role').includes("admin")) && (
+        (localStorage.getItem("role").includes('Sales Manager') || localStorage.getItem('role').includes("admin")) && (
           <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
 
             {order.status === '2' && (
@@ -1732,7 +2451,7 @@ from WEPRINT`,
         )
       }
       {
-        (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("admin")) && (
+        (localStorage.getItem("role").includes("Sales Manager") || localStorage.getItem("role").includes("admin")) && (
           <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
 
             {order.status === "3" && (
@@ -1800,11 +2519,13 @@ from WEPRINT`,
           </div>
         )
       }
+
+
       {
-        (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("admin")) && (
+        (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("admin") || localStorage.getItem("role").includes("Artwork Staff") || localStorage.getItem("role").includes("Artwork Manager")) && (
           <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
 
-            {order.status === "4" ? (
+            {(order.status === "4" || order.status === "5") ? (
               <>
                 <div className="mt-2 flex flex-col">
                   <label className='block text-sm font-medium text-gray-700'>
@@ -1891,8 +2612,56 @@ from WEPRINT`,
               </>
 
             ) :
-              order.status === "5" ? (
+              order.status === "6" ? (
                 <>
+                  <div className="mt-2 flex flex-col">
+                    <label className='block text-sm font-medium text-gray-700'>
+                      To Customer
+                    </label>
+                    <div className="mt-1">
+                      <textarea
+                        type="text"
+                        id="incomment"
+                        name="incomment"
+                        onChange={(e) => {
+                          setCustomerComment(e.target.value)
+                        }
+                        }
+                        // disabled={isView}
+                        value={customerComment}
+                        // rows={5}
+                        className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                      />
+                    </div>
+
+                  </div>
+                  <FaPaperPlane
+                    className="cursor-pointer text-blue-500 text-xl focus:bg-transparent focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none mt-2"
+                    onClick={sendCustomerComment}
+                  />
+
+                  <div className="mt-2">
+                    <label className='block text-sm font-medium text-gray-700'>
+                      Internal Comment
+                    </label>
+                    <div className="mt-1">
+                      <textarea
+                        type="text"
+                        id="incomment"
+                        name="incomment"
+                        onChange={(e) => {
+                          setInComment(e.target.value)
+                        }
+                        }
+                        // disabled={isView}
+                        value={inComment}
+                        // rows={5}
+                        className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                      />
+                    </div>
+                  </div>
                   <Link
                     to={`/dashboard/orders`}
                     className="text-sm font-semibold leading-6 text-gray-900"
@@ -1904,13 +2673,61 @@ from WEPRINT`,
                     onClick={saveOrder}
                     className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   >
-                    Inspect
+                    Pickup/ship
                   </button>
 
                 </>
               ) :
-                order.status === "6" ? (
+                order.status === "7" ? (
                   <>
+                    <div className="mt-2 flex flex-col">
+                      <label className='block text-sm font-medium text-gray-700'>
+                        To Customer
+                      </label>
+                      <div className="mt-1">
+                        <textarea
+                          type="text"
+                          id="incomment"
+                          name="incomment"
+                          onChange={(e) => {
+                            setCustomerComment(e.target.value)
+                          }
+                          }
+                          // disabled={isView}
+                          value={customerComment}
+                          // rows={5}
+                          className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                        />
+                      </div>
+
+                    </div>
+                    <FaPaperPlane
+                      className="cursor-pointer text-blue-500 text-xl focus:bg-transparent focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none mt-2"
+                      onClick={sendCustomerComment}
+                    />
+
+                    <div className="mt-2">
+                      <label className='block text-sm font-medium text-gray-700'>
+                        Internal Comment
+                      </label>
+                      <div className="mt-1">
+                        <textarea
+                          type="text"
+                          id="incomment"
+                          name="incomment"
+                          onChange={(e) => {
+                            setInComment(e.target.value)
+                          }
+                          }
+                          // disabled={isView}
+                          value={inComment}
+                          // rows={5}
+                          className={`rounded-md shadow-sm sm:text-sm focus:bg-transparent border-[1px] 
+                                                    h-auto border-gray-300 text-black focus-visible:border-[1px] focus-visible:border-blue-500 focus-visible:ring-blue-500 focus-visible:outline-none block p-2 pl-[7px] w-full ${false ? 'border-red-400' : 'border-gray-300'} `}
+                        />
+                      </div>
+                    </div>
                     <Link
                       to={`/dashboard/orders`}
                       className="text-sm font-semibold leading-6 text-gray-900"
@@ -1922,11 +2739,13 @@ from WEPRINT`,
                       onClick={saveOrder}
                       className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                     >
-                      Pick-up
+                      Complete
                     </button>
 
                   </>
-                ) : (null)}
+                ) : (
+                  null
+                )}
 
           </div>
         )

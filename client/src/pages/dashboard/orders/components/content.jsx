@@ -12,6 +12,8 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
+import DepartmentService from "@/services/department-service"
+
 
 // import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useNavigate, NavLink } from 'react-router-dom';
@@ -38,12 +40,14 @@ const paymentTypeList = [
 
 const serviceTypeList = [
   { id: 0, name: "", value: "" },
-  { id: 1, name: "We Print DTF", value: "we_print_dtf" },
-  { id: 2, name: "Embroidery", value: "embroidery" },
-  { id: 3, name: "Screen Printing", value: "screen_printing" },
-  { id: 4, name: "Vinyl Transfer", value: "vinly_transfer" },
-  { id: 5, name: "Signs & Banners", value: "signs_banners" },
+  { id: 1, name: "Screen Print", value: "screen_print" },
+  { id: 2, name: "We Print DTF", value: "we_print_dtf" },
+  { id: 3, name: "Gang Sheet", value: "gang_sheet" },
+  { id: 4, name: "Signs & Banners", value: "signs_bannersr" },
+  { id: 5, name: "Embroidery", value: "embroidery" },
+  { id: 6, name: "Vinyl Transfer", value: "vinyl_transfer" },
 ];
+
 
 export default function Content({
   orders,
@@ -68,6 +72,8 @@ export default function Content({
   const [open, setOpen] = useState(false);
   const [alertContent, setAlertContent] = useState("");
   const [alertHeader, setAlertHeader] = useState("");
+  const [departments, setDepartments] = useState([]);
+
 
   const handleOpen = () => setOpen(!open);
 
@@ -96,7 +102,24 @@ export default function Content({
     );
   }
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const temp_departments = [{ id: 0, name: "" }];
+        const res = await DepartmentService.getDepartments();
 
+        res.department.forEach((dep, index) => {
+          temp_departments[index + 1] = { id: index + 1, name: dep.name };
+        });
+        setDepartments(temp_departments);
+      } catch (error) {
+        // Handle error
+        console.log(error);
+      }
+    };
+
+    fetchData();
+  }, []);
   useEffect(() => {
     setFilterOrders(orders);
   }, [orders]);
@@ -310,7 +333,7 @@ export default function Content({
                   <FaSort onClick={() => sortHandle("status")} className='cursor-pointer' />
                 </div>
               </th>
-              {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+              {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('normal')) && (
                 <th
                   scope="col"
                   className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -358,6 +381,18 @@ export default function Content({
                   <p className="mr-2">Working State</p>
                 </div>
               </th>
+              {(!localStorage.getItem('role').includes('normal')) && (
+                <th
+                  scope="col"
+                  className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
+                >
+                  <div className="flex items-center">
+                    <p className="mr-2">Customer Aprrove State</p>
+                  </div>
+                </th>
+              )}
+
+
               <th
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -426,13 +461,13 @@ export default function Content({
                       ) : parseInt(order.status) === 4 ? (
                         <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
                           <svg
-                            className="h-1.5 w-1.5 fill-blue-500"
+                            className="h-1.5 w-1.5 fill-green-200"
                             viewBox="0 0 6 6"
                             aria-hidden="true"
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          In Production
+                          Artwork Department
                         </span>
                       ) : parseInt(order.status) === 5 ? (
                         <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
@@ -443,9 +478,20 @@ export default function Content({
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          Complete
+                          In Production
                         </span>
                       ) : parseInt(order.status) === 6 ? (
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-blue-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          Final Inspection
+                        </span>
+                      ) : parseInt(order.status) === 7 ? (
                         <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
                           <svg
                             className="h-1.5 w-1.5 fill-indigo-500"
@@ -454,7 +500,8 @@ export default function Content({
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          Final Inspection
+                          Ready for pickup/ship
+
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
@@ -465,7 +512,8 @@ export default function Content({
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          Ready for pickup/ship
+                          Complete
+
                         </span>
                       )
                     ) : (
@@ -482,14 +530,14 @@ export default function Content({
                     )}
 
                   </td>
-                  {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager')) && (
+                  {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('normal')) && (
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
                       {order.price !== 0 ? '$' + order.price : '-------'}
                     </td>
                   )}
 
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 ">
-                    {serviceTypeList[order.service_type] && serviceTypeList[order.service_type].name}
+                    {departments[order.service_type] && departments[order.service_type].name}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 ">
                     {order.createdAt && (
@@ -515,7 +563,7 @@ export default function Content({
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          Log On
+                          Log on
                         </span>
                       </td>
                     ) : (
@@ -528,28 +576,71 @@ export default function Content({
                           >
                             <circle cx={3} cy={3} r={3} />
                           </svg>
-                          Log Off
+                          Log off
                         </span>
+                      </td>
+                    )
+                  ) : (
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+
+                    </td>
+
+                  )}
+                  {((!localStorage.getItem('role').includes('normal')) && (order.status === "4")) ? (
+
+                    order.approve_design === 1 ? (
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-blue-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          approved
+                        </span>
+                      </td>
+                    ) : order.approve_design === 2 ? (
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-red-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          disapproved
+                        </span>
+                      </td>
+                    ) : order.approve_design === 3 ? (
+
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                        <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
+                          <svg
+                            className="h-1.5 w-1.5 fill-green-500"
+                            viewBox="0 0 6 6"
+                            aria-hidden="true"
+                          >
+                            <circle cx={3} cy={3} r={3} />
+                          </svg>
+                          pending approval
+                        </span>
+                      </td>
+
+                    ) : (
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+
                       </td>
                     )
 
                   ) : (
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                      <span className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-200">
-                        <svg
-                          className="h-1.5 w-1.5 fill-green-500"
-                          viewBox="0 0 6 6"
-                          aria-hidden="true"
-                        >
-                          <circle cx={3} cy={3} r={3} />
-                        </svg>
-                        No Assign Staff
-                      </span>
+
                     </td>
+
                   )}
-
-
-
 
                   <td className="whitespace-nowrap px-3  py-4 text-right text-sm font-medium sm:pr-6">
                     <div className="flex">

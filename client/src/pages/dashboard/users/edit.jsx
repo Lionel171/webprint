@@ -71,6 +71,7 @@ export function UserEdit() {
     contact_person: "",
     company_name: "",
     role: [""],
+    department: [""],
     user_status: "",
     phone: "",
     address: "",
@@ -105,12 +106,24 @@ export function UserEdit() {
   const addRole = () => {
     setUser(prevUser => ({ ...prevUser, role: [...prevUser.role, ""] }));
   }
+  const addDepartment = () => {
+    setUser(prevUser => ({ ...prevUser, department: [...prevUser.department, ""] }));
+
+  }
   const onDeleteButton = (index) => {
     setUser(prevUser => {
       const temp = prevUser.role.filter((button, subIndex) => index !== subIndex);
       return { ...prevUser, role: temp };
     });
   };
+
+  const onDeleteDpet = (index) => {
+    setUser(prevUser => {
+      const temp = prevUser.department.filter((button, subIndex) => index !== subIndex);
+      return { ...prevUser, department: temp };
+    });
+  }
+
   const onChangeAvatarPhoto = event => {
     if (event.target.files && event.target.files[0]) {
       setAvatarFile(event.target.files[0]);
@@ -373,7 +386,7 @@ export function UserEdit() {
               />
             </div>
             <div className="sm:col-span-3">
-              <SelectNoSearch
+              {/* <SelectNoSearch
                 labelName={"Department"}
                 onChange={(item) => {
                   setUser({
@@ -384,8 +397,44 @@ export function UserEdit() {
                 value={user.department}
                 items={departmentTypeList}
                 isStatus={true}
-              />
+              /> */}
             </div>
+            {user.department.map((dep, index) => {
+              return (
+                <>
+                  <div key={index} className="sm:col-span-3">
+                    <SelectNoSearch
+                      labelName={`Department ${index + 1}`}
+                      onChange={(item) => {
+                        const updatedDepartments = [...user.department];
+                        updatedDepartments[index] = item.name;
+                        setUser({ ...user, department: updatedDepartments });
+                      }}
+                      value={user.department[index]}
+                      items={departmentTypeList}
+                      isStatus={true}
+                    />
+                  </div>
+                  {index > 0 ? (
+                    <div className="items-end h-full w-[50px] mt-2 pt-4">
+                      <MinusCircleIcon
+                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                        onClick={() => onDeleteDpet(index)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="items-end h-full w-[50px] mt-2 pt-4">
+                      <PlusCircleIcon
+                        className=" rounded-l-full text-red-400 w-[30px]  border-white border border-r-0 z-10"
+                        onClick={addDepartment}
+                      />
+                    </div>
+                  )}
+                  <br />
+
+                </>
+              )
+            })}
             {user.role.map((role, index) => {
               return (
                 <>
