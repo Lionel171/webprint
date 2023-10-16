@@ -83,7 +83,7 @@ const stripe = require('stripe')('sk_test_51NfXohCSXhEhZmnyiiuL7dQPH85cj7gdoLHET
 const express = require('express');
 const router = express.Router();
 
-const MY_DOMAIN = "http://185.148.129.206:5174/dashboard/payments";
+const MY_DOMAIN = "http://185.148.129.206:5173/dashboard/payments";
 
 // Create a webhook endpoint to handle events from Stripe
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {

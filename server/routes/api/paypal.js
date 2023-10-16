@@ -12,7 +12,7 @@ paypal.configure({
     'client_secret': 'EDNIeVtDmvK3IvL2ybt_vCND_THwu-vMJK-nq28OARYmdEzUjVU1zm9Kv_qh6eyQlpTQCcv-o2S29AiU'
 })
 router.post('/buy', (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'http://185.148.129.206:5174');
+    res.header('Access-Control-Allow-Origin', 'http://185.148.129.206:5173');
   
     // create payment object
     console.log(req.body,"ddddd")
@@ -22,8 +22,8 @@ router.post('/buy', (req, res) => {
             "payment_method": "paypal"
         },
         "redirect_urls": {
-            "return_url": "http://185.148.129.206:5174/dashboard/payments",
-            "cancel_url": "http://185.148.129.206:5174/dashboard"
+            "return_url": "http://185.148.129.206:5173/dashboard/payments",
+            "cancel_url": "http://185.148.129.206:5173/dashboard"
         },
         "transactions": [{
             "amount": {

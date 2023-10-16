@@ -77,7 +77,7 @@ const server = app.listen(port, () => console.log(`Server up and running on port
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: 'http://185.148.129.206:5174',
+    origin: 'http://185.148.129.206:5173',
   },
 });
 io.on('connection', (socket) => {

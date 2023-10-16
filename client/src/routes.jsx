@@ -19,6 +19,7 @@ import {
   Department,
   Payments,
   Notifications,
+  Complete
 } from "@/pages/dashboard";
 import {
   UserEdit
@@ -32,6 +33,8 @@ import {
 import { SignIn, SignUp } from "@/pages/auth";
 import OrderEdit from "./pages/dashboard/orders/edit";
 import OrderView from "./pages/dashboard/orders/view";
+import CompleteView from "./pages/dashboard/complete/view";
+
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
@@ -60,6 +63,18 @@ export const routes = [
         path: "/orders",
         element: <Orders />,
       },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "complete orders",
+        path: "/complete-orders",
+        element: <Complete />,
+      },
+      // {
+      //   icon: <TableCellsIcon {...icon} />,
+      //   name: "Completed Orders",
+      //   path: "/order",
+      //   element: <Order />,
+      // },
       // {
       //   icon: <TableCellsIcon {...icon} />,
       //   name: "Invoice generator",
@@ -159,6 +174,18 @@ export const routes = [
         path: "/orders",
         element: <Orders />,
       },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "complete orders",
+        path: "/complete-orders",
+        element: <Complete />,
+      },
+      // {
+      //   icon: <TableCellsIcon {...icon} />,
+      //   name: "completed orders",
+      //   path: "/order",
+      //   element: <Order />,
+      // },
       // {
       //   icon: <TableCellsIcon {...icon} />,
       //   name: "payments",
@@ -319,6 +346,11 @@ export const routes = [
         // name: "order add",
         path: "/orders/view",
         element: <OrderView />,
+      },
+      {
+        // name: "order add",
+        path: "/complete/view",
+        element: <CompleteView />,
       },
     ],
   },
@@ -536,6 +568,12 @@ export const routes = [
         name: "orders",
         path: "/orders",
         element: <Orders />,
+      },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "complete orders",
+        path: "/complete-orders",
+        element: <Complete />,
       },
       {
         icon: <TableCellsIcon {...icon} />,

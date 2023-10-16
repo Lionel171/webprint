@@ -51,6 +51,15 @@ class OrderService {
     const getOderListByCompleteEndpoint = `api/orders/for-prostaff/${user_id}`;
     return await HttpService.getWithParams(getOderListByCompleteEndpoint, payload);
   }
+  //complete order tab
+  getCompleteOrderList = async (payload) => {
+    const getCompleteOrderListEndpoint = 'api/orders/complete-order';
+    return await HttpService.getWithParams(getCompleteOrderListEndpoint, payload);
+  }
+  getCompleteOrderListForCustomer = async (payload, user_id) => {
+    const getCompleteOrderListForCustomerEndpoint = `api/orders/complete-order-customer/${user_id}`;
+    return await HttpService.getWithParams(getCompleteOrderListForCustomerEndpoint, payload);
+  }
 
   getPaidByUser = async (user_id) => {
     const getPaidByUserEndpoint = `api/orders/paid/${user_id}`;

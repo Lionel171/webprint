@@ -39,12 +39,20 @@ router.post("/save-order", auth, async (req, res) => {
       const client_art_up = [];
       if (req.files) {
         const order_file = req.files.filter((file, i) => file.fieldname.startsWith(`files[${index}]`));
-        order_file.map((obj, sub_i) => {
-          client_art_up.push(obj.filename)
-        })
+        if (order_file.length > 0) {
+          order_file.map((obj, sub_i) => {
+            client_art_up.push(obj.filename)
+          })
+        } else {
+          client_art_up.push(null);
+        }
+        
       } else {
         client_art_up.push(null);
       }
+      
+      console.log(client_art_up, "hhhh hellloooo")
+      
       let orderDetail = new OrderDetail({
         order_id: order._id,
         status: item.status,
@@ -154,7 +162,7 @@ router.post('/file-upload', auth, async (req, res) => {
     }
 
     const updatedOrderDetail = await OrderDetail.findByIdAndUpdate(id, { $set: updateField }, { new: true });
- 
+
     return res.json({ success: true });
   } catch (err) {
     console.log(err);
@@ -181,15 +189,15 @@ router.post('/customer-comment', auth, async (req, res) => {
 
 // customer approve design
 router.post('/approve-design', auth, async (req, res) => {
-  const {id, approve_state} = req.body;
-  
+  const { id, approve_state } = req.body;
+
   try {
     const order = await OrderDetail.findById(id);
     order.approve_design = approve_state;
-    
+
     await order.save();
 
-   
+
 
     return res.json({
       success: true,
@@ -367,7 +375,7 @@ router.get("/list", async (req, res) => {
           // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : {status: { $in: [1, 2, 3, 4, 5, 6, 7] }};
+      : { status: { $in: [1, 2, 3, 4, 5, 6, 7] } };
     const { limit, offset } = getPagination(page, perPage);
     const orders = await OrderDetail.paginate(condition, {
       offset,
@@ -450,6 +458,57 @@ router.get("/approve", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+// get completed code
+router.get("/complete-order", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $in: 8 } };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    res.json(orders);
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// get completed order for customer
+router.get("/complete-order-customer/:id", async (req, res) => {
+  try {
+    const { page, perPage, search } = req.query;
+    var condition = search
+      ? {
+        $or: [
+          { title: { $regex: new RegExp(search), $options: "i" } },
+          // { status: { $regex: new RegExp(search), $options: "i" } },
+        ],
+      }
+      : { status: { $in: 8 }, user_id: req.params.id, };
+    const { limit, offset } = getPagination(page, perPage);
+    const orders = await OrderDetail.paginate(condition, {
+      offset,
+      limit,
+    });
+    res.json(orders);
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 // get order list for artwork manager
 router.get("/for-artmanager", async (req, res) => {
   try {
@@ -517,11 +576,11 @@ router.get("/for-promanager", async (req, res) => {
           { title: { $regex: new RegExp(search), $options: "i" } },
           // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
-        status: { $in: [ 5, 6, 7] },
+        status: { $in: [5, 6, 7] },
         service_type: { $in: service },
       }
       : {
-        status: { $in: [ 5, 6, 7] },
+        status: { $in: [5, 6, 7] },
         service_type: { $in: service },
       };
     const { limit, offset } = getPagination(page, perPage);
@@ -549,7 +608,7 @@ router.get("/for-prostaff/:id", async (req, res) => {
         ],
       }
       : {
-        status: { $in: [ 5, 6, 7] },
+        status: { $in: [5, 6, 7] },
         staff_id: req.params.id,
       };
     const { limit, offset } = getPagination(page, perPage);
@@ -643,7 +702,7 @@ router.get("/current/:id", async (req, res) => {
           // { status: { $regex: new RegExp(search), $options: "i" } },
         ],
       }
-      : { user_id: req.params.id };
+      : { status: { $in: [1, 2, 3, 4, 5, 6, 7] }, user_id: req.params.id };
 
     const { limit, offset } = getPagination(page, perPage);
     const orders = await OrderDetail.paginate(condition, {

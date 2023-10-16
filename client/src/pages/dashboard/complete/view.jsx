@@ -67,7 +67,7 @@ const controlList = [
 ];
 
 
-export function OrderEdit() {
+export function CompleteEdit() {
   const navigate = useNavigate();
   const location = useLocation();
   const authContext = useContext(AuthContext);
@@ -80,7 +80,6 @@ export function OrderEdit() {
   const API_URL = process.env.API_URL;
   const [totalPrice, setTotalPrice] = useState(0);
   const [isView, setIsView] = useState(false);
-  const [isDesignView, setIsDesignView] = useState(false);
   const [user, setUser] = useState([]);
   const [staff, setStaff] = useState([]);
 
@@ -286,7 +285,7 @@ export function OrderEdit() {
         img.src = url;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
         img.style.objectFit = 'contain';
 
         const imageContainer = document.getElementById(`image-${index}`);
@@ -306,7 +305,7 @@ export function OrderEdit() {
         img.src = order ? API_URL + '/' + image[index] : DefaultImage;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
 
         img.style.objectFit = 'contain';
 
@@ -322,7 +321,7 @@ export function OrderEdit() {
   };
 
   const renderOriginalImage = (item, index, image) => {
-    const fileExtension = image[index] !== null && image[index].slice(image[index].lastIndexOf('.') + 1).toLowerCase();
+    const fileExtension = image[index].slice(image[index].lastIndexOf('.') + 1).toLowerCase();
     const isTiff = fileExtension === 'tiff' || fileExtension === 'tif';
 
     if (isTiff) {
@@ -344,7 +343,7 @@ export function OrderEdit() {
         img.src = url;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
         img.style.objectFit = 'contain';
 
         const imageContainer = document.getElementById(`original_image-${index}`);
@@ -364,7 +363,7 @@ export function OrderEdit() {
         img.src = order ? API_URL + '/' + image[index] : DefaultImage;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
 
         img.style.objectFit = 'contain';
 
@@ -402,7 +401,7 @@ export function OrderEdit() {
         img.src = url;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
         img.style.objectFit = 'contain';
 
         const imageContainer = document.getElementById(`original_image-${index}`);
@@ -422,7 +421,7 @@ export function OrderEdit() {
         img.src = order ? API_URL + '/' + image[index] : DefaultImage;
         img.alt = `This file is not able to display with image format(.${fileExtension}).`;
         img.height = 100;
-        img.width = 200;
+        img.width = 100;
 
         img.style.objectFit = 'contain';
 
@@ -741,7 +740,7 @@ export function OrderEdit() {
 
 
     if (order && order._id) {
-      setIsDesignView(false);
+      setIsView(false);
     }
 
   };
@@ -1515,7 +1514,6 @@ from WEPRINT`,
       orders_temp.push(order_temp);
 
       // Update the state with orders_temp
-      setOrders(orders_temp)
       setOrders(orders_temp);
 
       const image = [];
@@ -1535,7 +1533,6 @@ from WEPRINT`,
         image.push(file);
         renderImage(order, index, image);
       });
-
 
       order.original_art_up.map((o_file, index) => {
         original_image.push(o_file);
@@ -1575,7 +1572,6 @@ from WEPRINT`,
 
     fetchData();
     setIsView(true);
-    setIsDesignView(true);
 
 
   }, [isPreStatus]);
@@ -1845,7 +1841,7 @@ from WEPRINT`,
                   {localStorage.getItem('role').includes('normal') ? ("My Order File(Original)") : ("Customer File(Original)")}
                 </th>
 
-                {((!localStorage.getItem('role').includes('normal')) && (order.status === "2" || order.status === "3" || order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                {((!localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6"|| order.status === "7")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
@@ -1853,7 +1849,7 @@ from WEPRINT`,
                     Working File
                   </th>
                 )}
-
+              
 
                 {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Staff') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff') || localStorage.getItem('role').includes('Production Manager')) && (order.status === "2" || order.status === "3" || order.status === "4" || order.status === "5")) && (
                   <th
@@ -1871,7 +1867,7 @@ from WEPRINT`,
                     Upload New File
                   </th>
                 )}
-                {((localStorage.getItem('role').includes('normal') || localStorage.getItem('role').includes('admin')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                  {((localStorage.getItem('role').includes('normal') || localStorage.getItem('role').includes('admin')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
@@ -1879,14 +1875,14 @@ from WEPRINT`,
                     Design Proof
                   </th>
                 )}
-                {/* {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "4")) && (
+                {((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "4")) && (
                   <th
                     scope="col"
                     className="py-3 pl-10 pr-0 text-center font-semibold"
                   >
-                    Upload Design
+                   Upload Design
                   </th>
-                )} */}
+                )}
 
                 {(localStorage.getItem('role').includes("admin") || localStorage.getItem('role').includes('Sales Manager') || localStorage.getItem('role').includes('normal')) && (
                   <th
@@ -1949,7 +1945,7 @@ from WEPRINT`,
                     order.original_art_up.map((o_file, index) => {
                       return (
                         <>
-                          {o_file && o_file.split('.').pop() === "pdf" ? (
+                          {o_file.split('.').pop() === "pdf" ? (
                             <div className="flex justify-center">
                               <button
                                 type="submit"
@@ -1982,12 +1978,12 @@ from WEPRINT`,
                 </td>
 
 
-                {((!localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                {((!localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6"|| order.status === "7")) && (
                   <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                     {order && order.client_art_up.map((o_file, index) => {
                       return (
                         <>
-                          {o_file !== null && o_file.split('.').pop() === "pdf" ? (
+                          {o_file.split('.').pop() === "pdf" ? (
                             <div className="flex justify-center">
                               <button
                                 type="submit"
@@ -2018,7 +2014,7 @@ from WEPRINT`,
                   </td>
                 )}
 
-
+             
 
                 {
                   ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('Artwork Staff') || localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('Production Staff') || localStorage.getItem('role').includes('Production Manager')) && (order.status === "2" || order.status === "3" || order.status === "4" || order.status === "5")) && (
@@ -2034,11 +2030,11 @@ from WEPRINT`,
                                   <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "choose working file."}</p>
                                 ) : (
                                   <img
-                                    src={file !== null ? (isView ? API_URL + '/' + file : file) : DefaultImage}
-                                    alt={`This file is not able to display with image format(.${file !== null && fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                    src={file ? (isView ? API_URL + '/' + file : file) : DefaultImage}
+                                    alt={`This file is not able to display with image format(.${fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
                                     onClick={() => fileUploadClick(index)}
                                     height={100}
-                                    width={200}
+                                    width={100}
                                     style={{ objectFit: 'contain' }}
                                   />
                                 )}
@@ -2080,12 +2076,12 @@ from WEPRINT`,
                     </td>
                   )
                 }
-                {/* {((localStorage.getItem('role').includes('normal') || localStorage.getItem('role').includes('admin')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
+                   {((localStorage.getItem('role').includes('normal') || localStorage.getItem('role').includes('admin') ) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) && (
                   <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                     {(order && order.design_img) ? order.design_img.map((img, index) => {
                       return (
                         <>
-                          {img !== null && img.split('.').pop() === "pdf" ? (
+                          {img.split('.').pop() === "pdf" ? (
                             <div className="flex justify-center">
                               <button
                                 type="submit"
@@ -2101,49 +2097,43 @@ from WEPRINT`,
                             </div>
                           )}
 
-                          {img !== null && (
-                            <div className="text-center mb-1">
+                          <div className="text-center mb-1">
+                            <button
+                              type="submit"
+                              onClick={() => downloadHandle(API_URL + "/" + img)}
+                              className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            >
+                              <FaDownload />
+                            </button>
+
+                            <div className="text-center">
                               <button
                                 type="submit"
-                                onClick={() => downloadHandle(API_URL + "/" + img)}
-                                className="text-center mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                onClick={() => approveDesign(2)}
+                                className="text-center mr-0.5 mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                               >
-                                <FaDownload />
+                                DISAPPROVE
                               </button>
 
-                              <div className="text-center">
-                                <button
-                                  type="submit"
-                                  onClick={() => approveDesign(2)}
-                                  className="text-center mr-0.5 mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                                >
-                                  DISAPPROVE
-                                </button>
-
-                                <button
-                                  type="submit"
-                                  onClick={() => approveDesign(1)}
-                                  className=" text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
-                                >
-                                  APPROVE
-                                </button>
-                              </div>
+                              <button
+                                type="submit"
+                                onClick={() => approveDesign(1)}
+                                className=" text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+                              >
+                                APPROVE
+                              </button>
                             </div>
-                          )
-                          }
 
-
-
+                          </div>
                         </>
                       );
                     }) : ("No Design Fiel")}
                   </td>
-                )} */}
+                )}
                 {
                   ((localStorage.getItem('role').includes('Artwork Manager') || localStorage.getItem('role').includes('admin')) && (order.status === "4")) && (
                     <td className="py-5 pl-10 pr-0 text-right align-top tabular-nums text-gray-700">
                       {(orders[0] && orders[0].design_img) && (orders[0].design_img.map((img, index) => {
-
                         return (
                           <div className="flex justify-center" key={index}>
                             <div className="flex items-center mr-3">
@@ -2153,11 +2143,11 @@ from WEPRINT`,
                                   <p>{defaultDesignImg[index] ? (isView ? designImgName[index] : designImgName[index]) : "choose desgin image."}</p>
                                 ) : ( */}
                                 <img
-                                  src={img !== null ? (isDesignView ? API_URL + '/' + img : img) : DefaultImage}
-                                  alt={`This file is not able to display with image format(.${img !== null && designImgName[index].slice(designImgName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                  src={img ? (isView ? API_URL + '/' + img : img) : DefaultImage}
+                                  alt={`This file is not able to display with image format(.${designImgName[index].slice(designImgName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
                                   onClick={() => designImgClick(index)}
                                   height={100}
-                                  width={200}
+                                  width={100}
                                   style={{ objectFit: 'contain' }}
                                 />
                                 {/* )} */}
@@ -2187,24 +2177,7 @@ from WEPRINT`,
                                         >
                                           <FaUpload />
                                         </button>
-
-                                        
                                       </div>
-                                      <button
-                                          type="submit"
-                                          onClick={() => approveDesign(2)}
-                                          className="text-center mr-0.5 mt-4 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                                        >
-                                          DISAPPROVE
-                                        </button>
-
-                                        <button
-                                          type="submit"
-                                          onClick={() => approveDesign(1)}
-                                          className=" text-center mr-0.5 mt-4 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
-                                        >
-                                          APPROVE
-                                        </button>
                                     </>
                                   )}
                                 </div>
@@ -2231,11 +2204,11 @@ from WEPRINT`,
                                   <p>{defaultImg[index] ? (isView ? fileName[index] : fileName[index]) : "choose working file."}</p>
                                 ) : (
                                   <img
-                                    src={file !== null ? (isView ? API_URL + '/' + file : file) : DefaultImage}
-                                    alt={`This file is not able to display with image format(.${file !== null && fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
+                                    src={file ? (isView ? API_URL + '/' + file : file) : DefaultImage}
+                                    alt={`This file is not able to display with image format(.${fileName[index].slice(fileName[index].lastIndexOf('.') + 1).toLowerCase()}).`}
                                     onClick={() => avatarImageClick(index)}
                                     height={100}
-                                    width={200}
+                                    width={100}
                                     style={{ objectFit: 'contain' }}
                                   />
                                 )}
@@ -2549,6 +2522,7 @@ from WEPRINT`,
         )
       }
 
+
       {
         (localStorage.getItem("role").includes("Production Manager") || localStorage.getItem("role").includes("Production Staff") || localStorage.getItem("role").includes("admin") || localStorage.getItem("role").includes("Artwork Staff") || localStorage.getItem("role").includes("Artwork Manager")) && (
           <div className="mt-6 flex flex-col gap-y-4 sm:flex-row sm:items-center sm:justify-end sm:gap-x-6">
@@ -2786,4 +2760,4 @@ from WEPRINT`,
   );
 }
 
-export default OrderEdit;
+export default CompleteEdit;

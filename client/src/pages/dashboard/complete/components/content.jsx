@@ -291,7 +291,7 @@ export default function Content({
             </div>
           </div>
         </div>
-        {(localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('normal') || localStorage.getItem("role").includes("Sales Team Member") || localStorage.getItem("role").includes("Sales Manager")) && (
+        {(localStorage.getItem('role').includes('admin') || localStorage.getItem('role').includes('normal') || localStorage.getItem("role").includes("Sales Team Member")) && (
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
             <NavLink
               className="block flex items-center rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -381,15 +381,18 @@ export default function Content({
                   <p className="mr-2">Working State</p>
                 </div>
               </th>
-         
+              {(!localStorage.getItem('role').includes('normal')) && (
                 <th
                   scope="col"
                   className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
                 >
                   <div className="flex items-center">
-                    <p className="mr-2">Art Approval</p>
+                    <p className="mr-2">Art Aprroval</p>
                   </div>
                 </th>
+              )}
+
+
               <th
                 scope="col"
                 className="px-6 py-3 bg-gray-50 dark:bg-gray-800  items-center"
@@ -401,7 +404,7 @@ export default function Content({
             {orders &&
               filterOrders.map((order, index) => (
                 <tr key={index} className='border-b border-gray-200 dark:border-gray-700 ml-3 hover:bg-gray-200'>
-                  <NavLink to={"/dashboard/orders/view"} state={order}>
+                  <NavLink to={"/dashboard/complete/view"} state={order}>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800 text-center ml-2">
                       <dl className="font-medium">
                         <dt className="sr-only">Order</dt>
@@ -583,7 +586,7 @@ export default function Content({
                     </td>
 
                   )}
-                  { (order.status === "4") ? (
+                  {((!localStorage.getItem('role').includes('normal')) && (order.status === "4" || order.status === "5" || order.status === "6" || order.status === "7")) ? (
 
                     order.approve_design === 1 ? (
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
@@ -673,7 +676,7 @@ export default function Content({
                         />
                       )}
 
-                      <NavLink to={"/dashboard/orders/view"} state={order}>
+                      <NavLink to={"/dashboard/complete/view"} state={order}>
                         <EyeIcon
                           width={20}
                           height={20}
